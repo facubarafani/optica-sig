@@ -1,0 +1,16 @@
+[project]
+name = "sgi-optica"
+version = "0.1.0"
+description = "Sistema de Gestión Integral para ópticas (Argentina) — master-data backbone"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
