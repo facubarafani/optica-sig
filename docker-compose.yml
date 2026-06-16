@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: sgi_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sgi
+      POSTGRES_PASSWORD: sgi
+      POSTGRES_DB: sgi
+    ports:
+      - "5432:5432"
+    volumes:
+      - sgi_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sgi -d sgi"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  sgi_pgdata:
