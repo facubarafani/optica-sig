@@ -1,0 +1,7 @@
+# Caddy reverse proxy with automatic Let's Encrypt HTTPS.
+# Used only by the portable docker-compose.prod.yml path (Coolify uses its own
+# Traefik proxy instead). APP_DOMAIN must resolve (DNS A record) to this server.
+{$APP_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy app:8000
+}
