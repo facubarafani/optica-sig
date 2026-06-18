@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SGI Óptica — Gestión</title>
+<style>
+  :root{
+    --bg:#f4f6f9; --panel:#ffffff; --border:#e3e8ef; --text:#1f2937; --muted:#6b7280;
+    --primary:#2563eb; --primary-600:#1d4ed8; --primary-50:#eff6ff;
+    --danger:#dc2626; --danger-50:#fef2f2; --ok:#16a34a; --ok-50:#f0fdf4; --warn:#d97706; --warn-50:#fffbeb;
+    --radius:10px; --radius-sm:7px; --shadow:0 1px 3px rgba(16,24,40,.08),0 1px 2px rgba(16,24,40,.04);
+    --shadow-lg:0 12px 32px rgba(16,24,40,.18); --sidebar:228px;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.45}
+  a{color:var(--primary);text-decoration:none}
+  h1,h2,h3{margin:0;font-weight:650}
+  /* ---------- login ---------- */
+  .login-wrap{min-height:100%;display:grid;place-items:center;padding:24px}
+  .login-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);width:360px;max-width:100%;padding:28px}
+  .login-card .brand{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+  .login-card .brand .logo{width:34px;height:34px;border-radius:9px;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:800}
+  .login-card h1{font-size:19px}
+  .login-card p.sub{color:var(--muted);margin:2px 0 20px;font-size:13px}
+  .hint{margin-top:16px;font-size:12px;color:var(--muted);text-align:center}
+  /* ---------- app shell ---------- */
+  .app{display:grid;grid-template-columns:var(--sidebar) 1fr;min-height:100%}
+  .sidebar{background:#0f172a;color:#cbd5e1;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+  .sidebar .brand{display:flex;align-items:center;gap:10px;padding:18px 18px 14px}
+  .sidebar .brand .logo{width:30px;height:30px;border-radius:8px;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:800}
+  .sidebar .brand b{color:#fff;font-size:15px}
+  .sidebar .brand small{display:block;color:#7c8aa5;font-size:11px}
+  .nav{padding:6px;overflow:auto;flex:1}
+  .nav a{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:8px;color:#cbd5e1;font-weight:500;margin:1px 0}
+  .nav a .ic{width:18px;text-align:center;opacity:.85;font-size:15px}
+  .nav a:hover{background:#1e293b;color:#fff}
+  .nav a.active{background:var(--primary);color:#fff}
+  .sidebar .foot{padding:12px;border-top:1px solid #1e293b;font-size:12px;color:#94a3b8}
+  .main{display:flex;flex-direction:column;min-width:0}
+  .topbar{height:56px;background:var(--panel);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:5}
+  .topbar .crumb{font-weight:650;font-size:15px}
+  .topbar .who{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:13px}
+  .topbar .who .avatar{width:30px;height:30px;border-radius:50%;background:var(--primary-50);color:var(--primary);display:grid;place-items:center;font-weight:700}
+  .content{padding:22px;max-width:1180px;width:100%}
+  .menu-btn{display:none;background:none;border:0;font-size:20px;cursor:pointer}
+  /* ---------- generic ---------- */
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .card.pad{padding:18px}
+  .card.error{padding:16px;color:var(--danger);background:var(--danger-50);border-color:#fecaca}
+  .page-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+  .page-head h2{font-size:20px}
+  .page-head .sub{color:var(--muted);font-size:13px;margin-top:2px}
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+  .toolbar .grow{flex:1}
+  .loading{padding:40px;text-align:center;color:var(--muted)}
+  .empty{padding:36px;text-align:center;color:var(--muted)}
+  /* buttons */
+  .btn{appearance:none;border:1px solid var(--border);background:var(--panel);color:var(--text);padding:8px 14px;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:background .12s,border-color .12s}
+  .btn:hover{background:#f8fafc}
+  .btn:disabled{opacity:.55;cursor:not-allowed}
+  .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+  .btn.primary:hover{background:var(--primary-600)}
+  .btn.danger{background:#fff;border-color:#fecaca;color:var(--danger)}
+  .btn.danger:hover{background:var(--danger-50)}
+  .btn.sm{padding:5px 10px;font-size:12px;border-radius:7px}
+  .btn.ghost{border-color:transparent;background:transparent}
+  .btn.ghost:hover{background:#f1f5f9}
+  /* inputs */
+  label.fld{display:block;font-size:12.5px;font-weight:600;color:#374151;margin-bottom:5px}
+  label.fld .req{color:var(--danger)}
+  input,select,textarea{width:100%;font:inherit;color:var(--text);background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 10px;outline:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-50)}
+  textarea{resize:vertical;min-height:64px}
+  input[type=checkbox]{width:auto}
+  .inp-sm{padding:6px 9px;font-size:13px}
+  .switch{display:flex;align-items:center;gap:8px;font-size:13px;color:#374151;font-weight:500;cursor:pointer;user-select:none}
+  /* table */
+  .tbl-wrap{overflow:auto;border-radius:var(--radius)}
+  table{width:100%;border-collapse:collapse;background:var(--panel);font-size:13px}
+  thead th{text-align:left;padding:10px 12px;background:#f8fafc;color:#64748b;font-weight:600;font-size:11.5px;letter-spacing:.03em;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap}
+  tbody td{padding:10px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+  tbody tr:last-child td{border-bottom:0}
+  tbody tr:hover{background:#fbfdff}
+  tr.inactive{opacity:.5}
+  td.actions{text-align:right;white-space:nowrap}
+  td.actions .btn{margin-left:5px}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  .mono{font-family:var(--mono);font-size:12.5px}
+  /* badges */
+  .badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:600;line-height:1.5}
+  .badge.green{background:var(--ok-50);color:var(--ok)}
+  .badge.gray{background:#f1f5f9;color:#64748b}
+  .badge.blue{background:var(--primary-50);color:var(--primary)}
+  .badge.amber{background:var(--warn-50);color:var(--warn)}
+  .badge.red{background:var(--danger-50);color:var(--danger)}
+  /* stat cards */
+  .stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:22px}
+  .stat{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow)}
+  .stat .k{color:var(--muted);font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .stat .v{font-size:28px;font-weight:750;margin-top:8px}
+  .stat .v small{font-size:13px;color:var(--muted);font-weight:500}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  /* tabs */
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:18px}
+  .tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:9px 14px;font-weight:600;color:var(--muted);cursor:pointer;font-size:13.5px}
+  .tabs button.active{color:var(--primary);border-bottom-color:var(--primary)}
+  /* modal */
+  .overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);display:grid;place-items:center;padding:20px;z-index:50;animation:fade .12s ease}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .modal{background:var(--panel);border-radius:14px;box-shadow:var(--shadow-lg);width:480px;max-width:100%;max-height:90vh;display:flex;flex-direction:column;animation:pop .14s ease}
+  .modal.wide{width:680px}
+  @keyframes pop{from{transform:translateY(8px) scale(.98);opacity:0}to{transform:none;opacity:1}}
+  .modal header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+  .modal header h3{font-size:16px}
+  .modal .body{padding:20px;overflow:auto}
+  .modal footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px}
+  .x{background:none;border:0;font-size:20px;line-height:1;cursor:pointer;color:var(--muted)}
+  /* form */
+  form.form .form-row{margin-bottom:14px}
+  form.form.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px}
+  form.form.grid2 .form-row{margin-bottom:0}
+  form.form.grid2 .form-row.full{grid-column:1/-1}
+  .checklist{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;max-height:240px;overflow:auto;border:1px solid var(--border);border-radius:8px;padding:10px}
+  .checklist label{display:flex;align-items:center;gap:8px;font-weight:500;font-size:13px}
+  .fhelp{font-size:11.5px;color:var(--muted);margin-top:4px}
+  /* toast */
+  #toasts{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:10px;z-index:80}
+  .toast{background:#0f172a;color:#fff;padding:11px 15px;border-radius:9px;box-shadow:var(--shadow-lg);font-size:13px;max-width:360px;animation:slide .16s ease}
+  .toast.err{background:var(--danger)}
+  .toast.ok{background:var(--ok)}
+  @keyframes slide{from{transform:translateX(16px);opacity:0}to{transform:none;opacity:1}}
+  .kv{display:grid;grid-template-columns:140px 1fr;gap:8px 14px;font-size:13.5px}
+  .kv dt{color:var(--muted);font-weight:600}
+  .kv dd{margin:0}
+  @media(max-width:820px){
+    .app{grid-template-columns:1fr}
+    .sidebar{position:fixed;left:0;top:0;width:240px;z-index:40;transform:translateX(-100%);transition:transform .2s}
+    .sidebar.open{transform:none}
+    .menu-btn{display:block}
+    .grid2{grid-template-columns:1fr}
+    form.form.grid2{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div id="toasts"></div>
+
+<script>
+"use strict";
+/* =========================================================================
+   SGI Óptica — consola de gestión en un solo archivo (vanilla JS).
+   FastAPI la sirve en el mismo origen en /app, así que llama a /api/... directo.
+   Convención: el código, los paths y los VALORES de enum quedan en inglés;
+   sólo se traduce lo que ve el usuario.
+   ========================================================================= */
+
+const TOKEN_KEY = "sgi_token";
+const state = { token: null, user: null, perms: new Set(), company: null, currency: "ARS" };
+const root = document.getElementById("root");
+
+/* Etiquetas en español para los valores de enum (los valores enviados a la API
+   siguen en inglés). */
+const ENUM_ES = {
+  supplier_type: { merchandise: "Mercadería", laboratory: "Laboratorio", workshop: "Taller" },
+  movement_type: { inbound: "Ingreso", outbound: "Egreso", adjustment: "Ajuste", transfer: "Transferencia" },
+  treatment_type: { myopia: "Miopía", astigmatism: "Astigmatismo", hyperopia: "Hipermetropía", presbyopia: "Presbicia", other: "Otro" },
+};
+
+/* ----------------------------- tiny helpers ----------------------------- */
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = (v) => (v == null ? "" : String(v).replace(/[&<>"']/g, c =>
+  ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])));
+const el = (html) => { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+
+function toast(msg, type = "") {
+  const t = el(`<div class="toast ${type}">${esc(msg)}</div>`);
+  $("#toasts").appendChild(t);
+  setTimeout(() => { t.style.opacity = "0"; t.style.transition = "opacity .3s"; setTimeout(() => t.remove(), 300); }, type === "err" ? 5200 : 3000);
+}
+
+function fmtMoney(v) {
+  if (v == null || v === "") return "—";
+  const n = Number(v);
+  if (Number.isNaN(n)) return esc(v);
+  try { return new Intl.NumberFormat("es-AR", { style:"currency", currency: state.currency || "ARS", maximumFractionDigits:2 }).format(n); }
+  catch { return n.toFixed(2); }
+}
+const fmtNum  = (v) => (v == null || v === "" ? "—" : String(Number(v)));
+const fmtDate = (v) => (v ? new Date(v).toLocaleDateString("es-AR") : "—");
+const fmtDateTime = (v) => (v ? new Date(v).toLocaleString("es-AR", { dateStyle:"short", timeStyle:"short" }) : "—");
+function badge(text, cls) { return `<span class="badge ${cls}">${esc(text)}</span>`; }
+const boolBadge = (v) => v ? badge("Activo","green") : badge("Inactivo","gray");
+
+const TITLECASE = (s) => String(s||"").replace(/_/g," ").replace(/\b\w/g, c => c.toUpperCase());
+
+/* ----------------------------- API client ------------------------------ */
+function errMsg(data, status) {
+  if (data == null) return `HTTP ${status}`;
+  if (typeof data === "string") return data;
+  const d = data.detail;
+  if (typeof d === "string") return d;
+  if (Array.isArray(d)) return d.map(e => `${(e.loc || []).slice(1).join(".") || "campo"}: ${e.msg}`).join("; ");
+  return JSON.stringify(data);
+}
+
+async function api(method, path, body) {
+  const headers = {};
+  if (state.token) headers["Authorization"] = "Bearer " + state.token;
+  const opts = { method, headers };
+  if (body !== undefined) { headers["Content-Type"] = "application/json"; opts.body = JSON.stringify(body); }
+  const res = await fetch(path, opts);
+  if (res.status === 401) { logout(); throw new Error("La sesión expiró. Iniciá sesión de nuevo."); }
+  if (res.status === 204) return null;
+  const txt = await res.text();
+  let data = null;
+  if (txt) { try { data = JSON.parse(txt); } catch { data = txt; } }
+  if (!res.ok) throw new Error(errMsg(data, res.status));
+  return data;
+}
+
+/* options cache (for dropdowns referencing other entities) */
+const _optCache = new Map();
+function clearOptions() { _optCache.clear(); }
+async function options({ endpoint, value = "id", label = "name", labelFn }) {
+  if (!_optCache.has(endpoint)) _optCache.set(endpoint, api("GET", endpoint).catch(() => []));
+  const rows = await _optCache.get(endpoint);
+  return (rows || []).map(r => ({ value: r[value], label: labelFn ? labelFn(r) : r[label] }));
+}
+async function idMap(endpoint, label = "name", labelFn) {
+  const rows = await (_optCache.has(endpoint) ? _optCache.get(endpoint) : (_optCache.set(endpoint, api("GET", endpoint).catch(() => [])), _optCache.get(endpoint)));
+  const m = {};
+  for (const r of (rows || [])) m[r.id] = labelFn ? labelFn(r) : r[label];
+  return m;
+}
+
+/* ----------------------------- auth flow ------------------------------- */
+function buildPerms(user) {
+  const set = new Set();
+  if (user.is_superuser) set.add("*");
+  for (const role of (user.roles || [])) for (const p of (role.permissions || [])) set.add(p.code);
+  return set;
+}
+const can = (code) => state.perms.has("*") || state.perms.has(code);
+
+async function loadSession() {
+  state.user = await api("GET", "/api/auth/me");
+  state.perms = buildPerms(state.user);
+  if (can("company:read")) {
+    try { state.company = await api("GET", "/api/company"); state.currency = state.company.currency || "ARS"; } catch {}
+  }
+}
+
+function logout() {
+  state.token = null; state.user = null; state.perms = new Set(); state.company = null;
+  localStorage.removeItem(TOKEN_KEY);
+  clearOptions();
+  renderLogin();
+}
+
+/* ----------------------------- login view ------------------------------ */
+function renderLogin(prefill = true) {
+  root.innerHTML = `
+    <div class="login-wrap">
+      <form class="login-card" id="loginForm">
+        <div class="brand"><div class="logo">S</div><div><h1>SGI Óptica</h1></div></div>
+        <p class="sub">Ingresá al sistema de gestión</p>
+        <div class="form-row">
+          <label class="fld">Email</label>
+          <input name="email" type="email" autocomplete="username" required value="${prefill ? "admin@sgi.com" : ""}">
+        </div>
+        <div class="form-row">
+          <label class="fld">Contraseña</label>
+          <input name="password" type="password" autocomplete="current-password" required value="${prefill ? "admin1234" : ""}">
+        </div>
+        <button class="btn primary" type="submit" style="width:100%;justify-content:center;margin-top:6px">Ingresar</button>
+        <div class="hint">El usuario demo está precargado. Requiere la API y la base con datos.</div>
+      </form>
+    </div>`;
+  $("#loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = $("#loginForm button"); btn.disabled = true; btn.textContent = "Ingresando…";
+    const email = $("[name=email]").value.trim();
+    const password = $("[name=password]").value;
+    try {
+      const res = await fetch("/api/auth/login", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ email, password }) });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(errMsg(data, res.status));
+      state.token = data.access_token;
+      localStorage.setItem(TOKEN_KEY, state.token);
+      await loadSession();
+      renderApp();
+    } catch (err) {
+      toast(err.message || "Error al iniciar sesión", "err");
+      btn.disabled = false; btn.textContent = "Ingresar";
+    }
+  });
+}
+
+/* ----------------------------- app shell ------------------------------- */
+const NAV = [
+  { route:"dashboard", label:"Inicio",          icon:"▦", perm:null },
+  { route:"products",  label:"Productos",        icon:"◫", perm:"products:read" },
+  { route:"catalog",   label:"Catálogo",         icon:"☰", perm:"products:read" },
+  { route:"pricing",   label:"Precios",          icon:"₵", perm:"pricing:read" },
+  { route:"stock",     label:"Stock",            icon:"⤰", perm:"stock:read" },
+  { route:"customers", label:"Clientes",         icon:"☺", perm:"customers:read" },
+  { route:"suppliers", label:"Proveedores",      icon:"⛟", perm:"suppliers:read" },
+  { route:"branches",  label:"Sucursales",       icon:"⌂", perm:"branches:read" },
+  { route:"users",     label:"Usuarios y Roles", icon:"⚷", perm:"users:read" },
+  { route:"company",   label:"Empresa",          icon:"⚙", perm:"company:read" },
+];
+
+function renderApp() {
+  const u = state.user;
+  const initials = (u.full_name || u.email || "?").split(" ").map(s => s[0]).slice(0,2).join("").toUpperCase();
+  const navHtml = NAV.filter(n => !n.perm || can(n.perm))
+    .map(n => `<a href="#/${n.route}" data-route="${n.route}"><span class="ic">${n.icon}</span>${n.label}</a>`).join("");
+  root.innerHTML = `
+    <div class="app">
+      <aside class="sidebar" id="sidebar">
+        <div class="brand"><div class="logo">S</div><div><b>SGI Óptica</b><small>${esc(state.company?.name || "Panel de gestión")}</small></div></div>
+        <nav class="nav">${navHtml}</nav>
+        <div class="foot">v0.1 · datos maestros</div>
+      </aside>
+      <div class="main">
+        <div class="topbar">
+          <div style="display:flex;align-items:center;gap:10px">
+            <button class="menu-btn" id="menuBtn">☰</button>
+            <span class="crumb" id="crumb">Inicio</span>
+          </div>
+          <div class="who">
+            <span>${esc(u.full_name || u.email)} ${u.is_superuser ? badge("admin","blue") : ""}</span>
+            <span class="avatar">${esc(initials)}</span>
+            <button class="btn sm ghost" id="logoutBtn">Salir</button>
+          </div>
+        </div>
+        <div class="content"><div id="view"></div></div>
+      </div>
+    </div>`;
+  $("#logoutBtn").addEventListener("click", logout);
+  $("#menuBtn").addEventListener("click", () => $("#sidebar").classList.toggle("open"));
+  $$("#sidebar .nav a").forEach(a => a.addEventListener("click", () => $("#sidebar").classList.remove("open")));
+  window.addEventListener("hashchange", route);
+  route();
+}
+
+function highlightNav(section) {
+  $$("#sidebar .nav a").forEach(a => a.classList.toggle("active", a.dataset.route === section));
+  const n = NAV.find(x => x.route === section);
+  const crumb = $("#crumb"); if (crumb) crumb.textContent = n ? n.label : "—";
+}
+
+async function route() {
+  if (!state.user) return;
+  const hash = location.hash.slice(1) || "/dashboard";
+  const [section, arg] = hash.split("/").filter(Boolean);
+  const sec = section || "dashboard";
+  highlightNav(sec);
+  const view = $("#view");
+  view.innerHTML = `<div class="loading">Cargando…</div>`;
+  const nav = NAV.find(n => n.route === sec);
+  if (nav && nav.perm && !can(nav.perm)) { view.innerHTML = `<div class="card error">No tenés permiso para ver esta sección.</div>`; return; }
+  try {
+    switch (sec) {
+      case "dashboard": await dashboardView(view); break;
+      case "products":  await productsView(view); break;
+      case "catalog":   await catalogView(view); break;
+      case "pricing":   await pricingView(view); break;
+      case "stock":     await stockView(view); break;
+      case "customers": arg ? await customerDetailView(view, arg) : await customersView(view); break;
+      case "suppliers": await resourceView(view, CONFIG.suppliers); break;
+      case "branches":  await resourceView(view, CONFIG.branches); break;
+      case "users":     await usersView(view); break;
+      case "company":   await companyView(view); break;
+      default: view.innerHTML = `<div class="card pad">Sección no encontrada.</div>`;
+    }
+  } catch (e) {
+    view.innerHTML = `<div class="card error">${esc(e.message)}</div>`;
+    toast(e.message, "err");
+  }
+}
+
+/* ------------------------------- modal --------------------------------- */
+function openModal({ title, body, onConfirm, confirmLabel = "Guardar", wide = false }) {
+  const overlay = el(`<div class="overlay"><div class="modal ${wide ? "wide" : ""}">
+      <header><h3>${esc(title)}</h3><button class="x" type="button">×</button></header>
+      <div class="body"></div>
+      <footer></footer></div></div>`);
+  const onKeydown = (e) => { if (e.key === "Escape") close(); };
+  const close = () => { document.removeEventListener("keydown", onKeydown); overlay.remove(); };
+  overlay.querySelector(".body").appendChild(body);
+  const foot = overlay.querySelector("footer");
+  const cancel = el(`<button class="btn" type="button">${onConfirm ? "Cancelar" : "Cerrar"}</button>`);
+  cancel.addEventListener("click", close); foot.appendChild(cancel);
+  if (onConfirm) {
+    const ok = el(`<button class="btn primary" type="button">${esc(confirmLabel)}</button>`);
+    ok.addEventListener("click", async () => { ok.disabled = true; try { await onConfirm(close); } finally { ok.disabled = false; } });
+    foot.appendChild(ok);
+  }
+  overlay.querySelector(".x").addEventListener("click", close);
+  overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) close(); });
+  document.addEventListener("keydown", onKeydown);
+  document.body.appendChild(overlay);
+  return close;
+}
+
+/* ------------------------- generic form builder ------------------------ */
+async function buildForm(fields, values = {}, grid = false) {
+  // resolve dynamic option sources
+  for (const f of fields) {
+    if (f.optionsFrom) f._opts = await options(f.optionsFrom);
+    else if (f.options) f._opts = f.options;
+  }
+  const form = el(`<form class="form ${grid ? "grid2" : ""}"></form>`);
+  form.addEventListener("submit", e => e.preventDefault());
+  for (const f of fields) {
+    const v = values[f.key];
+    const row = el(`<div class="form-row ${f.full ? "full" : ""}"></div>`);
+    const reqMark = f.required ? ` <span class="req">*</span>` : "";
+    if (f.type === "checkbox") {
+      row.innerHTML = `<label class="switch"><input type="checkbox" name="${f.key}" ${v ? "checked" : ""}> ${esc(f.label)}</label>`;
+    } else if (f.type === "multiselect") {
+      const sel = new Set((v || []).map(String));
+      const boxes = (f._opts || []).map(o => `<label><input type="checkbox" name="${f.key}" value="${esc(o.value)}" ${sel.has(String(o.value)) ? "checked" : ""}> ${esc(o.label)}</label>`).join("");
+      row.innerHTML = `<label class="fld">${esc(f.label)}${reqMark}</label><div class="checklist">${boxes || '<span class="fhelp">ninguno</span>'}</div>`;
+    } else if (f.type === "select") {
+      const allowEmpty = f.required ? "" : `<option value="">— ninguno —</option>`;
+      const opts = (f._opts || []).map(o => `<option value="${esc(o.value)}" ${String(v) === String(o.value) ? "selected" : ""}>${esc(o.label)}</option>`).join("");
+      row.innerHTML = `<label class="fld">${esc(f.label)}${reqMark}</label><select name="${f.key}">${allowEmpty}${opts}</select>`;
+    } else if (f.type === "textarea") {
+      row.innerHTML = `<label class="fld">${esc(f.label)}${reqMark}</label><textarea name="${f.key}" placeholder="${esc(f.placeholder||"")}">${esc(v ?? "")}</textarea>`;
+    } else {
+      const type = f.type === "decimal" || f.type === "int" ? "number" : (f.type || "text");
+      const step = f.step != null ? `step="${f.step}"` : (f.type === "decimal" ? `step="0.01"` : (f.type === "int" ? `step="1"` : ""));
+      const extra = [f.min!=null?`min="${f.min}"`:"", f.max!=null?`max="${f.max}"`:""].join(" ");
+      row.innerHTML = `<label class="fld">${esc(f.label)}${reqMark}</label><input type="${type}" name="${f.key}" ${step} ${extra} placeholder="${esc(f.placeholder||"")}" value="${v != null ? esc(v) : ""}">`;
+    }
+    if (f.help) row.appendChild(el(`<div class="fhelp">${esc(f.help)}</div>`));
+    form.appendChild(row);
+  }
+  form.read = () => {
+    const out = {};
+    for (const f of fields) {
+      if (f.type === "checkbox") { out[f.key] = form.querySelector(`[name="${f.key}"]`).checked; continue; }
+      if (f.type === "multiselect") { out[f.key] = $$(`[name="${f.key}"]:checked`, form).map(i => Number(i.value)); continue; }
+      const elx = form.querySelector(`[name="${f.key}"]`);
+      let raw = elx ? elx.value : "";
+      if (raw === "" || raw == null) {
+        // Campos numéricos: si quedan vacíos, se omiten para que aplique el
+        // default / opcional del servidor (ej. ProductCreate.current_cost y
+        // min_stock son Decimal no nulos con default).
+        if (f.type === "decimal" || f.type === "int") continue;
+        out[f.key] = null; continue;   // texto / FK opcionales → null explícito
+      }
+      if (f.type === "int" || f.valueType === "int") out[f.key] = parseInt(raw, 10);
+      else if (f.type === "decimal") out[f.key] = raw;            // string → Decimal de Pydantic
+      else out[f.key] = raw;
+    }
+    return out;
+  };
+  return form;
+}
+
+function validate(fields, payload) {
+  for (const f of fields) {
+    if (!f.required) continue;
+    const v = payload[f.key];
+    if (v == null || v === "" || (Array.isArray(v) && v.length === 0)) return `Falta completar "${f.label}".`;
+  }
+  return null;
+}
+
+/* open a create/edit form modal backed by buildForm */
+async function formModal({ title, fields, values = {}, confirmLabel = "Guardar", grid = false, onSubmit }) {
+  const form = await buildForm(fields, values, grid);
+  openModal({ title, body: form, confirmLabel, wide: grid, onConfirm: async (close) => {
+    const payload = form.read();
+    const err = validate(fields, payload);
+    if (err) return toast(err, "err");
+    await onSubmit(payload);
+    close();
+  }});
+}
+
+function confirmDanger({ title, message, confirmLabel = "Eliminar", onConfirm }) {
+  openModal({ title, confirmLabel, body: el(`<div>${esc(message)}</div>`), onConfirm: async (close) => { await onConfirm(); close(); } });
+}
+
+/* ------------------------------- table --------------------------------- */
+function renderTable(columns, rows, rowActions) {
+  if (!rows || !rows.length) return `<div class="card"><div class="empty">Sin registros.</div></div>`;
+  const head = columns.map(c => `<th class="${c.align === "right" ? "num" : ""}">${esc(c.label)}</th>`).join("") + (rowActions ? "<th></th>" : "");
+  const body = rows.map(r => {
+    const cells = columns.map(c => {
+      let val;
+      if (c.render) val = c.render(r[c.key], r);
+      else if (c.type === "bool") val = boolBadge(r[c.key]);
+      else if (c.type === "money") val = fmtMoney(r[c.key]);
+      else if (c.type === "num") val = fmtNum(r[c.key]);
+      else if (c.type === "date") val = fmtDate(r[c.key]);
+      else if (c.type === "datetime") val = fmtDateTime(r[c.key]);
+      else if (c.type === "badge") val = badge(c.map ? (c.map[r[c.key]] || TITLECASE(r[c.key])) : TITLECASE(r[c.key]), c.cls || "blue");
+      else val = esc(r[c.key] ?? "—");
+      return `<td class="${c.align === "right" || c.type === "money" || c.type === "num" ? "num" : ""} ${c.mono ? "mono" : ""}">${val}</td>`;
+    }).join("");
+    const acts = rowActions ? `<td class="actions">${rowActions(r)}</td>` : "";
+    const cls = ("is_active" in r && !r.is_active) ? "inactive" : "";
+    return `<tr class="${cls}">${cells}${acts}</tr>`;
+  }).join("");
+  return `<div class="card tbl-wrap"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+}
+
+/* =======================================================================
+   GENERIC RESOURCE VIEW (branches, suppliers, product-types, brands, ...)
+   ======================================================================= */
+const CONFIG = {
+  branches: {
+    title: "Sucursales", newTitle: "Nueva sucursal", editTitle: "Editar sucursal",
+    endpoint: "/api/branches", perm: "branches", softDelete: true,
+    columns: [
+      { key:"id", label:"ID" }, { key:"code", label:"Código", mono:true }, { key:"name", label:"Nombre" },
+      { key:"phone", label:"Teléfono" }, { key:"email", label:"Email" }, { key:"is_active", label:"Estado", type:"bool" },
+    ],
+    fields: [
+      { key:"name", label:"Nombre", required:true }, { key:"code", label:"Código", required:true },
+      { key:"address", label:"Dirección" }, { key:"phone", label:"Teléfono" }, { key:"email", label:"Email", type:"email" },
+    ],
+  },
+  suppliers: {
+    title: "Proveedores", newTitle: "Nuevo proveedor", editTitle: "Editar proveedor",
+    endpoint: "/api/suppliers", perm: "suppliers", softDelete: true,
+    columns: [
+      { key:"id", label:"ID" }, { key:"name", label:"Nombre" },
+      { key:"supplier_type", label:"Tipo", type:"badge", cls:"blue", map: ENUM_ES.supplier_type },
+      { key:"contact_name", label:"Contacto" }, { key:"phone", label:"Teléfono" }, { key:"email", label:"Email" },
+      { key:"is_active", label:"Estado", type:"bool" },
+    ],
+    fields: [
+      { key:"name", label:"Nombre", required:true },
+      { key:"supplier_type", label:"Tipo de proveedor", type:"select", required:true, options:[
+        { value:"merchandise", label:"Mercadería" }, { value:"laboratory", label:"Laboratorio" }, { value:"workshop", label:"Taller" } ] },
+      { key:"tax_id", label:"CUIT" }, { key:"contact_name", label:"Nombre de contacto" },
+      { key:"email", label:"Email", type:"email" }, { key:"phone", label:"Teléfono" },
+      { key:"address", label:"Dirección" }, { key:"notes", label:"Notas", type:"textarea", full:true },
+    ],
+    grid: true,
+  },
+  product_types: {
+    title: "Tipos de producto", newTitle: "Nuevo tipo", editTitle: "Editar tipo",
+    endpoint: "/api/product-types", perm: "products", softDelete: true,
+    columns: [ { key:"id", label:"ID" }, { key:"name", label:"Nombre" }, { key:"description", label:"Descripción" }, { key:"is_active", label:"Estado", type:"bool" } ],
+    fields: [ { key:"name", label:"Nombre", required:true }, { key:"description", label:"Descripción", type:"textarea" } ],
+  },
+  brands: {
+    title: "Marcas", newTitle: "Nueva marca", editTitle: "Editar marca",
+    endpoint: "/api/brands", perm: "products", softDelete: true,
+    columns: [ { key:"id", label:"ID" }, { key:"name", label:"Nombre" }, { key:"is_active", label:"Estado", type:"bool" } ],
+    fields: [ { key:"name", label:"Nombre", required:true } ],
+  },
+  price_categories: {
+    title: "Categorías de precio", newTitle: "Nueva categoría", editTitle: "Editar categoría",
+    endpoint: "/api/price-categories", perm: "pricing", softDelete: true,
+    columns: [ { key:"id", label:"ID" }, { key:"name", label:"Nombre" }, { key:"description", label:"Descripción" }, { key:"is_active", label:"Estado", type:"bool" } ],
+    fields: [ { key:"name", label:"Nombre", required:true }, { key:"description", label:"Descripción", type:"textarea" } ],
+  },
+};
+
+async function resourceView(container, cfg, opts = {}) {
+  const writable = can(cfg.perm + ":write");
+  let showInactive = !!opts.showInactive;
+  async function load() {
+    const list = await api("GET", cfg.endpoint + (showInactive ? "?include_inactive=true" : ""));
+    paint(list);
+  }
+  const editFields = (mode, row) => {
+    let f = cfg.fields.slice();
+    if (typeof cfg.fields === "function") f = cfg.fields(mode, row);
+    if (mode === "edit" && cfg.softDelete) f = f.concat([{ key:"is_active", label:"Activo", type:"checkbox" }]);
+    return f;
+  };
+  function openForm(mode, row) {
+    const fields = editFields(mode, row);
+    formModal({
+      title: mode === "edit" ? cfg.editTitle : cfg.newTitle,
+      fields, values: row || {}, grid: cfg.grid,
+      onSubmit: async (payload) => {
+        if (mode === "edit") await api("PUT", cfg.endpoint + "/" + row.id, payload);
+        else await api("POST", cfg.endpoint, payload);
+        clearOptions(); toast("Guardado", "ok"); await load();
+      },
+    });
+  }
+  function actions(r) {
+    if (!writable) return "";
+    let h = `<button class="btn sm" data-act="edit" data-id="${r.id}">Editar</button>`;
+    if (cfg.softDelete && !r.is_active) h += `<button class="btn sm" data-act="restore" data-id="${r.id}">Restaurar</button>`;
+    else h += `<button class="btn sm danger" data-act="del" data-id="${r.id}">Desactivar</button>`;
+    return h;
+  }
+  function paint(list) {
+    container.innerHTML = `
+      <div class="page-head">
+        <div><h2>${esc(cfg.title)}</h2><div class="sub">${list.length} registro(s)</div></div>
+        <div class="toolbar" style="margin:0">
+          ${cfg.softDelete ? `<label class="switch"><input type="checkbox" id="inact" ${showInactive ? "checked" : ""}> Ver inactivos</label>` : ""}
+          ${writable ? `<button class="btn primary" id="newBtn">+ Nuevo</button>` : ""}
+        </div>
+      </div>
+      ${renderTable(cfg.columns, list, writable ? actions : null)}`;
+    const nb = $("#newBtn", container); if (nb) nb.addEventListener("click", () => openForm("create"));
+    const ic = $("#inact", container); if (ic) ic.addEventListener("change", () => { showInactive = ic.checked; load(); });
+    $$("[data-act]", container).forEach(b => b.addEventListener("click", async () => {
+      const id = b.dataset.id, row = list.find(x => String(x.id) === id);
+      if (b.dataset.act === "edit") openForm("edit", row);
+      else if (b.dataset.act === "restore") { await api("PUT", cfg.endpoint + "/" + id, { is_active:true }); clearOptions(); toast("Restaurado", "ok"); load(); }
+      else confirmDanger({ title:"Desactivar", message:`¿Desactivar "${row.name || row.code || id}"? Se ocultará pero no se elimina.`, confirmLabel:"Desactivar",
+        onConfirm: async () => { await api("DELETE", cfg.endpoint + "/" + id); clearOptions(); toast("Desactivado", "ok"); load(); } });
+    }));
+  }
+  await load();
+}
+
+/* ------------------------------ tabs ----------------------------------- */
+function renderTabs(container, head, tabs) {
+  container.innerHTML = `<div class="page-head"><div><h2>${esc(head)}</h2></div></div>
+    <div class="tabs">${tabs.map((t,i) => `<button data-i="${i}" class="${i===0?"active":""}">${esc(t.label)}</button>`).join("")}</div>
+    <div id="tabbody"></div>`;
+  const body = $("#tabbody", container);
+  const show = (i) => { $$(".tabs button", container).forEach(b => b.classList.toggle("active", Number(b.dataset.i) === i)); body.innerHTML = ""; tabs[i].render(body); };
+  $$(".tabs button", container).forEach(b => b.addEventListener("click", () => show(Number(b.dataset.i))));
+  show(0);
+}
+
+/* =======================================================================
+   DASHBOARD
+   ======================================================================= */
+async function dashboardView(view) {
+  const want = [
+    ["products:read", "Productos", "/api/products"],
+    ["customers:read", "Clientes", "/api/customers"],
+    ["suppliers:read", "Proveedores", "/api/suppliers"],
+    ["branches:read", "Sucursales", "/api/branches"],
+    ["pricing:read", "Listas de precios", "/api/price-lists"],
+    ["users:read", "Usuarios", "/api/users"],
+  ].filter(([p]) => can(p));
+  const counts = await Promise.all(want.map(([, , ep]) => api("GET", ep).then(r => r.length).catch(() => "—")));
+  const stats = want.map(([, label], i) => `<div class="stat"><div class="k">${esc(label)}</div><div class="v">${counts[i]}<small> ${counts[i] === 100 ? "+ (máx)" : ""}</small></div></div>`).join("");
+
+  let lowStockHtml = "";
+  if (can("stock:read")) {
+    try {
+      const levels = await api("GET", "/api/stock/levels");
+      const pmap = can("products:read") ? await idMap("/api/products", "name", p => `${p.code} · ${p.name}`) : {};
+      const bmap = can("branches:read") ? await idMap("/api/branches") : {};
+      const low = levels.filter(l => l.min_stock != null && Number(l.quantity) <= Number(l.min_stock));
+      lowStockHtml = `<div class="card pad"><h3 style="margin-bottom:12px">Stock bajo / agotado ${low.length ? badge(low.length, "amber") : badge("0","green")}</h3>` +
+        (low.length ? renderTable(
+          [ { key:"product_id", label:"Producto", render:(v)=>esc(pmap[v] || ("#"+v)) },
+            { key:"branch_id", label:"Sucursal", render:(v)=>esc(bmap[v] || ("#"+v)) },
+            { key:"quantity", label:"Cant.", type:"num", align:"right" },
+            { key:"min_stock", label:"Mín", type:"num", align:"right" } ], low)
+        : `<div class="empty" style="padding:14px">Todo por encima del mínimo 👍</div>`) + `</div>`;
+    } catch {}
+  }
+
+  view.innerHTML = `
+    <div class="page-head"><div><h2>Hola, ${esc((state.user.full_name||"").split(" ")[0] || state.user.email)}</h2>
+      <div class="sub">${esc(state.company?.name || "SGI Óptica")} · ${esc(state.currency)}</div></div></div>
+    <div class="stats">${stats || '<div class="stat"><div class="k">Sin permisos de lectura</div></div>'}</div>
+    ${lowStockHtml}`;
+}
+
+/* =======================================================================
+   PRODUCTS
+   ======================================================================= */
+async function productsView(view) {
+  const writable = can("products:write");
+  const [typeMap, brandMap, supMap, catMap] = await Promise.all([
+    idMap("/api/product-types"), idMap("/api/brands"),
+    can("suppliers:read") ? idMap("/api/suppliers") : Promise.resolve({}),
+    can("pricing:read") ? idMap("/api/price-categories") : Promise.resolve({}),
+  ]);
+  const filters = { product_type_id:"", brand_id:"", supplier_id:"" };
+  let showInactive = false;
+
+  const baseFields = () => [
+    { key:"code", label:"Código", required:true },
+    { key:"name", label:"Nombre", required:true },
+    { key:"product_type_id", label:"Tipo de producto", type:"select", required:true, valueType:"int", optionsFrom:{ endpoint:"/api/product-types" } },
+    { key:"brand_id", label:"Marca", type:"select", valueType:"int", optionsFrom:{ endpoint:"/api/brands" } },
+    { key:"supplier_id", label:"Proveedor", type:"select", valueType:"int", optionsFrom:{ endpoint:"/api/suppliers" } },
+    { key:"price_category_id", label:"Categoría de precio", type:"select", valueType:"int", optionsFrom:{ endpoint:"/api/price-categories" } },
+    { key:"model", label:"Modelo" }, { key:"color", label:"Color" },
+    { key:"min_stock", label:"Stock mínimo", type:"decimal", step:"0.01" },
+    { key:"description", label:"Descripción", type:"textarea", full:true },
+  ];
+
+  async function load() {
+    const qs = new URLSearchParams();
+    for (const [k,v] of Object.entries(filters)) if (v) qs.set(k, v);
+    if (showInactive) qs.set("include_inactive", "true");
+    const list = await api("GET", "/api/products" + (qs.toString() ? "?" + qs : ""));
+    paint(list);
+  }
+
+  function openForm(mode, row) {
+    let fields = baseFields();
+    if (mode === "create") fields = fields.concat([{ key:"current_cost", label:"Costo inicial", type:"decimal", step:"0.01", help:"Después de crear, cambiá el costo con la acción Costo (queda auditado)." }]);
+    else fields = fields.concat([{ key:"is_active", label:"Activo", type:"checkbox" }]);
+    formModal({ title: (mode==="edit"?"Editar producto":"Nuevo producto"), fields, values: row || {}, grid:true,
+      onSubmit: async (payload) => {
+        if (mode === "edit") await api("PUT", "/api/products/" + row.id, payload);
+        else await api("POST", "/api/products", payload);
+        clearOptions(); toast("Guardado", "ok"); await load();
+      } });
+  }
+
+  function costModal(row) {
+    formModal({ title: `Cambiar costo — ${row.code}`, confirmLabel:"Guardar costo",
+      fields: [ { key:"new_cost", label:"Costo nuevo", type:"decimal", step:"0.01", required:true }, { key:"note", label:"Nota", type:"textarea" } ],
+      values: { new_cost: row.current_cost },
+      onSubmit: async (payload) => { await api("POST", `/api/products/${row.id}/cost`, payload); toast("Costo actualizado", "ok"); await load(); } });
+  }
+
+  async function historyModal(row) {
+    const hist = await api("GET", `/api/products/${row.id}/cost-history`);
+    const body = el(`<div>${renderTable(
+      [ { key:"changed_at", label:"Fecha", type:"datetime" },
+        { key:"old_cost", label:"Anterior", type:"money", align:"right" },
+        { key:"new_cost", label:"Nuevo", type:"money", align:"right" },
+        { key:"note", label:"Nota" } ], hist)}</div>`);
+    openModal({ title:`Historial de costos — ${row.code}`, body, wide:true });
+  }
+
+  async function stockModal(row) {
+    const levels = await api("GET", `/api/stock/levels?product_id=${row.id}`).catch(() => []);
+    const bmap = can("branches:read") ? await idMap("/api/branches") : {};
+    const body = el(`<div>${renderTable(
+      [ { key:"branch_id", label:"Sucursal", render:(v)=>esc(bmap[v] || ("#"+v)) },
+        { key:"quantity", label:"Cant.", type:"num", align:"right" },
+        { key:"min_stock", label:"Mín", type:"num", align:"right" } ], levels)}</div>`);
+    openModal({ title:`Stock — ${row.code} · ${row.name}`, body });
+  }
+
+  function actions(r) {
+    let h = "";
+    if (can("stock:read")) h += `<button class="btn sm" data-act="stock" data-id="${r.id}">Stock</button>`;
+    if (can("products:read")) h += `<button class="btn sm" data-act="hist" data-id="${r.id}">Historial</button>`;
+    if (writable) h += `<button class="btn sm" data-act="cost" data-id="${r.id}">Costo</button>
+      <button class="btn sm" data-act="edit" data-id="${r.id}">Editar</button>
+      ${r.is_active ? `<button class="btn sm danger" data-act="del" data-id="${r.id}">Desactivar</button>` : `<button class="btn sm" data-act="restore" data-id="${r.id}">Restaurar</button>`}`;
+    return h;
+  }
+
+  function selectFilter(key, map, label) {
+    const opts = Object.entries(map).map(([id,name]) => `<option value="${id}" ${filters[key]===id?"selected":""}>${esc(name)}</option>`).join("");
+    return `<select class="inp-sm" data-filter="${key}" style="width:auto"><option value="">${esc(label)}</option>${opts}</select>`;
+  }
+
+  function paint(list) {
+    view.innerHTML = `
+      <div class="page-head"><div><h2>Productos</h2><div class="sub">${list.length} producto(s)</div></div>
+        ${writable ? `<button class="btn primary" id="newBtn">+ Nuevo producto</button>` : ""}</div>
+      <div class="toolbar">
+        ${selectFilter("product_type_id", typeMap, "Todos los tipos")}
+        ${selectFilter("brand_id", brandMap, "Todas las marcas")}
+        ${can("suppliers:read") ? selectFilter("supplier_id", supMap, "Todos los proveedores") : ""}
+        <label class="switch"><input type="checkbox" id="inact" ${showInactive?"checked":""}> Ver inactivos</label>
+      </div>
+      ${renderTable([
+        { key:"code", label:"Código", mono:true },
+        { key:"name", label:"Nombre" },
+        { key:"product_type_id", label:"Tipo", render:(v)=>esc(typeMap[v]||"—") },
+        { key:"brand_id", label:"Marca", render:(v)=>esc(brandMap[v]||"—") },
+        { key:"price_category_id", label:"Cat.", render:(v)=>v?badge(catMap[v]||("#"+v),"gray"):"—" },
+        { key:"current_cost", label:"Costo", type:"money", align:"right" },
+        { key:"min_stock", label:"Mín", type:"num", align:"right" },
+        { key:"is_active", label:"Estado", type:"bool" },
+      ], list, actions)}`;
+    const nb = $("#newBtn", view); if (nb) nb.addEventListener("click", () => openForm("create"));
+    $("#inact", view).addEventListener("change", e => { showInactive = e.target.checked; load(); });
+    $$("[data-filter]", view).forEach(s => s.addEventListener("change", () => { filters[s.dataset.filter] = s.value; load(); }));
+    $$("[data-act]", view).forEach(b => b.addEventListener("click", async () => {
+      const row = list.find(x => String(x.id) === b.dataset.id), act = b.dataset.act;
+      if (act === "edit") openForm("edit", row);
+      else if (act === "cost") costModal(row);
+      else if (act === "hist") historyModal(row);
+      else if (act === "stock") stockModal(row);
+      else if (act === "restore") { await api("PUT", "/api/products/" + row.id, { is_active:true }); toast("Restaurado","ok"); load(); }
+      else confirmDanger({ title:"Desactivar producto", message:`¿Desactivar "${row.name}"?`, confirmLabel:"Desactivar",
+        onConfirm: async () => { await api("DELETE", "/api/products/" + row.id); toast("Desactivado","ok"); load(); } });
+    }));
+  }
+  await load();
+}
+
+/* =======================================================================
+   CATALOG (product types + brands)
+   ======================================================================= */
+async function catalogView(view) {
+  renderTabs(view, "Catálogo", [
+    { label:"Tipos de producto", render: (n) => resourceView(n, CONFIG.product_types) },
+    { label:"Marcas",            render: (n) => resourceView(n, CONFIG.brands) },
+  ]);
+}
+
+/* =======================================================================
+   PRICING (categories + lists + items + bulk)
+   ======================================================================= */
+async function pricingView(view) {
+  renderTabs(view, "Precios", [
+    { label:"Categorías de precio", render: (n) => resourceView(n, CONFIG.price_categories) },
+    { label:"Listas de precios",    render: (n) => priceListsTab(n) },
+  ]);
+}
+
+async function priceListsTab(container) {
+  const writable = can("pricing:write");
+  const typeMap = await idMap("/api/product-types");
+  async function load() { paint(await api("GET", "/api/price-lists?include_inactive=false")); }
+
+  function openForm(mode, row) {
+    let fields = [
+      { key:"name", label:"Nombre", required:true },
+      { key:"product_type_id", label:"Restringir a tipo de producto", type:"select", valueType:"int", optionsFrom:{ endpoint:"/api/product-types" } },
+      { key:"is_default", label:"Lista predeterminada", type:"checkbox" },
+    ];
+    if (mode === "edit") fields = fields.concat([{ key:"is_active", label:"Activa", type:"checkbox" }]);
+    formModal({ title: mode==="edit"?"Editar lista de precios":"Nueva lista de precios", fields, values: row || {},
+      onSubmit: async (payload) => { if (mode==="edit") await api("PUT","/api/price-lists/"+row.id,payload); else await api("POST","/api/price-lists",payload); clearOptions(); toast("Guardado","ok"); load(); } });
+  }
+
+  async function itemsModal(list) {
+    const catMap = await idMap("/api/price-categories");
+    const wrap = el(`<div></div>`);
+    async function refresh() {
+      const items = await api("GET", `/api/price-lists/${list.id}/items`);
+      wrap.innerHTML = `
+        ${writable ? `<div class="toolbar"><button class="btn sm primary" id="addItem">+ Agregar precio</button>
+          <button class="btn sm" id="bulk">Ajuste masivo %</button></div>` : ""}
+        ${renderTable([
+          { key:"price_category_id", label:"Categoría", render:(v)=>esc(catMap[v]||("#"+v)) },
+          { key:"price", label:"Precio", type:"money", align:"right" },
+        ], items, writable ? (r)=>`<button class="btn sm" data-edit="${r.id}" data-price="${r.price}">Editar</button>` : null)}`;
+      if (writable) {
+        $("#addItem", wrap).addEventListener("click", () => formModal({
+          title:"Agregar precio", fields:[
+            { key:"price_category_id", label:"Categoría", type:"select", required:true, valueType:"int", optionsFrom:{ endpoint:"/api/price-categories" } },
+            { key:"price", label:"Precio", type:"decimal", step:"0.01", required:true } ],
+          onSubmit: async (p) => { await api("POST", `/api/price-lists/${list.id}/items`, p); toast("Agregado","ok"); refresh(); } }));
+        $("#bulk", wrap).addEventListener("click", () => formModal({
+          title:"Ajuste porcentual masivo", confirmLabel:"Aplicar",
+          fields:[ { key:"percentage", label:"Cambio porcentual", type:"decimal", step:"0.01", required:true, help:"ej. 10 = +10%, -5 = -5%. Se aplica a todos los ítems (auditado)." } ],
+          onSubmit: async (p) => { const r = await api("POST", `/api/price-lists/${list.id}/bulk-update`, p); toast(`Se actualizaron ${r.updated_items} ítem(s)`, "ok"); refresh(); } }));
+        $$("[data-edit]", wrap).forEach(b => b.addEventListener("click", () => formModal({
+          title:"Editar precio", fields:[ { key:"price", label:"Precio", type:"decimal", step:"0.01", required:true } ], values:{ price: b.dataset.price },
+          onSubmit: async (p) => { await api("PUT", `/api/price-lists/${list.id}/items/${b.dataset.edit}`, p); toast("Guardado","ok"); refresh(); } })));
+      }
+    }
+    await refresh();
+    openModal({ title:`Precios — ${list.name}`, body: wrap, wide:true });
+  }
+
+  function actions(r) {
+    let h = `<button class="btn sm" data-act="items" data-id="${r.id}">Precios</button>`;
+    if (writable) h += `<button class="btn sm" data-act="edit" data-id="${r.id}">Editar</button>
+      <button class="btn sm danger" data-act="del" data-id="${r.id}">Desactivar</button>`;
+    return h;
+  }
+  function paint(list) {
+    container.innerHTML = `
+      <div class="toolbar"><div class="grow"></div>${writable ? `<button class="btn primary" id="newBtn">+ Nueva lista</button>` : ""}</div>
+      ${renderTable([
+        { key:"id", label:"ID" }, { key:"name", label:"Nombre" },
+        { key:"product_type_id", label:"Tipo de producto", render:(v)=>v?esc(typeMap[v]||("#"+v)):badge("todos","gray") },
+        { key:"is_default", label:"Predet.", render:(v)=>v?badge("predeterminada","blue"):"—" },
+        { key:"is_active", label:"Estado", type:"bool" },
+      ], list, actions)}`;
+    const nb = $("#newBtn", container); if (nb) nb.addEventListener("click", () => openForm("create"));
+    $$("[data-act]", container).forEach(b => b.addEventListener("click", async () => {
+      const row = list.find(x => String(x.id) === b.dataset.id);
+      if (b.dataset.act === "items") itemsModal(row);
+      else if (b.dataset.act === "edit") openForm("edit", row);
+      else confirmDanger({ title:"Desactivar lista", message:`¿Desactivar "${row.name}"?`, confirmLabel:"Desactivar",
+        onConfirm: async () => { await api("DELETE", "/api/price-lists/"+row.id); toast("Desactivado","ok"); load(); } });
+    }));
+  }
+  await load();
+}
+
+/* =======================================================================
+   STOCK
+   ======================================================================= */
+async function stockView(view) {
+  const writable = can("stock:write");
+  const [pmap, bmap, prodOpts, branchOpts] = await Promise.all([
+    idMap("/api/products", "name", p => `${p.code} · ${p.name}`),
+    idMap("/api/branches"),
+    options({ endpoint:"/api/products", labelFn:p => `${p.code} · ${p.name}` }),
+    options({ endpoint:"/api/branches" }),
+  ]);
+  const branchSel = (key, required) => ({ key, label: key==="from_branch_id"?"Desde sucursal":key==="to_branch_id"?"Hacia sucursal":"Sucursal", type:"select", required, valueType:"int", options: branchOpts });
+  const prodSel = { key:"product_id", label:"Producto", type:"select", required:true, valueType:"int", options: prodOpts };
+
+  function newMovement() {
+    formModal({ title:"Nuevo movimiento de stock", grid:true, confirmLabel:"Registrar",
+      fields:[ prodSel, branchSel("branch_id", true),
+        { key:"movement_type", label:"Tipo", type:"select", required:true, options:[
+          { value:"inbound", label:"Ingreso (+)" }, { value:"outbound", label:"Egreso (−)" }, { value:"adjustment", label:"Ajuste (=)" } ] },
+        { key:"quantity", label:"Cantidad", type:"decimal", step:"0.01", required:true, help:"Magnitud positiva. El ajuste fija el nivel a este valor." },
+        { key:"reference", label:"Referencia" }, { key:"note", label:"Nota", type:"textarea", full:true } ],
+      onSubmit: async (p) => { await api("POST", "/api/stock/movements", p); toast("Movimiento registrado","ok"); render(); } });
+  }
+  function newTransfer() {
+    formModal({ title:"Transferencia entre sucursales", grid:true, confirmLabel:"Transferir",
+      fields:[ prodSel, branchSel("from_branch_id", true), branchSel("to_branch_id", true),
+        { key:"quantity", label:"Cantidad", type:"decimal", step:"0.01", required:true },
+        { key:"reference", label:"Referencia" }, { key:"note", label:"Nota", type:"textarea", full:true } ],
+      onSubmit: async (p) => {
+        if (p.from_branch_id === p.to_branch_id) return toast("Las sucursales deben ser distintas", "err");
+        await api("POST", "/api/stock/transfers", p); toast("Transferencia realizada","ok"); render(); } });
+  }
+
+  function levelsTab(n) {
+    api("GET", "/api/stock/levels").then(levels => {
+      n.innerHTML = renderTable([
+        { key:"product_id", label:"Producto", render:(v)=>esc(pmap[v]||("#"+v)) },
+        { key:"branch_id", label:"Sucursal", render:(v)=>esc(bmap[v]||("#"+v)) },
+        { key:"quantity", label:"Cantidad", type:"num", align:"right",
+          render:(v,r)=>{ const low = r.min_stock!=null && Number(v)<=Number(r.min_stock); return `${fmtNum(v)} ${low?badge("bajo","amber"):""}`; } },
+        { key:"min_stock", label:"Mín", type:"num", align:"right" },
+      ], levels);
+    }).catch(e => n.innerHTML = `<div class="card error">${esc(e.message)}</div>`);
+  }
+  function movementsTab(n) {
+    api("GET", "/api/stock/movements?limit=100").then(mv => {
+      n.innerHTML = renderTable([
+        { key:"created_at", label:"Fecha", type:"datetime" },
+        { key:"product_id", label:"Producto", render:(v)=>esc(pmap[v]||("#"+v)) },
+        { key:"branch_id", label:"Sucursal", render:(v)=>esc(bmap[v]||("#"+v)) },
+        { key:"movement_type", label:"Tipo", type:"badge", cls:"blue", map: ENUM_ES.movement_type },
+        { key:"quantity", label:"Cant.", type:"num", align:"right" },
+        { key:"resulting_quantity", label:"Resultante", type:"num", align:"right" },
+        { key:"counterpart_branch_id", label:"Contraparte", render:(v)=>v?esc(bmap[v]||("#"+v)):"—" },
+        { key:"reference", label:"Ref." },
+      ], mv);
+    }).catch(e => n.innerHTML = `<div class="card error">${esc(e.message)}</div>`);
+  }
+
+  function render() {
+    view.innerHTML = `
+      <div class="page-head"><div><h2>Stock</h2><div class="sub">Existencias y movimientos por sucursal</div></div>
+        ${writable ? `<div class="toolbar" style="margin:0"><button class="btn" id="transferBtn">Transferir</button><button class="btn primary" id="moveBtn">+ Movimiento</button></div>` : ""}</div>
+      <div class="tabs"><button data-i="0" class="active">Existencias</button><button data-i="1">Movimientos</button></div>
+      <div id="stab"></div>`;
+    const body = $("#stab", view);
+    const show = (i) => { $$(".tabs button", view).forEach(b => b.classList.toggle("active", Number(b.dataset.i)===i)); body.innerHTML = `<div class="loading">Cargando…</div>`; (i===0?levelsTab:movementsTab)(body); };
+    $$(".tabs button", view).forEach(b => b.addEventListener("click", () => show(Number(b.dataset.i))));
+    if (writable) { $("#moveBtn", view).addEventListener("click", newMovement); $("#transferBtn", view).addEventListener("click", newTransfer); }
+    show(0);
+  }
+  render();
+}
+
+/* =======================================================================
+   CUSTOMERS (+ prescriptions / treatments)
+   ======================================================================= */
+const CUSTOMER_FIELDS = [
+  { key:"first_name", label:"Nombre", required:true },
+  { key:"last_name", label:"Apellido", required:true },
+  { key:"document_type", label:"Tipo de documento", placeholder:"DNI / CUIT…" },
+  { key:"document_number", label:"Número de documento" },
+  { key:"email", label:"Email", type:"email" },
+  { key:"phone", label:"Teléfono" },
+  { key:"birth_date", label:"Fecha de nacimiento", type:"date" },
+  { key:"address", label:"Dirección" },
+  { key:"notes", label:"Notas", type:"textarea", full:true },
+];
+
+async function customersView(view) {
+  const writable = can("customers:write");
+  let showInactive = false;
+  async function load() { paint(await api("GET", "/api/customers" + (showInactive ? "?include_inactive=true" : ""))); }
+  function openForm(mode, row) {
+    let fields = CUSTOMER_FIELDS.slice();
+    if (mode === "edit") fields = fields.concat([{ key:"is_active", label:"Activo", type:"checkbox" }]);
+    formModal({ title: mode==="edit"?"Editar cliente":"Nuevo cliente", grid:true, fields, values: row || {},
+      onSubmit: async (p) => { if (mode==="edit") await api("PUT","/api/customers/"+row.id,p); else await api("POST","/api/customers",p); toast("Guardado","ok"); load(); } });
+  }
+  function actions(r) {
+    let h = `<button class="btn sm" onclick="location.hash='#/customers/${r.id}'">Abrir</button>`;
+    if (writable) h += `<button class="btn sm" data-act="edit" data-id="${r.id}">Editar</button>
+      ${r.is_active?`<button class="btn sm danger" data-act="del" data-id="${r.id}">Desactivar</button>`:`<button class="btn sm" data-act="restore" data-id="${r.id}">Restaurar</button>`}`;
+    return h;
+  }
+  function paint(list) {
+    view.innerHTML = `
+      <div class="page-head"><div><h2>Clientes</h2><div class="sub">${list.length} cliente(s)</div></div>
+        ${writable ? `<button class="btn primary" id="newBtn">+ Nuevo cliente</button>` : ""}</div>
+      <div class="toolbar"><label class="switch"><input type="checkbox" id="inact" ${showInactive?"checked":""}> Ver inactivos</label></div>
+      ${renderTable([
+        { key:"id", label:"ID" },
+        { key:"last_name", label:"Nombre", render:(v,r)=>esc(`${r.last_name}, ${r.first_name}`) },
+        { key:"document_number", label:"Documento", render:(v,r)=>esc(r.document_number?`${r.document_type||""} ${r.document_number}`.trim():"—") },
+        { key:"phone", label:"Teléfono" }, { key:"email", label:"Email" },
+        { key:"is_active", label:"Estado", type:"bool" },
+      ], list, actions)}`;
+    const nb = $("#newBtn", view); if (nb) nb.addEventListener("click", () => openForm("create"));
+    $("#inact", view).addEventListener("change", e => { showInactive = e.target.checked; load(); });
+    $$("[data-act]", view).forEach(b => b.addEventListener("click", async () => {
+      const row = list.find(x => String(x.id) === b.dataset.id);
+      if (b.dataset.act === "edit") openForm("edit", row);
+      else if (b.dataset.act === "restore") { await api("PUT","/api/customers/"+row.id,{ is_active:true }); toast("Restaurado","ok"); load(); }
+      else confirmDanger({ title:"Desactivar cliente", message:`¿Desactivar "${row.first_name} ${row.last_name}"?`, confirmLabel:"Desactivar",
+        onConfirm: async () => { await api("DELETE","/api/customers/"+row.id); toast("Desactivado","ok"); load(); } });
+    }));
+  }
+  await load();
+}
+
+async function customerDetailView(view, id) {
+  const writable = can("customers:write");
+  const c = await api("GET", "/api/customers/" + id);
+  const [presc, treat] = await Promise.all([
+    api("GET", `/api/customers/${id}/prescriptions`).catch(() => []),
+    api("GET", `/api/customers/${id}/treatments`).catch(() => []),
+  ]);
+  const dim = (v) => v == null ? "—" : v;
+  view.innerHTML = `
+    <div class="page-head">
+      <div><h2>${esc(c.first_name)} ${esc(c.last_name)} ${boolBadge(c.is_active)}</h2>
+        <div class="sub"><a href="#/customers">← Todos los clientes</a></div></div>
+    </div>
+    <div class="grid2">
+      <div class="card pad">
+        <h3 style="margin-bottom:12px">Datos</h3>
+        <dl class="kv">
+          <dt>Documento</dt><dd>${esc(c.document_type||"")} ${esc(c.document_number||"—")}</dd>
+          <dt>Email</dt><dd>${esc(c.email||"—")}</dd>
+          <dt>Teléfono</dt><dd>${esc(c.phone||"—")}</dd>
+          <dt>Fecha de nac.</dt><dd>${fmtDate(c.birth_date)}</dd>
+          <dt>Dirección</dt><dd>${esc(c.address||"—")}</dd>
+          <dt>Notas</dt><dd>${esc(c.notes||"—")}</dd>
+        </dl>
+      </div>
+      <div class="card pad">
+        <h3 style="margin-bottom:12px">Tratamientos ${writable?`<button class="btn sm" id="addTreat" style="float:right">+ Agregar</button>`:""}</h3>
+        <div id="treatBox">${renderTable([
+          { key:"treatment_type", label:"Tipo", type:"badge", cls:"blue", map: ENUM_ES.treatment_type },
+          { key:"diagnosed_at", label:"Diagnóstico", type:"date" },
+          { key:"description", label:"Descripción" },
+        ], treat)}</div>
+      </div>
+    </div>
+    <div class="card pad" style="margin-top:18px">
+      <h3 style="margin-bottom:12px">Recetas ${writable?`<button class="btn sm primary" id="addPresc" style="float:right">+ Agregar receta</button>`:""}</h3>
+      <div id="prescBox">${renderTable([
+        { key:"prescribed_at", label:"Fecha", type:"date" },
+        { key:"doctor_name", label:"Médico" },
+        { key:"right_sphere", label:"OD Esf", align:"right", render:(v,r)=>esc(dim(r.right_sphere)) },
+        { key:"right_cylinder", label:"OD Cil", align:"right", render:(v,r)=>esc(dim(r.right_cylinder)) },
+        { key:"right_axis", label:"OD Eje", align:"right", render:(v,r)=>esc(dim(r.right_axis)) },
+        { key:"left_sphere", label:"OI Esf", align:"right", render:(v,r)=>esc(dim(r.left_sphere)) },
+        { key:"left_cylinder", label:"OI Cil", align:"right", render:(v,r)=>esc(dim(r.left_cylinder)) },
+        { key:"left_axis", label:"OI Eje", align:"right", render:(v,r)=>esc(dim(r.left_axis)) },
+        { key:"pupillary_distance", label:"DP", align:"right", render:(v,r)=>esc(dim(r.pupillary_distance)) },
+      ], presc)}</div>
+    </div>`;
+
+  if (writable) {
+    $("#addTreat", view)?.addEventListener("click", () => formModal({
+      title:"Agregar tratamiento", fields:[
+        { key:"treatment_type", label:"Tipo", type:"select", required:true, options:[
+          { value:"myopia",label:"Miopía" },{ value:"astigmatism",label:"Astigmatismo" },{ value:"hyperopia",label:"Hipermetropía" },{ value:"presbyopia",label:"Presbicia" },{ value:"other",label:"Otro" } ] },
+        { key:"diagnosed_at", label:"Fecha de diagnóstico", type:"date" },
+        { key:"description", label:"Descripción", type:"textarea" } ],
+      onSubmit: async (p) => { await api("POST", `/api/customers/${id}/treatments`, p); toast("Agregado","ok"); customerDetailView(view, id); } }));
+
+    $("#addPresc", view)?.addEventListener("click", () => formModal({
+      title:"Agregar receta", grid:true, confirmLabel:"Guardar receta",
+      fields:[
+        { key:"prescribed_at", label:"Fecha de receta", type:"date" },
+        { key:"doctor_name", label:"Médico" },
+        { key:"right_sphere", label:"OD Esfera", type:"decimal", step:"0.25" },
+        { key:"right_cylinder", label:"OD Cilindro", type:"decimal", step:"0.25" },
+        { key:"right_axis", label:"OD Eje", type:"int", min:0, max:180 },
+        { key:"right_addition", label:"OD Adición", type:"decimal", step:"0.25" },
+        { key:"left_sphere", label:"OI Esfera", type:"decimal", step:"0.25" },
+        { key:"left_cylinder", label:"OI Cilindro", type:"decimal", step:"0.25" },
+        { key:"left_axis", label:"OI Eje", type:"int", min:0, max:180 },
+        { key:"left_addition", label:"OI Adición", type:"decimal", step:"0.25" },
+        { key:"pupillary_distance", label:"Distancia pupilar", type:"decimal", step:"0.5" },
+        { key:"notes", label:"Notas", type:"textarea", full:true } ],
+      onSubmit: async (p) => { await api("POST", `/api/customers/${id}/prescriptions`, p); toast("Guardado","ok"); customerDetailView(view, id); } }));
+  }
+}
+
+/* =======================================================================
+   USERS & ROLES
+   ======================================================================= */
+async function usersView(view) {
+  renderTabs(view, "Usuarios y Roles", [
+    { label:"Usuarios", render:(n) => usersTab(n) },
+    { label:"Roles",    render:(n) => rolesTab(n) },
+  ]);
+}
+
+async function usersTab(container) {
+  const writable = can("users:write");
+  let showInactive = false;
+  const branchMap = can("branches:read") ? await idMap("/api/branches") : {};
+  async function load() { paint(await api("GET", "/api/users" + (showInactive ? "?include_inactive=true" : ""))); }
+
+  function openForm(mode, row) {
+    const fields = [
+      { key:"full_name", label:"Nombre completo", required: mode==="create" },
+      ...(mode==="create" ? [{ key:"email", label:"Email", type:"email", required:true }] : []),
+      { key:"password", label: mode==="create"?"Contraseña":"Contraseña nueva (vacío = sin cambios)", type:"password", required: mode==="create" },
+      { key:"branch_id", label:"Sucursal", type:"select", valueType:"int", optionsFrom:{ endpoint:"/api/branches" } },
+      { key:"role_ids", label:"Roles", type:"multiselect", optionsFrom:{ endpoint:"/api/roles" } },
+      { key:"is_superuser", label:"Superusuario (todos los permisos)", type:"checkbox" },
+      ...(mode==="edit" ? [{ key:"is_active", label:"Activo", type:"checkbox" }] : []),
+    ];
+    const values = row ? { ...row, role_ids: (row.roles||[]).map(r => r.id) } : {};
+    formModal({ title: mode==="edit"?"Editar usuario":"Nuevo usuario", grid:true, fields, values,
+      onSubmit: async (p) => {
+        if (mode === "edit" && (p.password == null || p.password === "")) delete p.password;
+        if (mode === "edit") await api("PUT", "/api/users/" + row.id, p);
+        else await api("POST", "/api/users", p);
+        clearOptions(); toast("Guardado","ok"); load();
+      } });
+  }
+  function actions(r) {
+    if (!writable) return "";
+    return `<button class="btn sm" data-act="edit" data-id="${r.id}">Editar</button>`;
+  }
+  function paint(list) {
+    container.innerHTML = `
+      <div class="toolbar"><label class="switch"><input type="checkbox" id="inact" ${showInactive?"checked":""}> Ver inactivos</label>
+        <div class="grow"></div>${writable ? `<button class="btn primary" id="newBtn">+ Nuevo usuario</button>` : ""}</div>
+      ${renderTable([
+        { key:"id", label:"ID" }, { key:"full_name", label:"Nombre" }, { key:"email", label:"Email" },
+        { key:"is_superuser", label:"Super", render:(v)=>v?badge("sí","blue"):"—" },
+        { key:"branch_id", label:"Sucursal", render:(v)=>v?esc(branchMap[v]||("#"+v)):"—" },
+        { key:"roles", label:"Roles", render:(v)=>(v&&v.length)?v.map(r=>badge(r.name,"gray")).join(" "):"—" },
+        { key:"is_active", label:"Estado", type:"bool" },
+      ], list, writable ? actions : null)}`;
+    const nb = $("#newBtn", container); if (nb) nb.addEventListener("click", () => openForm("create"));
+    $("#inact", container).addEventListener("change", e => { showInactive = e.target.checked; load(); });
+    $$("[data-act=edit]", container).forEach(b => b.addEventListener("click", () => openForm("edit", list.find(x => String(x.id) === b.dataset.id))));
+  }
+  await load();
+}
+
+async function rolesTab(container) {
+  const writable = can("users:write");
+  async function load() { paint(await api("GET", "/api/roles")); }
+  function openForm(mode, row) {
+    const fields = [
+      { key:"name", label:"Nombre", required: mode==="create" },
+      { key:"description", label:"Descripción", type:"textarea" },
+      { key:"permission_ids", label:"Permisos", type:"multiselect", optionsFrom:{ endpoint:"/api/permissions", labelFn:p => `${p.name}  (${p.code})` } },
+      ...(mode==="edit" ? [{ key:"is_active", label:"Activo", type:"checkbox" }] : []),
+    ];
+    const values = row ? { ...row, permission_ids: (row.permissions||[]).map(p => p.id) } : {};
+    formModal({ title: mode==="edit"?"Editar rol":"Nuevo rol", grid:false, fields, values,
+      onSubmit: async (p) => { if (mode==="edit") await api("PUT","/api/roles/"+row.id,p); else await api("POST","/api/roles",p); clearOptions(); toast("Guardado","ok"); load(); } });
+  }
+  function paint(list) {
+    container.innerHTML = `
+      <div class="toolbar"><div class="grow"></div>${writable ? `<button class="btn primary" id="newBtn">+ Nuevo rol</button>` : ""}</div>
+      ${renderTable([
+        { key:"id", label:"ID" }, { key:"name", label:"Nombre" }, { key:"description", label:"Descripción" },
+        { key:"permissions", label:"Permisos", render:(v)=>v?`${v.length} permiso(s)`:"0" },
+        { key:"is_active", label:"Estado", type:"bool" },
+      ], list, writable ? (r)=>`<button class="btn sm" data-id="${r.id}">Editar</button>` : null)}`;
+    const nb = $("#newBtn", container); if (nb) nb.addEventListener("click", () => openForm("create"));
+    $$("[data-id]", container).forEach(b => b.addEventListener("click", () => openForm("edit", list.find(x => String(x.id) === b.dataset.id))));
+  }
+  await load();
+}
+
+/* =======================================================================
+   COMPANY + SETTINGS
+   ======================================================================= */
+async function companyView(view) {
+  const writable = can("company:write");
+  const company = await api("GET", "/api/company");
+  const settings = await api("GET", "/api/company/settings").catch(() => null);
+  const branchOpts = can("branches:read") ? await options({ endpoint:"/api/branches" }) : [];
+  const listOpts = can("pricing:read") ? await options({ endpoint:"/api/price-lists" }) : [];
+
+  const companyFields = [
+    { key:"name", label:"Nombre", required:true }, { key:"legal_name", label:"Razón social" },
+    { key:"tax_id", label:"CUIT" }, { key:"currency", label:"Moneda" },
+    { key:"email", label:"Email", type:"email" }, { key:"phone", label:"Teléfono" },
+    { key:"address", label:"Dirección", full:true },
+  ];
+  const settingsFields = [
+    { key:"currency", label:"Moneda" }, { key:"timezone", label:"Zona horaria" },
+    { key:"default_branch_id", label:"Sucursal predeterminada", type:"select", valueType:"int", options: branchOpts },
+    { key:"default_price_list_id", label:"Lista de precios predeterminada", type:"select", valueType:"int", options: listOpts },
+    { key:"allow_negative_stock", label:"Permitir stock negativo", type:"checkbox" },
+    { key:"low_stock_alerts_enabled", label:"Alertas de stock bajo", type:"checkbox" },
+  ];
+
+  const cForm = await buildForm(companyFields, company, true);
+  const sForm = settings ? await buildForm(settingsFields, settings, true) : null;
+  $$("input,select,textarea", cForm).forEach(i => { if (!writable) i.disabled = true; });
+  if (sForm) $$("input,select,textarea", sForm).forEach(i => { if (!writable) i.disabled = true; });
+
+  view.innerHTML = `<div class="page-head"><div><h2>Empresa</h2><div class="sub">Perfil de la organización y configuración del sistema</div></div></div><div class="grid2" id="cwrap"></div>`;
+  const wrap = $("#cwrap", view);
+  const card1 = el(`<div class="card pad"><h3 style="margin-bottom:14px">Perfil</h3></div>`);
+  card1.appendChild(cForm);
+  if (writable) { const b = el(`<button class="btn primary">Guardar perfil</button>`); b.addEventListener("click", async () => {
+    try { const p = cForm.read(); const e = validate(companyFields, p); if (e) return toast(e,"err"); await api("PUT","/api/company",p); state.currency = p.currency || state.currency; toast("Guardado","ok"); } catch(err){ toast(err.message,"err"); } }); card1.appendChild(b); }
+  wrap.appendChild(card1);
+
+  if (sForm) {
+    const card2 = el(`<div class="card pad"><h3 style="margin-bottom:14px">Configuración</h3></div>`);
+    card2.appendChild(sForm);
+    if (writable) { const b = el(`<button class="btn primary">Guardar configuración</button>`); b.addEventListener("click", async () => {
+      try { await api("PUT","/api/company/settings", sForm.read()); toast("Guardado","ok"); } catch(err){ toast(err.message,"err"); } }); card2.appendChild(b); }
+    wrap.appendChild(card2);
+  }
+}
+
+/* ------------------------------- boot ---------------------------------- */
+(async function boot() {
+  state.token = localStorage.getItem(TOKEN_KEY);
+  if (state.token) {
+    try { await loadSession(); renderApp(); }
+    catch { if (state.token) logout(); else renderLogin(); }  // 401 ya cerró sesión → evita doble render
+  } else {
+    renderLogin();
+  }
+})();
+</script>
+</body>
+</html>
