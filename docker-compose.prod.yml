@@ -1,0 +1,60 @@
+# Portable production stack: app + self-hosted Postgres + Caddy (auto-HTTPS).
+#
+# This is the host-agnostic escape hatch — it runs identically on any plain VM
+# (Hetzner, a bigger Oracle PAYG box, your own hardware). On Coolify you don't
+# need this file: Coolify builds the Dockerfile and provisions Postgres + TLS
+# for you (see docs/DEPLOY.md). Kept here so you are never locked to one host.
+#
+#   cp .env.prod.example .env   # fill in secrets + APP_DOMAIN
+#   docker compose -f docker-compose.prod.yml up -d --build
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sgi}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-sgi}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sgi} -d ${POSTGRES_DB:-sgi}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-sgi}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-sgi}
+      SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY in .env}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-480}
+      DEFAULT_COMPANY_ID: ${DEFAULT_COMPANY_ID:-1}
+      SEED_ON_START: ${SEED_ON_START:-false}
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}
+    expose:
+      - "8000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?set APP_DOMAIN (your public domain) in .env}
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
