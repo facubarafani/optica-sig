@@ -1,0 +1,30 @@
+# Render Blueprint — one-click deploy of the SGI Óptica web service.
+# Render → New → Blueprint → pick this repo. It reads this file, builds the
+# Dockerfile, wires HTTPS, and prompts you for DATABASE_URL (your Neon string).
+#
+# The database is intentionally NOT defined here: Render's own free Postgres is
+# deleted after 30 days, so we use a free Neon Postgres instead (persistent) and
+# pass it in via DATABASE_URL. See docs/DEPLOY.md → "Quick start: Render + Neon".
+services:
+  - type: web
+    name: sgi-optica
+    runtime: docker
+    repo: https://github.com/facubarafani/optica-sig
+    branch: main
+    region: virginia            # closest Render region to Argentina (~no SA region)
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL       # paste your Neon connection string at deploy time
+        sync: false             #   (scheme must be postgresql+psycopg2://, keep ?sslmode=require)
+      - key: SECRET_KEY
+        generateValue: true     # Render generates a secure random value
+      - key: SEED_ON_START
+        value: "true"           # first deploy seeds demo data; set to false afterwards
+      - key: WEB_CONCURRENCY
+        value: "1"              # 1 uvicorn worker fits Render's 512 MB free instance
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "480"
+      - key: DEFAULT_COMPANY_ID
+        value: "1"
