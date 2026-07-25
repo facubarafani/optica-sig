@@ -1,172 +1,217 @@
-# Deploy — SGI Óptica (free, self-hosted, future-proof)
+# Deploy — SGI Óptica
 
-This guide deploys the app **free, always-on, with full control and no lock-in**:
-an **Oracle Cloud Always Free** ARM VM running **Coolify** (open-source PaaS),
-which deploys the app container + a one-click **PostgreSQL** and issues
-**automatic HTTPS**.
+The app is a portable **Docker image + PostgreSQL**, so the host is a swappable
+detail: switching later is just *"change `DATABASE_URL` / redeploy the same
+image."* Pick a tier:
 
-```
-Oracle Cloud Always Free VM (ARM Ampere A1, Santiago/São Paulo region)
-└─ Coolify  (open-source, self-hosted — Heroku-style deploys)
-     ├─ FastAPI container  ← built from this repo's Dockerfile  (auto HTTPS via Traefik)
-     └─ PostgreSQL         ← one-click, on the same private network, auto-backups
-```
+| Tier | Stack | Cost | Use when |
+|---|---|---|---|
+| **Quick (now)** | **Render + Neon** | $0 | Get a demo live today, zero servers to manage |
+| **Long-term** ⭐ | **Hetzner + Coolify** | ~€5/mo | Real usage — max control + reliable, no free-tier surprises |
+| Free-forever | Oracle Always Free + Coolify | $0 | $0 is non-negotiable (accept the volatility — see caveats) |
+| Portable | `docker-compose` on any VM | varies | Total DIY / lift-and-shift |
 
-Why this stack: it costs **$0** forever, you have **root-level control**, and the
-**future-proofing comes from the architecture, not the vendor** — the app is a
-portable Docker image + plain Postgres managed by an open-source PaaS, so if
-Oracle ever disappoints you, you lift-and-shift the *same* setup to Hetzner
-(~$5/mo) or convert Oracle to pay-as-you-go in minutes. See **Escalation** below.
-
+> Repo: `https://github.com/facubarafani/optica-sig`
 > Container artifacts in this repo: `Dockerfile`, `docker/entrypoint.sh`
-> (runs `alembic upgrade head` → optional seed → uvicorn), `docker-compose.prod.yml`
-> + `docker/Caddyfile` (the portable any-VM path), `.env.prod.example`.
+> (runs `alembic upgrade head` → optional seed → uvicorn), `render.yaml` (Render
+> blueprint), `docker-compose.prod.yml` + `docker/Caddyfile` (any-VM path),
+> `.env.prod.example`.
+
+**Prerequisites (all paths):** the repo on GitHub (done), and a **domain** you
+control if you want a custom HTTPS hostname (the Render path also gives you a free
+`*.onrender.com` URL with no domain needed).
 
 ---
 
-## 0. Prerequisites
+## Quick start (now): Render + Neon
 
-- A **GitHub/GitLab repo** with this code (Coolify deploys from Git). Public is
-  fine; private needs a deploy key (Coolify guides you).
-- A **domain** (or subdomain, e.g. `demo.tudominio.com`) you can edit DNS for —
-  required for a real HTTPS certificate.
-- ~30–45 min the first time (most of it is Oracle's signup).
+Easiest free + **persistent** path. Render runs the Docker image (free, auto
+HTTPS); Neon holds the data (free Postgres that doesn't expire or pause —
+Render's own free Postgres self-deletes after 30 days, which is why the DB lives
+on Neon). ~10 minutes, no servers.
+
+### 1. Free Postgres on Neon (~3 min)
+1. Sign up at <https://neon.tech> (no card).
+2. New project → Postgres 16 → **region: AWS US East (N. Virginia / us-east-1)**.
+   Co-locate it with Render's Virginia region (below): the app queries the DB on
+   every request, so app↔DB proximity matters more than DB↔Argentina. (For the
+   self-hosted VM paths where the app lives in São Paulo/Santiago, pick a South
+   America Neon region instead.)
+3. Copy the **connection string**, e.g.
+   `postgresql://user:pass@ep-xxx.sa-east-1.aws.neon.tech/dbname?sslmode=require`
+4. Change the scheme to **`postgresql+psycopg2://`** (edit the prefix only); keep
+   `?sslmode=require`. This is your `DATABASE_URL`.
+
+### 2. Deploy on Render (~5 min)
+**Option A — Blueprint (one-click, uses `render.yaml`):**
+Render → **New → Blueprint** → pick this repo. It creates the web service from
+`render.yaml` and prompts for `DATABASE_URL` (paste the Neon string from step 1).
+`SECRET_KEY` is auto-generated. Deploy. *(Requires `render.yaml` to be on the
+GitHub default branch.)*
+
+**Option B — Manual:**
+Render → **New → Web Service** → pick the repo (it detects the Dockerfile) →
+Region **Virginia**, Instance type **Free**, Health Check Path **`/health`**,
+then set env vars:
+```
+DATABASE_URL    = <Neon string, postgresql+psycopg2://…?sslmode=require>
+SECRET_KEY      = <openssl rand -hex 32>
+SEED_ON_START   = true
+WEB_CONCURRENCY = 1
+ACCESS_TOKEN_EXPIRE_MINUTES = 480
+DEFAULT_COMPANY_ID = 1
+```
+Create. The container migrates the DB, seeds demo data, then serves on Render's
+`$PORT` (the Dockerfile already honors it).
+
+### 3. Verify & tidy
+1. Open **`https://<your-app>.onrender.com/app`** → log in with
+   `admin@sgi.com` / `admin1234`. That's the partner link. ✅
+2. Then set **`SEED_ON_START=false`** (redeploys) and change the demo admin
+   password in **Usuarios y Roles**.
+
+**Quirk:** Render's *free* web service sleeps after ~15 min idle → first hit after
+a quiet spell takes ~30–60 s to wake. Fine for a demo; warm it up before a
+meeting, or keep it awake with a free UptimeRobot ping every ~10 min.
 
 ---
 
-## 1. Create the Oracle Always Free VM
+## Long-term home: Hetzner + Coolify  ⭐
 
-1. Sign up at <https://signup.oraclecloud.com>. **Pick your home region carefully —
-   it's permanent.** For Argentina latency choose **Chile (Santiago)** or
-   **Brazil (São Paulo / Vinhedo)**. Use a **Visa credit card** (debit/other
-   often fails — a known signup quirk).
-2. **Compute → Instances → Create instance**:
-   - **Image**: Ubuntu 22.04 (or 24.04).
-   - **Shape**: change to **Ampere (ARM) → VM.Standard.A1.Flex**, set
-     **2 OCPU / 12 GB RAM** (the current Always Free allotment). If you see
-     *"out of capacity"*, retry later or try another availability domain — ARM
-     capacity is often tight.
-   - Add your **SSH public key**.
-   - Create. Note the **public IP**.
-3. **Open the firewall in BOTH places** (the #1 "site unreachable" gotcha):
-   - **OCI Security List** (VCN → Subnet → Security List): add ingress rules for
-     TCP **80**, **443**, and **8000** (Coolify UI) from `0.0.0.0/0`.
-   - **On the VM** (SSH in): allow them at the OS level too:
+When the demo becomes real, this is the recommended long-term host: the **same**
+Coolify + Docker + Postgres setup as the Oracle path, but on a **paid, predictable,
+well-regarded** VM — no free-tier rug-pulls, no ARM capacity lottery, no idle
+reclamation, and the best price/performance VPS available. You keep full
+root-level control and zero lock-in.
+
+```
+Hetzner VM (CAX11, ~€5/mo, Ashburn VA)
+└─ Coolify (open-source, self-hosted — Heroku-style deploys)
+     ├─ FastAPI container  ← this repo's Dockerfile  (auto HTTPS via Traefik)
+     └─ PostgreSQL         ← one-click, private network, scheduled backups
+```
+
+### 1. Provision the VM
+1. <https://hetzner.com/cloud> → new project → **Add Server**.
+   - **Location: Ashburn, VA (US East)** — closest of Hetzner's regions to
+     Argentina (~120–160 ms; fine for an admin/ERP app). EU is ~200 ms+.
+   - Image: Ubuntu 24.04.
+   - Type: **CAX11** (Arm Ampere, 2 vCPU / 4 GB / 40 GB NVMe, ~€4.49/mo) — ample
+     for this app; add an IPv4 (~€0.50/mo). *(Prefer x86? choose CX23 — our image
+     is multi-arch, so either works.)*
+   - Add your SSH key → Create.
+2. **Firewall:** enable the Hetzner Cloud Firewall and allow TCP **22/80/443** —
+   one place, no OS-level iptables dance (a nicety over Oracle).
+3. **DNS:** point your domain's **A record** at the server's IP; wait for it to
+   resolve (`ping yourdomain`).
+
+### 2. Then follow the shared Coolify steps
+Continue with **[Install Coolify → Add Postgres → Deploy → Verify & harden]** in
+the *Coolify steps* section below — they are identical regardless of VM host.
+
+### Scaling later
+In-place resize CAX11 → CAX21 (4 vCPU / 8 GB) → … (reboot only), add a Volume for
+storage, or offload the DB to managed Neon by changing `DATABASE_URL`. All
+lateral, no rewrite.
+
+---
+
+## Free-forever: Oracle Cloud Always Free + Coolify
+
+Genuinely $0 forever (a real always-on ARM VM), but accept the volatility:
+Oracle **silently halved** the free ARM allotment in June 2026, ARM capacity is
+often *"out of capacity,"* idle free instances can be reclaimed, and free-account
+suspensions are common. Mitigate by upgrading to Pay-As-You-Go (stays $0 within
+free limits). Use this only if free is non-negotiable; otherwise prefer Hetzner.
+
+### 1. Provision the VM
+1. Sign up at <https://signup.oraclecloud.com>. **Home region is permanent** —
+   choose **Chile (Santiago)** or **Brazil (São Paulo)** for AR latency. Use a
+   **Visa credit card** (debit often fails at signup).
+2. **Right after signup, upgrade the tenancy to Pay-As-You-Go** (still $0 within
+   free limits) — exempts the VM from idle reclamation and unlocks resizing.
+3. **Compute → Instances → Create instance**: Ubuntu 24.04, shape
+   **VM.Standard.A1.Flex** at **2 OCPU / 12 GB** (current free allotment; retry
+   if *"out of capacity"*). Add SSH key. Note the public IP.
+4. **Open the firewall in BOTH places** (the #1 "unreachable" gotcha):
+   - **OCI Security List** (VCN → subnet → Security List): ingress TCP **80, 443,
+     8000** from `0.0.0.0/0`.
+   - **On the VM** (OS firewall):
      ```bash
-     sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 80 -j ACCEPT
-     sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 443 -j ACCEPT
+     sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 80   -j ACCEPT
+     sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 443  -j ACCEPT
      sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 8000 -j ACCEPT
-     sudo netfilter-persistent save   # persists across reboot
+     sudo netfilter-persistent save
      ```
-4. **Strongly recommended: upgrade the tenancy to Pay-As-You-Go.** You stay **$0
-   within the Always Free limits**, but PAYG instances are **exempt from idle
-   reclamation** (a free-only box can be stopped if it looks idle for 7 days) and
-   it unlocks instant resizing later. Account → Upgrade to Paid.
+5. **DNS:** point your domain's **A record** at the public IP.
+
+### 2. Then follow the shared Coolify steps below.
 
 ---
 
-## 2. Point your domain at the VM
+## Coolify steps (shared by the Hetzner & Oracle paths)
 
-Create a DNS **A record**: `demo.tudominio.com → <VM public IP>`. Wait for it to
-resolve (`ping demo.tudominio.com`). HTTPS won't issue until DNS is live.
+Run these on the VM after it's provisioned, the firewall is open, and DNS points
+at it.
 
----
-
-## 3. Install Coolify
-
-SSH into the VM and run the official installer:
-
+### Install Coolify
 ```bash
 curl -fsSL https://cdn.coollabs.io/coolify/install.sh | sudo bash
 ```
+Open **`http://<VM_IP>:8000`**, create the admin account, finish onboarding.
 
-Then open **`http://<VM public IP>:8000`**, create the admin account, and (in
-Settings) set Coolify's own FQDN if you want the dashboard on HTTPS too. The
-2 OCPU / 12 GB box runs Coolify + app + Postgres comfortably.
+### Add PostgreSQL (one-click)
+Coolify → **+ New → Project** (`sgi`) → Environment → **+ New → Database →
+PostgreSQL 16** → Create. Copy its **internal** connection URL.
 
----
-
-## 4. Add PostgreSQL (one-click)
-
-1. Coolify → **Projects → New Project** (e.g. `sgi`) → an Environment.
-2. **+ New → Database → PostgreSQL 16**. Create it.
-3. Copy its **internal connection URL** (the `*-internal`/service-name one, not
-   the public one). You'll convert the scheme in the next step.
-
----
-
-## 5. Deploy the app
-
-1. In the same project: **+ New → Application → Public Repository** (or your
-   private repo) → paste the repo URL → **Build Pack: Dockerfile**.
-2. **Port**: `8000`. **Health check path**: `/health`.
-3. **Domain**: `https://demo.tudominio.com` (Coolify's Traefik auto-issues
-   Let's Encrypt TLS).
-4. **Environment variables** (Coolify → the app → Environment):
+### Deploy the app
+1. Same project → **+ New → Application → Public Repository** → paste the repo →
+   **Build Pack: Dockerfile**, branch `main`.
+2. **Port = `8000`**, **Health check path = `/health`**, **Domain =
+   `https://yourdomain`** (Coolify's Traefik auto-issues Let's Encrypt TLS).
+3. **Environment variables:**
    ```
-   DATABASE_URL=postgresql+psycopg2://USER:PASS@HOST:5432/DBNAME   # from step 4
-   SECRET_KEY=<run: openssl rand -hex 32>
-   SEED_ON_START=true        # FIRST deploy only — flip to false afterwards
-   ACCESS_TOKEN_EXPIRE_MINUTES=480
-   DEFAULT_COMPANY_ID=1
-   WEB_CONCURRENCY=2
+   DATABASE_URL = postgresql+psycopg2://USER:PASS@HOST:5432/DBNAME   # from above
+   SECRET_KEY   = <openssl rand -hex 32>
+   SEED_ON_START = true        # first deploy only — then flip to false
+   ACCESS_TOKEN_EXPIRE_MINUTES = 480
+   DEFAULT_COMPANY_ID = 1
+   WEB_CONCURRENCY = 2
    ```
-   > ⚠️ Take the Postgres URL from step 4 and make sure the scheme is
-   > **`postgresql+psycopg2://`** (Coolify usually gives `postgres://...` — just
-   > replace the prefix). Use the **internal** host so the app and DB talk over
+   > ⚠️ Coolify usually gives `postgres://…`; change the scheme to
+   > **`postgresql+psycopg2://`** and use the **internal** host so app↔DB stay on
    > the private network.
-5. **Deploy.** The container's entrypoint runs `alembic upgrade head`, seeds the
-   demo data (because `SEED_ON_START=true`), then starts uvicorn.
+4. **Deploy.** The entrypoint runs `alembic upgrade head` → seed → uvicorn.
+
+### Verify & harden
+1. Open **`https://yourdomain/app`** → log in `admin@sgi.com` / `admin1234`. ✅
+2. Set **`SEED_ON_START=false`** + redeploy; create a real admin and
+   deactivate/change the demo account; confirm `SECRET_KEY` is your value.
+3. Lock down Coolify's dashboard (restrict port 8000 / put it behind its own
+   domain + auth) and keep Coolify updated.
+4. **Backups:** Coolify → Postgres resource → **Backups** → daily dump to
+   S3-compatible storage (Oracle Object Storage 20 GB free, or Backblaze B2).
 
 ---
 
-## 6. Verify & harden
+## Portable: `docker compose` on any VM (no Coolify)
 
-1. Open **`https://demo.tudominio.com/app`** → log in with the seeded
-   `admin@sgi.com` / `admin1234`. Send that link to your partner. ✅
-2. **Immediately after the first successful boot:**
-   - Set **`SEED_ON_START=false`** and redeploy (so the seed never re-runs).
-   - In the UI (**Usuarios y Roles**) create a real admin user and **deactivate
-     or change** the demo `admin@sgi.com` account.
-   - Confirm `SECRET_KEY` is your generated value, not the default.
-   - Restrict Coolify's dashboard: close port **8000** to the public again, or
-     put it behind Coolify's own domain + auth, and keep Coolify updated.
-3. **Backups**: Coolify → the Postgres resource → **Backups** → schedule daily
-   dumps to an S3-compatible bucket (Oracle Object Storage has 20 GB free, or
-   Backblaze B2). Don't rely on VM snapshots alone.
-
----
-
-## Escalation (when the free box isn't enough)
-
-All lateral — **no rewrite**, because everything is Docker + plain Postgres:
-
-| Need | Move |
-|---|---|
-| More CPU/RAM, same host | Oracle is already PAYG → resize the A1.Flex shape (reboot only); pay only for resources above the free baseline. |
-| A different host / leave Oracle | Provision a **Hetzner CAX11** (~€5/mo, 2 vCPU/4 GB, full root), install Coolify the same way (§3), point DNS, deploy the same repo. Closest region to AR: Ashburn (VA). |
-| Offload the database | Create a free **Neon** Postgres (São Paulo region), change `DATABASE_URL` to its connection string, redeploy. Escalates to paid Neon (~$19/mo) with no code change. |
-
----
-
-## Alternative: plain `docker compose` on any VM (no Coolify)
-
-For a bare Hetzner/Oracle VM without Coolify, this repo ships a self-contained
-stack (`docker-compose.prod.yml` = app + Postgres + Caddy auto-HTTPS):
-
+For a bare VM without Coolify, this repo ships a self-contained stack
+(`docker-compose.prod.yml` = app + Postgres + Caddy auto-HTTPS):
 ```bash
-git clone <repo> && cd sig-optica
+git clone https://github.com/facubarafani/optica-sig && cd optica-sig
 cp .env.prod.example .env     # set SECRET_KEY, POSTGRES_PASSWORD, APP_DOMAIN
 docker compose -f docker-compose.prod.yml up -d --build
 ```
-
 Point `APP_DOMAIN`'s DNS A record at the server first; Caddy fetches the TLS cert
-automatically. App is then live at `https://$APP_DOMAIN/app`.
+automatically. Live at `https://$APP_DOMAIN/app`.
 
 ---
 
 ## Updating the app later
 
-- **Coolify**: push to the repo → click **Redeploy** (or enable auto-deploy on
-  push). Migrations run automatically on each boot via the entrypoint.
+- **Render**: push to `main` → auto-deploys (or click Manual Deploy).
+- **Coolify**: push to `main` → **Redeploy** (or enable auto-deploy on push).
 - **Compose**: `git pull && docker compose -f docker-compose.prod.yml up -d --build`.
+
+Migrations run automatically on every boot via the container entrypoint.
