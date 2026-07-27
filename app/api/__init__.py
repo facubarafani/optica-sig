@@ -7,7 +7,9 @@ from app.api.routers import (
     catalog,
     company,
     customers,
+    imports,
     pricing,
+    product_models,
     products,
     stock,
     suppliers,
@@ -21,7 +23,9 @@ api_router.include_router(users.router)
 api_router.include_router(branches.router)
 api_router.include_router(suppliers.router)
 api_router.include_router(catalog.router)
+api_router.include_router(product_models.router)
 api_router.include_router(products.router)
 api_router.include_router(pricing.router)
 api_router.include_router(stock.router)
 api_router.include_router(customers.router)
+api_router.include_router(imports.router)

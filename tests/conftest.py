@@ -117,8 +117,27 @@ def branch_id(client, auth_headers):
 def product_id(client, auth_headers, product_type_id):
     resp = client.post(
         "/api/products",
-        json={"code": "P-1", "name": "Test product", "product_type_id": product_type_id,
+        json={"code": "P-1", "description": "Test product",
+              "product_type_id": product_type_id,
               "current_cost": "100.00", "min_stock": "1"},
+        headers=auth_headers,
+    )
+    assert resp.status_code == 201, resp.text
+    return resp.json()["id"]
+
+
+@pytest.fixture
+def brand_id(client, auth_headers):
+    resp = client.post("/api/brands", json={"name": "Vulk"}, headers=auth_headers)
+    assert resp.status_code == 201, resp.text
+    return resp.json()["id"]
+
+
+@pytest.fixture
+def supplier_id(client, auth_headers):
+    resp = client.post(
+        "/api/suppliers",
+        json={"name": "Distribuidora SA", "supplier_type": "merchandise"},
         headers=auth_headers,
     )
     assert resp.status_code == 201, resp.text

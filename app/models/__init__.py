@@ -15,6 +15,7 @@ from app.models.auth import (
 from app.models.branch import Branch
 from app.models.company import Company, CompanySettings
 from app.models.customer import Customer, Prescription, TreatmentHistory
+from app.models.imports import ImportBatch
 from app.models.enums import (
     ExternalWorkStatus,
     ExternalWorkType,
@@ -24,9 +25,9 @@ from app.models.enums import (
     TreatmentType,
 )
 from app.models.pricing import CostHistory, PriceCategory, PriceList, PriceListItem
-from app.models.product import Brand, Product, ProductType
+from app.models.product import Brand, Product, ProductModel, ProductType
 from app.models.stock import StockLevel, StockMovement
-from app.models.supplier import Supplier
+from app.models.supplier import Supplier, supplier_brands
 
 __all__ = [
     "Base",
@@ -43,16 +44,19 @@ __all__ = [
     "Customer",
     "Prescription",
     "TreatmentHistory",
+    "ImportBatch",
     "CostHistory",
     "PriceCategory",
     "PriceList",
     "PriceListItem",
     "Brand",
     "Product",
+    "ProductModel",
     "ProductType",
     "StockLevel",
     "StockMovement",
     "Supplier",
+    "supplier_brands",
     # enums
     "SupplierType",
     "StockMovementType",
