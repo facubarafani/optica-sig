@@ -9,19 +9,20 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from app.models.branch import Branch
-from app.models.pricing import PriceCategory, PriceList
+from app.models.pricing import PriceList
 from app.models.product import Brand, Product, ProductModel, ProductType
 from app.models.supplier import Supplier
 
 # Reference targets a column can point at, by name.
 #   model, label, creatable  -> can a missing one be created on the fly?
+# Price categories are deliberately absent: they belong to a list rather than to
+# the company, and a product carries the plain code, so both are ordinary text.
 REFS = {
     "product_type": (ProductType, "Tipo de producto", True),
     "brand": (Brand, "Marca", True),
     "model": (ProductModel, "Modelo", True),
     "supplier": (Supplier, "Proveedor", False),
     "branch": (Branch, "Sucursal", False),
-    "price_category": (PriceCategory, "Categoría de precio", True),
     "price_list": (PriceList, "Lista de precios", False),
     "product": (Product, "Producto", False),
 }
@@ -85,8 +86,9 @@ PRODUCTS = ImportSpec(
               help="Sólo si el modo es manual."),
         Field("price_list", "Lista de precios", kind="ref", ref="price_list",
               help="Vacío = lista por defecto de la empresa."),
-        Field("price_category", "Categoría de precio", kind="ref",
-              ref="price_category", example="Categoría A"),
+        Field("price_category", "Categoría de precio", example="AB",
+              help="El código de la categoría (AA, AB, AC…). Se busca dentro de "
+                   "la lista que le corresponda al producto."),
     ],
 )
 
@@ -123,14 +125,17 @@ STOCK = ImportSpec(
 PRICE_LIST_ITEMS = ImportSpec(
     key="price_list_items",
     label="Precios de listas",
-    description="Carga o actualiza el precio de cada categoría dentro de una lista.",
+    description="Carga o actualiza el precio de cada categoría dentro de una "
+                "lista. Si la categoría no existe en esa lista, se agrega al "
+                "final de la escalera.",
     permission="pricing:write",
     fields=[
         Field("price_list", "Lista de precios", kind="ref", ref="price_list",
               required=True, example="Lista General"),
-        Field("price_category", "Categoría de precio", kind="ref",
-              ref="price_category", required=True, example="Categoría A"),
+        Field("price_category", "Categoría", required=True, example="AB",
+              help="Código de la categoría dentro de la lista (AA, AB, AC…)."),
         Field("price", "Precio", kind="decimal", required=True, example="50000,00"),
+        Field("description", "Descripción", example="Armazones premium"),
     ],
 )
 

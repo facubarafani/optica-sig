@@ -70,7 +70,7 @@ class Product(IDMixin, CompanyMixin, TimestampMixin, SoftDeleteMixin, Base):
 
     # --- selling price -----------------------------------------------------
     # MANUAL      -> use ``sale_price``.
-    # PRICE_LIST  -> look up ``price_category_id`` in ``price_list_id``; when
+    # PRICE_LIST  -> look up ``price_category_code`` in ``price_list_id``; when
     #                that is NULL, fall back to the company's default list.
     # Resolution lives in services.pricing.resolve_price().
     pricing_mode: Mapped[PricingMode] = mapped_column(
@@ -85,9 +85,10 @@ class Product(IDMixin, CompanyMixin, TimestampMixin, SoftDeleteMixin, Base):
     price_list_id: Mapped[int | None] = mapped_column(
         ForeignKey("price_lists.id", ondelete="SET NULL")
     )
-    price_category_id: Mapped[int | None] = mapped_column(
-        ForeignKey("price_categories.id", ondelete="SET NULL")
-    )
+    # The category *code* ("AB"), not a row id: categories belong to a list, and
+    # tagging by code is what lets one product be priced by any list that has
+    # that step. See app/models/pricing.py.
+    price_category_code: Mapped[str | None] = mapped_column(String(8))
 
     # Current cost snapshot; full trail lives in cost_history.
     current_cost: Mapped[float] = mapped_column(

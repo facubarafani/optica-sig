@@ -327,19 +327,35 @@ def test_stock_import_sets_the_level_and_is_idempotent(
 
 
 def test_price_list_items_import(client, auth_headers):
-    cat = client.post("/api/price-categories", json={"name": "Cat A"},
-                      headers=auth_headers).json()
+    """A code the list does not have yet is appended to its ladder."""
     lst = client.post("/api/price-lists", json={"name": "Lista General"},
                       headers=auth_headers).json()
-    rows = [["Lista de precios", "Categoría de precio", "Precio"],
-            ["Lista General", "Cat A", "50.000,00"]]
+    rows = [["Lista de precios", "Categoría", "Precio"],
+            ["Lista General", "AA", "50.000,00"]]
     _, result = run_import(client, auth_headers, "price_list_items", rows)
     assert result["created"] == 1
 
-    items = client.get(f"/api/price-lists/{lst['id']}/items",
-                       headers=auth_headers).json()
-    assert items[0]["price"] == "50000.00"
-    assert items[0]["price_category_id"] == cat["id"]
+    cats = client.get(f"/api/price-lists/{lst['id']}/categories",
+                      headers=auth_headers).json()
+    assert cats[0]["code"] == "AA"
+    assert cats[0]["price"] == "50000.00"
+
+
+def test_price_list_items_import_updates_an_existing_code(client, auth_headers):
+    lst = client.post("/api/price-lists", json={"name": "Lista General"},
+                      headers=auth_headers).json()
+    client.post(f"/api/price-lists/{lst['id']}/generate-categories",
+                json={"count": 2}, headers=auth_headers)
+
+    rows = [["Lista de precios", "Categoría", "Precio"],
+            ["Lista General", "AB", "77.000,00"]]
+    preview, result = run_import(client, auth_headers, "price_list_items", rows)
+    assert preview["to_update"] == 1 and preview["to_create"] == 0
+    assert result["updated"] == 1
+
+    cats = client.get(f"/api/price-lists/{lst['id']}/categories",
+                      headers=auth_headers).json()
+    assert [c["price"] for c in cats] == ["0.00", "77000.00"]
 
 
 def test_batches_are_recorded_in_the_history(client, auth_headers, product_type_id):

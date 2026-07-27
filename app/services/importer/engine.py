@@ -15,11 +15,11 @@ import unicodedata
 from dataclasses import dataclass, field
 from decimal import Decimal
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.enums import PricingMode, StockMovementType
-from app.models.pricing import PriceListItem
+from app.models.pricing import PriceCategory
 from app.models.product import Product
 from app.schemas.stock import StockMovementCreate
 from app.services import pricing as pricing_service
@@ -34,6 +34,11 @@ def _norm(text: str) -> str:
     """Fold case, accents and surrounding space so "MARCA" == " Marca "."""
     s = unicodedata.normalize("NFKD", str(text or "").strip().lower())
     return "".join(c for c in s if not unicodedata.combining(c))
+
+
+def _category_code(text: str) -> str:
+    """Category codes are stored and matched upper-cased ("ab" -> "AB")."""
+    return str(text or "").strip().upper()
 
 
 def suggest_mapping(spec: ImportSpec, headers: list[str]) -> dict[str, str]:
@@ -275,7 +280,23 @@ def analyze(
             else:
                 preview.to_create += 1
     elif spec.key == "price_list_items":
-        preview.to_create = len(good)
+        # A (list, code) pair the list already has is an update; anything else
+        # gets appended to that list's ladder.
+        existing_cats = {
+            (r[0], r[1].strip().upper())
+            for r in db.execute(
+                select(PriceCategory.price_list_id, PriceCategory.code).where(
+                    PriceCategory.company_id == company_id
+                )
+            ).all()
+        }
+        for _, values in good:
+            list_id = resolver.resolve("price_list", values.get("price_list", ""))
+            key = (list_id, _category_code(values.get("price_category", "")))
+            if key in existing_cats:
+                preview.to_update += 1
+            else:
+                preview.to_create += 1
     else:
         preview.to_update = len(good)
 
@@ -361,10 +382,12 @@ def _apply_products(db, parsed, *, company_id, user_id) -> dict:
             ("product_type", "product_type_id"), ("brand", "brand_id"),
             ("model", "model_id"), ("supplier", "supplier_id"),
             ("min_stock", "min_stock"), ("sale_price", "sale_price"),
-            ("price_list", "price_list_id"), ("price_category", "price_category_id"),
+            ("price_list", "price_list_id"),
         ):
             if src in v:
                 setattr(product, dst, v[src])
+        if "price_category" in v:
+            product.price_category_code = _category_code(v["price_category"])
         if "pricing_mode" in v:
             product.pricing_mode = PricingMode(v["pricing_mode"])
 
@@ -434,22 +457,39 @@ def _apply_stock(db, parsed, *, company_id, user_id) -> dict:
 
 
 def _apply_price_list_items(db, parsed, *, company_id, user_id) -> dict:
+    """Upsert one category price inside a list, keyed by (list, code).
+
+    Prices go through the pricing service so each change is audited, and a code
+    the list does not have yet is appended to its ladder — that is what makes an
+    exported list round-trip after being edited in Excel.
+    """
     created = updated = 0
     for _row_no, v in parsed:
-        item = db.execute(
-            select(PriceListItem).where(
-                PriceListItem.company_id == company_id,
-                PriceListItem.price_list_id == v["price_list"],
-                PriceListItem.price_category_id == v["price_category"],
+        code = _category_code(v["price_category"])
+        cat = db.execute(
+            select(PriceCategory).where(
+                PriceCategory.company_id == company_id,
+                PriceCategory.price_list_id == v["price_list"],
+                func.upper(PriceCategory.code) == code,
             )
         ).scalar_one_or_none()
-        if item is None:
-            db.add(PriceListItem(
-                company_id=company_id, price_list_id=v["price_list"],
-                price_category_id=v["price_category"], price=v["price"],
-            ))
+        if cat is None:
+            cat = pricing_service.add_category(
+                db,
+                company_id=company_id,
+                price_list_id=v["price_list"],
+                code=code,
+                description=v.get("description"),
+                price=v["price"],
+                commit=False,
+            )
             created += 1
-        elif Decimal(item.price) != v["price"]:
-            item.price = v["price"]
+            continue
+        if "description" in v:
+            cat.description = v["description"]
+            db.add(cat)
+        if pricing_service.set_price(
+            db, cat, v["price"], company_id=company_id, user_id=user_id
+        ):
             updated += 1
     return {"created": created, "updated": updated}

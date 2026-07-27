@@ -272,11 +272,14 @@ function toast(msg, type = "") {
   setTimeout(() => { t.style.opacity = "0"; t.style.transition = "opacity .3s"; setTimeout(() => t.remove(), 300); }, type === "err" ? 5200 : 3000);
 }
 
-function fmtMoney(v) {
+/* `currency` overrides the company's — a price list carries its own (ARS/USD)
+   and its prices must not be shown with the wrong symbol. */
+function fmtMoney(v, currency) {
   if (v == null || v === "") return "—";
   const n = Number(v);
   if (Number.isNaN(n)) return esc(v);
-  try { return new Intl.NumberFormat("es-AR", { style:"currency", currency: state.currency || "ARS", maximumFractionDigits:2 }).format(n); }
+  const cur = currency || state.currency || "ARS";
+  try { return new Intl.NumberFormat("es-AR", { style:"currency", currency: cur, maximumFractionDigits:2 }).format(n); }
   catch { return n.toFixed(2); }
 }
 const fmtNum  = (v) => (v == null || v === "" ? "—" : String(Number(v)));
@@ -812,12 +815,6 @@ const CONFIG = {
         help:"Opcional. Sin tipo, el modelo aparece para todos los productos." },
     ],
   },
-  price_categories: {
-    title: "Categorías de precio", newTitle: "Nueva categoría", editTitle: "Editar categoría",
-    endpoint: "/api/price-categories", perm: "pricing", softDelete: true,
-    columns: [ { key:"id", label:"ID" }, { key:"name", label:"Nombre" }, { key:"description", label:"Descripción" }, { key:"is_active", label:"Estado", type:"bool" } ],
-    fields: [ { key:"name", label:"Nombre", required:true }, { key:"description", label:"Descripción", type:"textarea" } ],
-  },
 };
 
 async function resourceView(container, cfg, opts = {}) {
@@ -1116,14 +1113,24 @@ async function dashboardView(view) {
    ======================================================================= */
 async function productsView(view) {
   const writable = can("products:write");
-  const [typeMap, brandMap, modelMap, supMap, catMap, listMap, settings] = await Promise.all([
+  const [typeMap, brandMap, modelMap, supMap, codeRows, priceLists, settings] = await Promise.all([
     idMap("/api/product-types"), idMap("/api/brands"), idMap("/api/product-models"),
     can("suppliers:read") ? idMap("/api/suppliers") : Promise.resolve({}),
-    can("pricing:read") ? idMap("/api/price-categories") : Promise.resolve({}),
-    can("pricing:read") ? idMap("/api/price-lists") : Promise.resolve({}),
+    can("pricing:read") ? api("GET", "/api/price-category-codes").catch(() => []) : Promise.resolve([]),
+    can("pricing:read") ? api("GET", "/api/price-lists").catch(() => []) : Promise.resolve([]),
     can("company:read") ? api("GET", "/api/company/settings").catch(() => ({})) : Promise.resolve({}),
   ]);
+  // Lists are read whole (not via idMap) because the price preview needs their
+  // currency as well as their name.
+  const listMap = Object.fromEntries(priceLists.map(l => [l.id, l.name]));
+  const listCurrency = Object.fromEntries(priceLists.map(l => [l.id, l.currency]));
   const defaultPriceListId = settings.default_price_list_id || "";
+  /* Products are tagged by code, so the picker offers every code some list can
+     price — the code then resolves inside whichever list applies. */
+  const codeOptions = codeRows.map(r => ({
+    value: r.code,
+    label: r.list_count > 1 ? `${r.code} · en ${r.list_count} listas` : r.code,
+  }));
   const filters = { product_type_id:"", brand_id:"", model_id:"", supplier_id:"" };
   let showInactive = false;
 
@@ -1144,9 +1151,9 @@ async function productsView(view) {
       optionsFrom:{ endpoint:"/api/price-lists" },
       showIf:(v) => v.pricing_mode !== "manual",
       help:"Vacío = se usa la lista por defecto de la empresa." },
-    { key:"price_category_id", label:"Categoría de precio", type:"select", valueType:"int",
-      optionsFrom:{ endpoint:"/api/price-categories" },
-      showIf:(v) => v.pricing_mode !== "manual" },
+    { key:"price_category_code", label:"Categoría de precio", type:"select", options: codeOptions,
+      showIf:(v) => v.pricing_mode !== "manual",
+      help:"El código se busca dentro de la lista que le toque al producto." },
     { key:"description", label:"Descripción", type:"textarea", full:true },
   ];
 
@@ -1199,20 +1206,21 @@ async function productsView(view) {
     /* Live preview of the price the chosen list + category resolves to, so you
        are not saving blind. */
     const listSel = form.querySelector('[name="price_list_id"]');
-    const catSel  = form.querySelector('[name="price_category_id"]');
+    const catSel  = form.querySelector('[name="price_category_code"]');
     async function previewPrice() {
       const row = catSel.closest(".form-row");
       let hint = row.querySelector(".pricehint");
       if (!hint) { hint = el(`<div class="pricehint"></div>`); row.appendChild(hint); }
-      const cat = catSel.value;
-      if (!cat) { hint.textContent = "Elegí una categoría para ver el precio."; return; }
+      const code = catSel.value;
+      if (!code) { hint.textContent = "Elegí una categoría para ver el precio."; return; }
       const listId = listSel.value || defaultPriceListId;
       if (!listId) { hint.textContent = "Sin lista propia ni lista por defecto en Empresa."; return; }
-      const items = await api("GET", `/api/price-lists/${listId}/items`).catch(() => []);
-      const hit = items.find(i => String(i.price_category_id) === cat);
+      const cats = await api("GET", `/api/price-lists/${listId}/categories`).catch(() => []);
+      const hit = cats.find(c => c.code === code);
+      const currency = listCurrency[listId];
       hint.innerHTML = hit
-        ? `Precio resultante: <b>${fmtMoney(hit.price)}</b>`
-        : "Esa lista todavía no tiene precio para esta categoría.";
+        ? `Precio resultante: <b>${fmtMoney(hit.price, currency)}</b>`
+        : `Esa lista no tiene la categoría ${esc(code)}.`;
     }
 
     typeSel.addEventListener("change", refreshModels);
@@ -1329,9 +1337,9 @@ async function productsView(view) {
         { key:"product_type_id", label:"Tipo", render:(v)=>esc(typeMap[v]||"—") },
         { key:"brand_id", label:"Marca", render:(v)=>esc(brandMap[v]||"—") },
         { key:"model_id", label:"Modelo", priority:2, render:(v)=>esc(modelMap[v]||"—") },
-        { key:"price_category_id", label:"Cat.", priority:3, render:(v)=>v?badge(catMap[v]||("#"+v),"gray"):"—" },
+        { key:"price_category_code", label:"Cat.", priority:3, render:(v)=>v?badge(v,"gray"):"—" },
         { key:"resolved_sale_price", label:"Precio", align:"right", render:(v, r) => v != null
-            ? `<span title="${esc(r.price_source === "manual" ? "Precio manual" : ("Lista: " + (listMap[r.price_list_id] || "por defecto")))}">${fmtMoney(v)}</span>`
+            ? `<span title="${esc(r.price_source === "manual" ? "Precio manual" : ("Lista: " + (listMap[r.price_list_id] || "por defecto")))}">${fmtMoney(v, r.price_currency)}</span>`
             : `<span class="badge gray" title="${esc(r.price_reason || "")}">sin precio</span>` },
         { key:"current_cost", label:"Costo", type:"money", align:"right", priority:2 },
         { key:"min_stock", label:"Mín", type:"num", align:"right", priority:3 },
@@ -1373,21 +1381,56 @@ async function catalogView(view) {
 /* =======================================================================
    PRICING (categories + lists + items + bulk)
    ======================================================================= */
-async function pricingView(view) {
-  renderTabs(view, "Precios", [
-    { label:"Categorías de precio", render: (n) => resourceView(n, CONFIG.price_categories) },
-    { label:"Listas de precios",    render: (n) => priceListsTab(n) },
-  ]);
+/* Currencies a list can be expressed in — mirrors models.enums.Currency. A
+   label only: nothing is converted. */
+const CURRENCIES = [
+  { value:"ARS", label:"Pesos argentinos ($)" },
+  { value:"USD", label:"Dólares (US$)" },
+];
+
+/* Rounding controls shared by "generar precios" and the percentage adjustment.
+   The default — up to the nearest 100 — is what turns $8.583 into $8.600. */
+const ROUNDING_STEPS = [
+  { value:"0",    label:"Sin redondeo" },
+  { value:"10",   label:"A decenas ($10)" },
+  { value:"50",   label:"A $50" },
+  { value:"100",  label:"A centenas ($100)" },
+  { value:"500",  label:"A $500" },
+  { value:"1000", label:"A miles ($1.000)" },
+];
+const ROUNDING_MODES = [
+  { value:"up",      label:"Hacia arriba" },
+  { value:"nearest", label:"Al más cercano" },
+  { value:"down",    label:"Hacia abajo" },
+];
+const roundingFields = () => [
+  { key:"rounding_step", label:"Redondeo", type:"select", options: ROUNDING_STEPS, default:"100" },
+  { key:"rounding_mode", label:"Dirección", type:"select", options: ROUNDING_MODES, default:"up" },
+];
+
+/* Same maths as services.pricing.round_price, for the live preview only. */
+function previewRound(value, step, mode) {
+  const s = Number(step || 0);
+  if (!(s > 0)) return Math.round(value * 100) / 100;
+  const q = value / s;
+  const n = mode === "down" ? Math.floor(q) : mode === "nearest" ? Math.round(q) : Math.ceil(q);
+  return n * s;
 }
 
-async function priceListsTab(container) {
+async function pricingView(view) {
   const writable = can("pricing:write");
   const typeMap = await idMap("/api/product-types");
-  async function load() { paint(await api("GET", "/api/price-lists?include_inactive=false")); }
+  let showInactive = false;
+
+  async function load() {
+    paint(await api("GET", "/api/price-lists/summary" + (showInactive ? "?include_inactive=true" : "")));
+  }
 
   function openForm(mode, row) {
     let fields = [
-      { key:"name", label:"Nombre", required:true },
+      { key:"name", label:"Nombre", required:true, placeholder:"Mostrador, Mayorista, Importados…" },
+      { key:"currency", label:"Moneda", type:"select", options: CURRENCIES, default:"ARS",
+        help:"Los precios de la lista se expresan en esta moneda. No hay conversión." },
       { key:"product_type_id", label:"Restringir a tipo de producto", type:"select", valueType:"int", optionsFrom:{ endpoint:"/api/product-types" } },
       { key:"is_default", label:"Lista predeterminada", type:"checkbox" },
     ];
@@ -1396,72 +1439,231 @@ async function priceListsTab(container) {
       onSubmit: async (payload) => { if (mode==="edit") await api("PUT","/api/price-lists/"+row.id,payload); else await api("POST","/api/price-lists",payload); clearOptions(); toast("Guardado","ok"); load(); } });
   }
 
-  async function itemsModal(list) {
-    const catMap = await idMap("/api/price-categories");
+  /* The ladder of one list: its categories (AA, AB, AC…) and their prices. */
+  async function ladderModal(list) {
+    const cur = list.currency;
     const wrap = el(`<div></div>`);
+    const cats = () => api("GET", `/api/price-lists/${list.id}/categories`);
+
     async function refresh() {
-      const items = await api("GET", `/api/price-lists/${list.id}/items`);
+      const rows = await cats();
       wrap.innerHTML = `
         <div class="toolbar">
-          ${writable ? `<button class="btn sm primary" id="addItem"><svg class="ic"><use href="#i-plus"/></svg>Agregar precio</button>
-          <button class="btn sm" id="bulk"><svg class="ic"><use href="#i-percent"/></svg>Ajuste masivo</button>
-          <button class="btn sm" id="impPrices"><svg class="ic"><use href="#i-upload"/></svg>Importar precios</button>` : ""}
+          ${writable ? `<button class="btn sm primary" id="genCats"><svg class="ic"><use href="#i-tags"/></svg>Generar categorías</button>
+          <button class="btn sm" id="genPrices"><svg class="ic"><use href="#i-banknote"/></svg>Generar precios</button>
+          <button class="btn sm" id="bulk"><svg class="ic"><use href="#i-percent"/></svg>Ajustar %</button>
+          <button class="btn sm" id="addCat"><svg class="ic"><use href="#i-plus"/></svg>Agregar</button>
+          <button class="btn sm" id="impPrices"><svg class="ic"><use href="#i-upload"/></svg>Importar</button>` : ""}
           <button class="btn sm" id="expPrices"><svg class="ic"><use href="#i-download"/></svg>Exportar<svg class="ic"><use href="#i-chevron-down"/></svg></button>
         </div>
-        ${renderTable([
-          { key:"price_category_id", label:"Categoría", render:(v)=>esc(catMap[v]||("#"+v)) },
-          { key:"price", label:"Precio", type:"money", align:"right" },
-        ], items, writable ? (r)=>`<button class="btn sm" data-edit="${r.id}" data-price="${r.price}">Editar</button>` : null)}`;
-      if (writable) {
-        $("#addItem", wrap).addEventListener("click", () => formModal({
-          title:"Agregar precio", fields:[
-            { key:"price_category_id", label:"Categoría", type:"select", required:true, valueType:"int", optionsFrom:{ endpoint:"/api/price-categories" } },
-            { key:"price", label:"Precio", type:"decimal", step:"0.01", required:true } ],
-          onSubmit: async (p) => { await api("POST", `/api/price-lists/${list.id}/items`, p); toast("Agregado","ok"); refresh(); } }));
-        $("#bulk", wrap).addEventListener("click", () => formModal({
-          title:"Ajuste porcentual masivo", confirmLabel:"Aplicar",
-          fields:[ { key:"percentage", label:"Cambio porcentual", type:"decimal", step:"0.01", required:true, help:"ej. 10 = +10%, -5 = -5%. Se aplica a todos los ítems (auditado)." } ],
-          onSubmit: async (p) => { const r = await api("POST", `/api/price-lists/${list.id}/bulk-update`, p); toast(`Se actualizaron ${r.updated_items} ítem(s)`, "ok"); refresh(); } }));
-        $("#impPrices", wrap).addEventListener("click", () => openImportWizard("price_list_items", refresh));
-      }
-      {
-        // Export is a read action — available even without pricing:write.
-        $("#expPrices", wrap).addEventListener("click", (e) => openExportMenu(
-          e.currentTarget, [{ key:"price_list_items", label:"Precios" }],
-          { price_list_id: list.id }));
-        $$("[data-edit]", wrap).forEach(b => b.addEventListener("click", () => formModal({
-          title:"Editar precio", fields:[ { key:"price", label:"Precio", type:"decimal", step:"0.01", required:true } ], values:{ price: b.dataset.price },
-          onSubmit: async (p) => { await api("PUT", `/api/price-lists/${list.id}/items/${b.dataset.edit}`, p); toast("Guardado","ok"); refresh(); } })));
-      }
+        ${rows.length ? renderTable([
+          { key:"code", label:"Categoría", render:(v)=>badge(v,"blue") },
+          { key:"description", label:"Descripción", priority:3 },
+          { key:"price", label:"Precio", align:"right", render:(v)=>fmtMoney(v, cur) },
+        ], rows, writable ? (r)=>`<button class="btn sm" data-edit="${r.id}"><svg class="ic"><use href="#i-pencil"/></svg>Editar</button>
+             <button class="btn sm ico" data-more="${r.id}" title="Más acciones"><svg class="ic"><use href="#i-more"/></svg></button>` : null)
+        : `<div class="empty" style="padding:18px">Esta lista todavía no tiene categorías.${writable ? ' Empezá por <b>Generar categorías</b>.' : ""}</div>`}`;
+
+      // Export is a read action — available even without pricing:write.
+      $("#expPrices", wrap).addEventListener("click", (e) => openExportMenu(
+        e.currentTarget, [{ key:"price_list_items", label:"Precios" }],
+        { price_list_id: list.id }));
+      if (!writable) return;
+
+      $("#genCats", wrap).addEventListener("click", () => openGenerateCategories(rows.length, refresh, list));
+      $("#genPrices", wrap).addEventListener("click", () => openGeneratePrices(rows, refresh, list));
+      $("#bulk", wrap).addEventListener("click", () => openBulkAdjust(rows, refresh, list));
+      $("#addCat", wrap).addEventListener("click", () => openCategoryForm("create", null, refresh, list));
+      $("#impPrices", wrap).addEventListener("click", () => openImportWizard("price_list_items", refresh));
+
+      $$("[data-edit]", wrap).forEach(b => b.addEventListener("click", () =>
+        openCategoryForm("edit", rows.find(r => String(r.id) === b.dataset.edit), refresh, list)));
+      $$("[data-more]", wrap).forEach(b => b.addEventListener("click", () => {
+        const row = rows.find(r => String(r.id) === b.dataset.more);
+        openRowMenu(b, [{ label:"Quitar de la lista", icon:"i-ban", danger:true, onClick: () =>
+          confirmDanger({
+            title:"Quitar categoría",
+            message:`¿Quitar "${row.code}" de la lista? Se desactiva: su precio se conserva y los productos con ese código quedan sin precio en esta lista.`,
+            confirmLabel:"Quitar",
+            onConfirm: async () => { await api("DELETE", `/api/price-lists/${list.id}/categories/${row.id}`); toast("Quitada","ok"); refresh(); },
+          }) }]);
+      }));
     }
+
     await refresh();
-    openModal({ title:`Precios — ${list.name}`, body: wrap, wide:true });
+    openModal({ title:`Categorías y precios — ${list.name} · ${list.currency}`, body: wrap, wide:true });
+  }
+
+  /* --- "cantidad de categorías": set the ladder to exactly N steps -------- */
+  function openGenerateCategories(currentCount, refresh, list) {
+    formModal({
+      title:"Generar categorías", confirmLabel:"Generar",
+      fields:[
+        { key:"count", label:"Cantidad de categorías", type:"int", min:1, max:676, required:true,
+          default: currentCount || 10,
+          help:"Se nombran AA, AB, AC… hasta ZZ. Después podés agregar o quitar de a una." },
+      ],
+      values:{ count: currentCount || 10 },
+      onSubmit: async (p) => {
+        const apply = async () => {
+          const rows = await api("POST", `/api/price-lists/${list.id}/generate-categories`, p);
+          toast(`La lista quedó con ${rows.length} categoría(s)`, "ok");
+          await refresh(); await load();
+        };
+        if (p.count < currentCount) {
+          return confirmDanger({
+            title:"Reducir la escalera",
+            message:`La lista tiene ${currentCount} categorías y vas a dejarla en ${p.count}. Las últimas ${currentCount - p.count} se desactivan (conservan su precio y se pueden restaurar volviendo a subir la cantidad).`,
+            confirmLabel:"Reducir", onConfirm: apply,
+          });
+        }
+        await apply();
+      },
+    });
+  }
+
+  /* --- spread a min..max range across the ladder, rounded ---------------- */
+  function openGeneratePrices(rows, refresh, list) {
+    const n = rows.length;
+    if (!n) return toast("Primero generá las categorías de la lista.", "err");
+    const fields = [
+      { key:"min_price", label:"Más barato", type:"decimal", step:"0.01", required:true },
+      { key:"max_price", label:"Más caro", type:"decimal", step:"0.01", required:true },
+      ...roundingFields(),
+    ];
+    formModal({
+      title:`Generar precios — ${n} categoría(s)`, confirmLabel:"Generar", fields,
+      onReady: (form) => {
+        /* Live preview of the whole ladder: you see the rounding before saving. */
+        const hint = el(`<div class="pricehint"></div>`);
+        form.appendChild(hint);
+        const draw = () => {
+          const v = form.read({ all:true });
+          const lo = Number(v.min_price), hi = Number(v.max_price);
+          if (!Number.isFinite(lo) || !Number.isFinite(hi) || !v.min_price || !v.max_price)
+            return hint.textContent = "Cargá el precio más barato y el más caro para ver la escalera.";
+          if (hi < lo) return hint.textContent = "El precio más caro no puede ser menor que el más barato.";
+          const preview = rows.map((r, i) => {
+            const raw = n === 1 ? lo : lo + (hi - lo) * i / (n - 1);
+            return `${r.code} ${fmtMoney(previewRound(raw, v.rounding_step, v.rounding_mode), list.currency)}`;
+          });
+          const shown = preview.length > 8
+            ? preview.slice(0, 4).concat(["…"], preview.slice(-2)) : preview;
+          hint.innerHTML = `<b>${esc(shown.join("  ·  "))}</b>`;
+        };
+        form.addEventListener("input", draw);
+        form.addEventListener("change", draw);
+        draw();
+      },
+      onSubmit: async (p) => {
+        const r = await api("POST", `/api/price-lists/${list.id}/generate-prices`, p);
+        toast(`Se actualizaron ${r.updated_items} precio(s)`, "ok");
+        await refresh(); await load();
+      },
+    });
+  }
+
+  /* --- move every price by a percentage --------------------------------- */
+  function openBulkAdjust(rows, refresh, list) {
+    if (!rows.length) return toast("La lista no tiene categorías para ajustar.", "err");
+    const fields = [
+      { key:"percentage", label:"Cambio porcentual", type:"decimal", step:"0.01", required:true,
+        help:"ej. 10 = +10%, -5 = -5%. Se aplica a toda la lista (auditado)." },
+      ...roundingFields(),
+    ];
+    formModal({
+      title:"Subir o bajar la lista", confirmLabel:"Aplicar", fields,
+      onReady: (form) => {
+        const hint = el(`<div class="pricehint"></div>`);
+        form.appendChild(hint);
+        const draw = () => {
+          const v = form.read({ all:true });
+          const pct = Number(v.percentage);
+          if (!v.percentage || !Number.isFinite(pct))
+            return hint.textContent = "Cargá el porcentaje para ver cómo queda.";
+          const sample = rows.slice(0, 3).map(r => {
+            const next = previewRound(Number(r.price) * (1 + pct / 100), v.rounding_step, v.rounding_mode);
+            return `${r.code} ${fmtMoney(r.price, list.currency)} → ${fmtMoney(next, list.currency)}`;
+          });
+          hint.innerHTML = `<b>${esc(sample.join("  ·  "))}</b>${rows.length > 3 ? " …" : ""}`;
+        };
+        form.addEventListener("input", draw);
+        form.addEventListener("change", draw);
+        draw();
+      },
+      onSubmit: async (p) => {
+        const r = await api("POST", `/api/price-lists/${list.id}/bulk-update`, p);
+        toast(`Se actualizaron ${r.updated_items} precio(s)`, "ok");
+        await refresh(); await load();
+      },
+    });
+  }
+
+  /* --- add / edit one step by hand --------------------------------------- */
+  function openCategoryForm(mode, row, refresh, list) {
+    const fields = [
+      { key:"code", label:"Código", required: mode === "edit",
+        placeholder: mode === "create" ? "Vacío = el siguiente (AA, AB, AC…)" : "",
+        help: mode === "create" ? "Dejalo vacío y se usa el siguiente código libre." : null },
+      { key:"description", label:"Descripción" },
+      { key:"price", label:`Precio (${list.currency})`, type:"decimal", step:"0.01" },
+    ];
+    formModal({
+      title: mode === "edit" ? `Editar ${row.code}` : "Agregar categoría",
+      fields, values: row || {},
+      onSubmit: async (p) => {
+        if (mode === "edit") await api("PUT", `/api/price-lists/${list.id}/categories/${row.id}`, p);
+        else await api("POST", `/api/price-lists/${list.id}/categories`, p);
+        toast("Guardado","ok");
+        await refresh(); await load();
+      },
+    });
   }
 
   function actions(r) {
-    let h = `<button class="btn sm" data-act="items" data-id="${r.id}"><svg class="ic"><use href="#i-receipt"/></svg>Precios</button>`;
+    let h = `<button class="btn sm" data-act="cats" data-id="${r.id}"><svg class="ic"><use href="#i-tags"/></svg>Categorías</button>`;
     if (writable) h += `<button class="btn sm" data-act="edit" data-id="${r.id}"><svg class="ic"><use href="#i-pencil"/></svg>Editar</button>
-      <button class="btn sm danger" data-act="del" data-id="${r.id}"><svg class="ic"><use href="#i-ban"/></svg>Desactivar</button>`;
+      <button class="btn sm ico" data-act="more" data-id="${r.id}" title="Más acciones"><svg class="ic"><use href="#i-more"/></svg></button>`;
     return h;
   }
-  function paint(list) {
-    container.innerHTML = `
-      <div class="toolbar"><div class="grow"></div>${writable ? `<button class="btn primary" id="newBtn">+ Nueva lista</button>` : ""}</div>
+
+  function paint(rows) {
+    view.innerHTML = `
+      <div class="page-head"><div><h2>Precios</h2>
+        <div class="sub">Cada lista tiene su propia escalera de categorías (AA, AB, AC…) y su moneda.</div></div></div>
+      <div class="toolbar">
+        <label class="switch"><input type="checkbox" id="showInactive" ${showInactive?"checked":""}> Ver inactivas</label>
+        <div class="grow"></div>
+        ${writable ? `<button class="btn primary" id="newBtn">+ Nueva lista</button>` : ""}
+      </div>
       ${renderTable([
-        { key:"id", label:"ID" }, { key:"name", label:"Nombre" },
-        { key:"product_type_id", label:"Tipo de producto", render:(v)=>v?esc(typeMap[v]||("#"+v)):badge("todos","gray") },
-        { key:"is_default", label:"Predet.", render:(v)=>v?badge("predeterminada","blue"):"—" },
+        { key:"name", label:"Nombre" },
+        { key:"currency", label:"Moneda", render:(v)=>badge(v,"gray") },
+        { key:"category_count", label:"Categorías", align:"right", render:(v)=>v ? String(v) : badge("sin cargar","amber") },
+        { key:"min_price", label:"Rango", priority:2, render:(v, r) => r.category_count
+            ? `${fmtMoney(r.min_price, r.currency)} — ${fmtMoney(r.max_price, r.currency)}` : "—" },
+        { key:"product_type_id", label:"Tipo de producto", priority:3, render:(v)=>v?esc(typeMap[v]||("#"+v)):badge("todos","gray") },
+        { key:"is_default", label:"Predet.", priority:2, render:(v)=>v?badge("predeterminada","blue"):"—" },
         { key:"is_active", label:"Estado", type:"bool" },
-      ], list, actions)}`;
-    const nb = $("#newBtn", container); if (nb) nb.addEventListener("click", () => openForm("create"));
-    $$("[data-act]", container).forEach(b => b.addEventListener("click", async () => {
-      const row = list.find(x => String(x.id) === b.dataset.id);
-      if (b.dataset.act === "items") itemsModal(row);
+      ], rows, actions)}`;
+
+    $("#showInactive", view).addEventListener("change", (e) => { showInactive = e.target.checked; load(); });
+    const nb = $("#newBtn", view); if (nb) nb.addEventListener("click", () => openForm("create"));
+    $$("[data-act]", view).forEach(b => b.addEventListener("click", () => {
+      const row = rows.find(x => String(x.id) === b.dataset.id);
+      if (b.dataset.act === "cats") ladderModal(row);
       else if (b.dataset.act === "edit") openForm("edit", row);
-      else confirmDanger({ title:"Desactivar lista", message:`¿Desactivar "${row.name}"?`, confirmLabel:"Desactivar",
-        onConfirm: async () => { await api("DELETE", "/api/price-lists/"+row.id); toast("Desactivado","ok"); load(); } });
+      else openRowMenu(b, [
+        row.is_active
+          ? { label:"Desactivar lista", icon:"i-ban", danger:true, onClick: () => confirmDanger({
+              title:"Desactivar lista", message:`¿Desactivar "${row.name}"?`, confirmLabel:"Desactivar",
+              onConfirm: async () => { await api("DELETE", "/api/price-lists/"+row.id); toast("Desactivada","ok"); load(); } }) }
+          : { label:"Reactivar lista", icon:"i-check", onClick: async () => {
+              await api("PUT", "/api/price-lists/"+row.id, { is_active:true }); toast("Reactivada","ok"); load(); } },
+      ]);
     }));
   }
+
   await load();
 }
 

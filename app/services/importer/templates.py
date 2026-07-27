@@ -23,7 +23,6 @@ _REFERENCE_SOURCES = [
     ("Modelos", ProductModel),
     ("Proveedores", Supplier),
     ("Sucursales", Branch),
-    ("Categorías de precio", PriceCategory),
     ("Listas de precios", PriceList),
 ]
 
@@ -82,14 +81,13 @@ def _comment(text: str):
 
 def _reference_sheet(wb, db: Session, *, company_id: int) -> None:
     from openpyxl.styles import Font
-    from openpyxl.utils import get_column_letter
 
     ws = wb.create_sheet("Referencia")
     ws.cell(row=1, column=1, value="Valores válidos ya cargados en el sistema") \
         .font = Font(bold=True, size=12)
     ws.cell(row=2, column=1,
-            value="Escribí los nombres exactamente así. Tipos, marcas, modelos "
-                  "y categorías que no existan se pueden crear al importar.") \
+            value="Escribí los nombres exactamente así. Tipos, marcas y modelos "
+                  "que no existan se pueden crear al importar.") \
         .font = Font(italic=True, color="6B7280")
 
     col = 1
@@ -101,8 +99,31 @@ def _reference_sheet(wb, db: Session, *, company_id: int) -> None:
                 .order_by(model.name)
             ).scalars()
         )
-        ws.cell(row=4, column=col, value=label).font = Font(bold=True)
-        for i, name in enumerate(names, start=5):
-            ws.cell(row=i, column=col, value=name)
-        ws.column_dimensions[get_column_letter(col)].width = max(18, len(label) + 4)
+        _reference_column(ws, col, label, names)
         col += 1
+
+    # Categories belong to a list, so they are listed as "Lista · Código"
+    # rather than as a flat set of names.
+    steps = db.execute(
+        select(PriceList.name, PriceCategory.code)
+        .join(PriceCategory, PriceCategory.price_list_id == PriceList.id)
+        .where(
+            PriceCategory.company_id == company_id,
+            PriceCategory.is_active.is_(True),
+            PriceList.is_active.is_(True),
+        )
+        .order_by(PriceList.name, PriceCategory.position, PriceCategory.id)
+    ).all()
+    _reference_column(
+        ws, col, "Categorías por lista", [f"{r[0]} · {r[1]}" for r in steps]
+    )
+
+
+def _reference_column(ws, col: int, label: str, values: list[str]) -> None:
+    from openpyxl.styles import Font
+    from openpyxl.utils import get_column_letter
+
+    ws.cell(row=4, column=col, value=label).font = Font(bold=True)
+    for i, value in enumerate(values, start=5):
+        ws.cell(row=i, column=col, value=value)
+    ws.column_dimensions[get_column_letter(col)].width = max(18, len(label) + 4)
