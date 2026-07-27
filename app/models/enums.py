@@ -14,6 +14,13 @@ class SupplierType(str, enum.Enum):
     WORKSHOP = "workshop"         # taller
 
 
+class PricingMode(str, enum.Enum):
+    """How a product's selling price is determined."""
+
+    MANUAL = "manual"             # precio propio, cargado a mano
+    PRICE_LIST = "price_list"     # lista de precios + categoría
+
+
 class StockMovementType(str, enum.Enum):
     INBOUND = "inbound"           # ingreso
     OUTBOUND = "outbound"         # egreso
