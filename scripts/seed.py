@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from sqlalchemy import select
+from sqlalchemy import delete, insert, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -24,8 +24,8 @@ from app.models.company import Company, CompanySettings
 from app.models.customer import Customer
 from app.models.enums import StockMovementType, SupplierType
 from app.models.pricing import PriceCategory, PriceList, PriceListItem
-from app.models.product import Brand, Product, ProductType
-from app.models.supplier import Supplier
+from app.models.product import Brand, Product, ProductModel, ProductType
+from app.models.supplier import Supplier, supplier_brands
 from app.schemas.stock import StockMovementCreate
 from app.services import numbering, stock as stock_service
 
@@ -122,7 +122,7 @@ def run() -> None:
         )
 
         # --- suppliers ---
-        get_or_create(
+        supplier, _ = get_or_create(
             db, Supplier,
             defaults={"supplier_type": SupplierType.MERCHANDISE, "email": "ventas@distrib.com"},
             company_id=cid, name="Distribuidora Óptica SA",
@@ -164,18 +164,40 @@ def run() -> None:
         cfg.default_price_list_id = price_list.id
         cfg.default_branch_id = main_branch.id
 
+        # --- product models ("Modelo": shape/style; type is optional) ---
+        model_specs = [
+            ("Clipper", pt_frames), ("Aviador", pt_frames), ("Redondo", None),
+        ]
+        models = {}
+        for name, ptype in model_specs:
+            models[name], _ = get_or_create(
+                db, ProductModel,
+                defaults={"product_type_id": ptype.id if ptype else None},
+                company_id=cid, name=name,
+            )
+        db.flush()
+
+        # --- suppliers → brands ---
+        db.execute(delete(supplier_brands).where(supplier_brands.c.supplier_id == supplier.id))
+        db.execute(
+            insert(supplier_brands),
+            [{"supplier_id": supplier.id, "brand_id": b.id} for b in (brand_a, brand_b)],
+        )
+
         # --- products ---
         products_spec = [
-            ("ARM-001", "Armazón clásico negro", pt_frames, brand_a, cat_a, "20000"),
-            ("SOL-001", "Lente de sol aviador", pt_sun, brand_a, cat_b, "12000"),
-            ("LC-001", "Lentes de contacto mensual", pt_contact, brand_b, cat_c, "6000"),
+            ("ARM-001", "Armazón clásico negro", pt_frames, brand_a, models["Clipper"], cat_a, "20000"),
+            ("SOL-001", "Lente de sol aviador", pt_sun, brand_a, models["Aviador"], cat_b, "12000"),
+            ("LC-001", "Lentes de contacto mensual", pt_contact, brand_b, None, cat_c, "6000"),
         ]
         created_products: list[Product] = []
-        for code, name, ptype, brand, cat, cost in products_spec:
+        for code, description, ptype, brand, model, cat, cost in products_spec:
             prod, was_new = get_or_create(
                 db, Product,
                 defaults={
-                    "name": name, "product_type_id": ptype.id, "brand_id": brand.id,
+                    "description": description, "product_type_id": ptype.id,
+                    "brand_id": brand.id, "model_id": model.id if model else None,
+                    "supplier_id": supplier.id,
                     "price_category_id": cat.id, "current_cost": Decimal(cost),
                     "min_stock": Decimal("2"),
                 },

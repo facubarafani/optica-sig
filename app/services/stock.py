@@ -126,8 +126,13 @@ def apply_movement(
     company_id: int,
     user_id: int | None = None,
     allow_negative: bool = False,
+    commit: bool = True,
 ) -> StockMovement:
-    """Apply an inbound/outbound/adjustment movement to a single branch."""
+    """Apply an inbound/outbound/adjustment movement to a single branch.
+
+    ``commit=False`` leaves the transaction open so a bulk import can apply many
+    movements as a single unit of work.
+    """
     qty = Decimal(data.quantity)
     mt = data.movement_type
     if mt is StockMovementType.TRANSFER:
@@ -152,8 +157,11 @@ def apply_movement(
         counterpart_branch_id=None,
         allow_negative=allow_negative,
     )
-    db.commit()
-    db.refresh(movement)
+    if commit:
+        db.commit()
+        db.refresh(movement)
+    else:
+        db.flush()
     return movement
 
 

@@ -35,3 +35,9 @@ class SupplierUpdate(BaseModel):
 
 class SupplierRead(SoftDeleteRead, SupplierBase):
     pass
+
+
+class SupplierBrandsUpdate(BaseModel):
+    """Replaces the supplier's whole brand set."""
+
+    brand_ids: list[int]

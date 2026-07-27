@@ -22,6 +22,9 @@ print/export) are designed in the ER diagram but **out of scope** for now.
 | Soft delete | `is_active` flag (no physical deletes) on master data. |
 | Audit / change history | `change_history` table + `record_change()` service. |
 | Auto-numbering | `number_sequence` table + `next_number()` service (sales, quotes, work orders, repairs). |
+| Selling price | Per product: manual price, or price list + category (the product's list overrides the company default). Resolved by `pricing.resolve_price()`. |
+| Bulk import | Excel/CSV → column mapping → preview → atomic commit, for products, costs, initial stock and price lists. Downloadable `.xlsx` template. |
+| Bulk export | Same four targets to `.xlsx`/`.csv`, using the import column layout — export, edit in Excel, re-import. Respects the on-screen filters. |
 
 ## Quick start
 
@@ -62,9 +65,11 @@ app/
   core/        config, db session, security (JWT/bcrypt), deps, base CRUD
   models/      SQLAlchemy 2.0 models (one module per domain)
   schemas/     Pydantic v2 request/response schemas
-  services/    numbering, audit, stock, auth business logic
+  services/    numbering, audit, stock, pricing, auth business logic
+    importer/  bulk import: readers (xlsx/csv), specs, engine, templates
   api/         FastAPI routers + dependency wiring
-alembic/       migration env + initial revision
+  web/         single-file Spanish admin console served at /app
+alembic/       migration env + revisions
 scripts/       seed.py
 tests/         pytest suite (per-domain)
 docs/          ER_DIAGRAM.md (14 modules), ARCHITECTURE.md

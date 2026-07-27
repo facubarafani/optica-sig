@@ -33,3 +33,6 @@ env/
 htmlcov/
 *.db
 *.sqlite3
+
+# working deploy handoff — contains live DB credentials
+docs/DEPLOY_HANDOFF.md
