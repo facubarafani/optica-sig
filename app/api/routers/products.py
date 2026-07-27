@@ -36,6 +36,7 @@ def _with_prices(db: Session, products: list[Product], company_id: int) -> list[
         data["resolved_sale_price"] = r.price
         data["price_source"] = r.source
         data["price_reason"] = r.reason
+        data["price_currency"] = r.currency
         out.append(data)
     return out
 
@@ -117,6 +118,7 @@ def get_product_price(
         price=r.price,
         source=r.source,
         price_list_id=r.price_list_id,
+        currency=r.currency,
         reason=r.reason,
     )
 
@@ -138,7 +140,7 @@ def update_product(
     pricing_payload = {
         k: payload.pop(k)
         for k in list(payload)
-        if k in ("pricing_mode", "sale_price", "price_list_id", "price_category_id")
+        if k in ("pricing_mode", "sale_price", "price_list_id", "price_category_code")
     }
     for field, value in payload.items():
         setattr(obj, field, value)

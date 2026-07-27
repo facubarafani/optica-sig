@@ -24,7 +24,7 @@ from app.models.enums import (
     SupplierType,
     TreatmentType,
 )
-from app.models.pricing import CostHistory, PriceCategory, PriceList, PriceListItem
+from app.models.pricing import CostHistory, PriceCategory, PriceList
 from app.models.product import Brand, Product, ProductModel, ProductType
 from app.models.stock import StockLevel, StockMovement
 from app.models.supplier import Supplier, supplier_brands
@@ -48,7 +48,6 @@ __all__ = [
     "CostHistory",
     "PriceCategory",
     "PriceList",
-    "PriceListItem",
     "Brand",
     "Product",
     "ProductModel",

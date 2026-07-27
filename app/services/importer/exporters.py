@@ -21,7 +21,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.branch import Branch
-from app.models.pricing import PriceCategory, PriceList, PriceListItem
+from app.models.pricing import PriceCategory, PriceList
 from app.models.product import Brand, Product, ProductModel, ProductType
 from app.models.stock import StockLevel
 from app.models.supplier import Supplier
@@ -49,7 +49,6 @@ def _products(db: Session, company_id: int, opts: dict) -> list[dict]:
     models = _name_map(db, ProductModel, company_id)
     suppliers = _name_map(db, Supplier, company_id)
     lists_ = _name_map(db, PriceList, company_id)
-    cats = _name_map(db, PriceCategory, company_id)
 
     stmt = select(Product).where(Product.company_id == company_id)
     if not opts.get("include_inactive"):
@@ -77,7 +76,7 @@ def _products(db: Session, company_id: int, opts: dict) -> list[dict]:
             "pricing_mode": p.pricing_mode.value,
             "sale_price": p.sale_price,
             "price_list": lists_.get(p.price_list_id),
-            "price_category": cats.get(p.price_category_id),
+            "price_category": p.price_category_code,
         })
     return rows
 
@@ -116,18 +115,22 @@ def _stock(db: Session, company_id: int, opts: dict) -> list[dict]:
 
 def _price_list_items(db: Session, company_id: int, opts: dict) -> list[dict]:
     lists_ = _name_map(db, PriceList, company_id)
-    cats = _name_map(db, PriceCategory, company_id)
-    stmt = select(PriceListItem).where(PriceListItem.company_id == company_id)
+    stmt = select(PriceCategory).where(PriceCategory.company_id == company_id)
     if opts.get("price_list_id"):
-        stmt = stmt.where(PriceListItem.price_list_id == opts["price_list_id"])
+        stmt = stmt.where(PriceCategory.price_list_id == opts["price_list_id"])
+    if not opts.get("include_inactive"):
+        stmt = stmt.where(PriceCategory.is_active.is_(True))
     rows = []
-    for it in db.execute(stmt.order_by(PriceListItem.id)).scalars():
+    # Ladder order, so the exported file reads cheapest-first like the console.
+    order = (PriceCategory.price_list_id, PriceCategory.position, PriceCategory.id)
+    for cat in db.execute(stmt.order_by(*order)).scalars():
         rows.append({
-            "price_list": lists_.get(it.price_list_id),
-            "price_category": cats.get(it.price_category_id),
-            "price": it.price,
+            "price_list": lists_.get(cat.price_list_id),
+            "price_category": cat.code,
+            "price": cat.price,
+            "description": cat.description,
         })
-    return [r for r in rows if r["price_list"] and r["price_category"]]
+    return [r for r in rows if r["price_list"]]
 
 
 BUILDERS = {

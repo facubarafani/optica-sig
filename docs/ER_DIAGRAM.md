@@ -16,7 +16,7 @@ vía `number_sequence`.
 | 3 | Sucursales | ✅ | `branch` |
 | 4 | Proveedores / terceros | ✅ | `supplier` (mercadería/laboratorio/taller) |
 | 5 | Productos y stock | ✅ | `product_type`, `brand`, `product_model`, `product`, `supplier_brands`, `stock_level`, `stock_movement` |
-| 6 | Precios y costos | ✅ | `price_category`, `price_list`, `price_list_item`, `cost_history` |
+| 6 | Precios y costos | ✅ | `price_list`, `price_category` (escalera AA..ZZ), `cost_history` |
 | 7 | Clientes | ✅ | `customer`, `prescription`, `treatment_history` |
 | 8 | Ventas | 🟡 | `sale`, `sale_item`, `payment` |
 | 9 | Caja | 🟡 | `cash_register_session`, `cash_movement` |
@@ -42,7 +42,6 @@ erDiagram
     COMPANY ||--o{ PRODUCT_TYPE : "clasifica"
     COMPANY ||--o{ BRAND : "registra"
     COMPANY ||--o{ PRODUCT : "cataloga"
-    COMPANY ||--o{ PRICE_CATEGORY : "define"
     COMPANY ||--o{ PRICE_LIST : "publica"
     COMPANY ||--o{ CUSTOMER : "atiende"
     COMPANY ||--o{ CHANGE_HISTORY : "audita"
@@ -56,7 +55,6 @@ erDiagram
     PRODUCT }o--o| BRAND : "de marca"
     PRODUCT }o--o| PRODUCT_MODEL : "modelo / forma"
     PRODUCT }o--o| SUPPLIER : "provisto por"
-    PRODUCT }o--o| PRICE_CATEGORY : "categoría precio"
     PRODUCT }o--o| PRICE_LIST : "lista propia (pisa la default)"
     PRODUCT_MODEL }o--o| PRODUCT_TYPE : "acotado a tipo (opcional)"
     SUPPLIER }o--o{ BRAND : "supplier_brands"
@@ -67,8 +65,7 @@ erDiagram
     BRANCH ||--o{ STOCK_LEVEL : "almacena"
     BRANCH ||--o{ STOCK_MOVEMENT : "registra"
 
-    PRICE_LIST ||--o{ PRICE_LIST_ITEM : "tiene"
-    PRICE_CATEGORY ||--o{ PRICE_LIST_ITEM : "precio por categoría"
+    PRICE_LIST ||--o{ PRICE_CATEGORY : "escalera AA..ZZ con su precio"
     PRICE_LIST }o--o| PRODUCT_TYPE : "acotada a tipo"
 
     CUSTOMER ||--o{ PRESCRIPTION : "recetas"
@@ -152,7 +149,7 @@ erDiagram
         enum pricing_mode
         numeric sale_price
         int price_list_id FK
-        int price_category_id FK
+        string price_category_code
         numeric current_cost
         numeric min_stock
         bool is_active
@@ -181,26 +178,24 @@ erDiagram
         text result
         int created_by_user_id FK
     }
-    PRICE_CATEGORY {
-        int id PK
-        int company_id FK
-        string name UK
-        bool is_active
-    }
     PRICE_LIST {
         int id PK
         int company_id FK
         string name UK
         int product_type_id FK
         bool is_default
+        string currency
         bool is_active
     }
-    PRICE_LIST_ITEM {
+    PRICE_CATEGORY {
         int id PK
         int company_id FK
         int price_list_id FK
-        int price_category_id FK
+        string code UK
+        string description
         numeric price
+        int position
+        bool is_active
     }
     COST_HISTORY {
         int id PK
@@ -422,10 +417,9 @@ erDiagram
 
 - **Precio de venta**: cada producto declara un `pricing_mode`.
   - `manual` → usa su propio `sale_price`.
-  - `price_list` → resuelve `price_category_id` contra el `price_list_item` de
-    `price_list_id`; si el producto no tiene lista propia, cae a
-    `company_settings.default_price_list_id`. Único por (lista, categoría) →
-    "el precio por categoría es único por empresa".
+  - `price_list` → busca `price_category_code` (el código `AB`, no un id) entre
+    las categorías de `price_list_id`; si el producto no tiene lista propia, cae
+    a `company_settings.default_price_list_id`. Único por (lista, código).
 
   La resolución vive en `services.pricing.resolve_price()` / `resolve_prices()`
   (versión batch, para no hacer N+1 en las grillas). **Ventas debe consumir esa

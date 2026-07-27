@@ -21,6 +21,27 @@ class PricingMode(str, enum.Enum):
     PRICE_LIST = "price_list"     # lista de precios + categoría
 
 
+class Currency(str, enum.Enum):
+    """Currencies a price list can be expressed in.
+
+    Stored as a plain 3-letter code (``String(3)``) rather than a Postgres enum,
+    matching ``companies.currency`` / ``company_settings.currency``. It is a
+    label only: there is no exchange rate and nothing is converted — a list in
+    USD holds US dollar prices.
+    """
+
+    ARS = "ARS"                   # pesos argentinos
+    USD = "USD"                   # dólares
+
+
+class RoundingMode(str, enum.Enum):
+    """How a generated or adjusted price is rounded to the rounding step."""
+
+    UP = "up"                     # hacia arriba (8.583 -> 8.600)
+    NEAREST = "nearest"           # al más cercano
+    DOWN = "down"                 # hacia abajo
+
+
 class StockMovementType(str, enum.Enum):
     INBOUND = "inbound"           # ingreso
     OUTBOUND = "outbound"         # egreso

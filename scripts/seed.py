@@ -23,11 +23,11 @@ from app.models.branch import Branch
 from app.models.company import Company, CompanySettings
 from app.models.customer import Customer
 from app.models.enums import StockMovementType, SupplierType
-from app.models.pricing import PriceCategory, PriceList, PriceListItem
+from app.models.pricing import PriceCategory, PriceList
 from app.models.product import Brand, Product, ProductModel, ProductType
 from app.models.supplier import Supplier, supplier_brands
 from app.schemas.stock import StockMovementCreate
-from app.services import numbering, stock as stock_service
+from app.services import numbering, pricing, stock as stock_service
 
 PERMISSIONS: list[tuple[str, str]] = [
     ("company:read", "View company & settings"),
@@ -143,19 +143,18 @@ def run() -> None:
         brand_a, _ = get_or_create(db, Brand, company_id=cid, name="RayBan")
         brand_b, _ = get_or_create(db, Brand, company_id=cid, name="Vulk")
 
-        # --- price categories + list ---
-        cat_a, _ = get_or_create(db, PriceCategory, company_id=cid, name="A")
-        cat_b, _ = get_or_create(db, PriceCategory, company_id=cid, name="B")
-        cat_c, _ = get_or_create(db, PriceCategory, company_id=cid, name="C")
+        # --- price list + its category ladder (cheapest first) ---
         price_list, _ = get_or_create(
-            db, PriceList, defaults={"is_default": True},
+            db, PriceList, defaults={"is_default": True, "currency": "ARS"},
             company_id=cid, name="Lista General",
         )
         db.flush()
-        for cat, price in [(cat_a, "50000"), (cat_b, "30000"), (cat_c, "15000")]:
+        for position, price in enumerate(["15000", "30000", "50000"]):
             get_or_create(
-                db, PriceListItem, defaults={"price": Decimal(price)},
-                company_id=cid, price_list_id=price_list.id, price_category_id=cat.id,
+                db, PriceCategory,
+                defaults={"price": Decimal(price), "position": position},
+                company_id=cid, price_list_id=price_list.id,
+                code=pricing.category_code(position),
             )
         # point company settings at the default list
         cfg = db.execute(
@@ -186,19 +185,19 @@ def run() -> None:
 
         # --- products ---
         products_spec = [
-            ("ARM-001", "Armazón clásico negro", pt_frames, brand_a, models["Clipper"], cat_a, "20000"),
-            ("SOL-001", "Lente de sol aviador", pt_sun, brand_a, models["Aviador"], cat_b, "12000"),
-            ("LC-001", "Lentes de contacto mensual", pt_contact, brand_b, None, cat_c, "6000"),
+            ("ARM-001", "Armazón clásico negro", pt_frames, brand_a, models["Clipper"], "AC", "20000"),
+            ("SOL-001", "Lente de sol aviador", pt_sun, brand_a, models["Aviador"], "AB", "12000"),
+            ("LC-001", "Lentes de contacto mensual", pt_contact, brand_b, None, "AA", "6000"),
         ]
         created_products: list[Product] = []
-        for code, description, ptype, brand, model, cat, cost in products_spec:
+        for code, description, ptype, brand, model, cat_code, cost in products_spec:
             prod, was_new = get_or_create(
                 db, Product,
                 defaults={
                     "description": description, "product_type_id": ptype.id,
                     "brand_id": brand.id, "model_id": model.id if model else None,
                     "supplier_id": supplier.id,
-                    "price_category_id": cat.id, "current_cost": Decimal(cost),
+                    "price_category_code": cat_code, "current_cost": Decimal(cost),
                     "min_stock": Decimal("2"),
                 },
                 company_id=cid, code=code,
