@@ -15,7 +15,7 @@ vía `number_sequence`.
 | 2 | Usuarios y permisos (RBAC) | ✅ | `user`, `role`, `permission`, `user_roles`, `role_permissions` |
 | 3 | Sucursales | ✅ | `branch` |
 | 4 | Proveedores / terceros | ✅ | `supplier` (mercadería/laboratorio/taller) |
-| 5 | Productos y stock | ✅ | `product_type`, `brand`, `product`, `stock_level`, `stock_movement` |
+| 5 | Productos y stock | ✅ | `product_type`, `brand`, `product_model`, `product`, `supplier_brands`, `stock_level`, `stock_movement` |
 | 6 | Precios y costos | ✅ | `price_category`, `price_list`, `price_list_item`, `cost_history` |
 | 7 | Clientes | ✅ | `customer`, `prescription`, `treatment_history` |
 | 8 | Ventas | 🟡 | `sale`, `sale_item`, `payment` |
@@ -27,8 +27,8 @@ vía `number_sequence`.
 | 14 | Reportes / Dashboard | 🟡 | (vistas/agregaciones, sin tablas propias) |
 
 Infraestructura transversal (✅): `change_history` (historial de cambios),
-`number_sequence` (numeración automática). Importación masiva y impresión/export
-(🟡) son funciones transversales sin esquema propio relevante.
+`number_sequence` (numeración automática), `import_batch` (importación masiva
+desde Excel/CSV). Impresión/export (🟡) sigue pendiente.
 
 ## Diagrama (implementado — master-data backbone) ✅
 
@@ -54,8 +54,12 @@ erDiagram
 
     PRODUCT }o--|| PRODUCT_TYPE : "es de tipo"
     PRODUCT }o--o| BRAND : "de marca"
+    PRODUCT }o--o| PRODUCT_MODEL : "modelo / forma"
     PRODUCT }o--o| SUPPLIER : "provisto por"
     PRODUCT }o--o| PRICE_CATEGORY : "categoría precio"
+    PRODUCT }o--o| PRICE_LIST : "lista propia (pisa la default)"
+    PRODUCT_MODEL }o--o| PRODUCT_TYPE : "acotado a tipo (opcional)"
+    SUPPLIER }o--o{ BRAND : "supplier_brands"
     PRODUCT ||--o{ COST_HISTORY : "historial costo"
     PRODUCT ||--o{ STOCK_LEVEL : "stock por sucursal"
     PRODUCT ||--o{ STOCK_MOVEMENT : "movimientos"
@@ -139,16 +143,43 @@ erDiagram
         int id PK
         int company_id FK
         string code UK
-        string name
-        string model
+        string description
         string color
         int product_type_id FK
         int brand_id FK
+        int model_id FK
         int supplier_id FK
+        enum pricing_mode
+        numeric sale_price
+        int price_list_id FK
         int price_category_id FK
         numeric current_cost
         numeric min_stock
         bool is_active
+    }
+    PRODUCT_MODEL {
+        int id PK
+        int company_id FK
+        string name UK
+        int product_type_id FK
+        bool is_active
+    }
+    SUPPLIER_BRANDS {
+        int supplier_id PK
+        int brand_id PK
+    }
+    IMPORT_BATCH {
+        int id PK
+        int company_id FK
+        string spec_key
+        string filename
+        string status
+        int row_count
+        text headers
+        text rows
+        text mapping
+        text result
+        int created_by_user_id FK
     }
     PRICE_CATEGORY {
         int id PK
@@ -389,9 +420,27 @@ erDiagram
 
 ## Notas de diseño
 
-- **Precios por categoría**: el precio de venta de un producto se resuelve por su
-  `price_category_id` contra el `price_list_item` de la lista activa. Único por
-  (lista, categoría) → "el precio por categoría es único por empresa".
+- **Precio de venta**: cada producto declara un `pricing_mode`.
+  - `manual` → usa su propio `sale_price`.
+  - `price_list` → resuelve `price_category_id` contra el `price_list_item` de
+    `price_list_id`; si el producto no tiene lista propia, cae a
+    `company_settings.default_price_list_id`. Único por (lista, categoría) →
+    "el precio por categoría es único por empresa".
+
+  La resolución vive en `services.pricing.resolve_price()` / `resolve_prices()`
+  (versión batch, para no hacer N+1 en las grillas). **Ventas debe consumir esa
+  función, no reimplementar la lógica.** Un precio que no se puede resolver
+  devuelve `source="unresolved"` con el motivo, en vez de fallar.
+- **Modelo (forma)**: `product_model` es una lista administrable (clipper,
+  aviador, redondo…). `product_type_id` es opcional: un modelo sin tipo aplica a
+  todos los tipos de producto.
+- **Proveedor ↔ marcas**: `supplier_brands` (N-N) acota qué marcas ofrece cada
+  proveedor. El formulario de producto filtra de forma estricta, pero conserva
+  la marca ya asignada aunque quede fuera de la lista.
+- **Importación masiva**: `import_batch` guarda el archivo parseado entre la
+  vista previa y la confirmación (sin resubir) y deja historial. El motor está
+  en `services/importer/` y **nunca puentea las reglas de negocio**: los costos
+  pasan por `pricing.change_cost()` y el stock por `stock.apply_movement()`.
 - **Stock**: nunca se edita `stock_level` directamente. Todo cambio pasa por el
   servicio de stock que escribe `stock_movement` y actualiza `stock_level` en la
   misma transacción. Las transferencias generan dos movimientos `transfer`.

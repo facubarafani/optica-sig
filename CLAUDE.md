@@ -34,7 +34,44 @@ Transactional modules are designed (see `docs/ER_DIAGRAM.md`) but not built yet.
 6. **Money = `Numeric(12, 2)`.** Never float. Quantities = `Numeric(12, 2)` too
    (supports fractional units / adjustments).
 7. **Enums = controlled string lists** via `app/models/enums.py`. Add new states
-   there, never as free text.
+   there, never as free text. SQLAlchemy stores the member **name** in Postgres
+   (`INBOUND`, `PRICE_LIST`), so a migration's `server_default` must use the
+   name, not the value.
+8. **Selling price is resolved, never read off the row.** Use
+   `services.pricing.resolve_price()` (or `resolve_prices()` for a list — it
+   batches, avoiding N+1). It handles both `pricing_mode`s and the fallback to
+   the company's default price list. The sales module must call it rather than
+   reimplement the rules.
+9. **Bulk import never bypasses business rules.** `services/importer/` routes
+   costs through `pricing.change_cost()` and stock through
+   `stock.apply_movement()`, both with `commit=False` so a batch is one
+   transaction. Adding an import target = one `ImportSpec` in
+   `importer/specs.py` + one apply function in `importer/engine.py` + one row
+   builder in `importer/exporters.py`; the template, the mapping UI, the
+   preview and the export all derive from the spec.
+10. **Export and import share the spec, so files round-trip.** An export uses
+    the import column layout: export → edit in Excel → re-import updates by
+    key instead of duplicating. Keep it that way — if you add a column to a
+    spec, both directions get it. `.xlsx` writes real numeric cells (immune to
+    locale parsing); `.csv` uses `;` + comma decimals + a UTF-8 BOM, which is
+    what Spanish Excel reads and what the importer defaults to.
+
+## Web console (`app/web/index.html`)
+
+Single self-contained file — no build step, no external requests. Two
+conventions worth knowing before editing it:
+
+- **Icons** come from an embedded Lucide sprite at the top of `<body>`. Use
+  `<svg class="ic"><use href="#i-name"/></svg>` (add `lg` for 18px). Never add
+  a CDN link or an icon font: the console must keep working offline and with no
+  third-party dependency. To add an icon, paste one more `<symbol>` into the
+  sprite.
+- **Table columns take a `priority`** (`2` or `3`). Priority 3 hides below
+  1460px of viewport, priority 2 below 1250px, so a wide grid degrades by
+  showing fewer columns instead of scrolling sideways. Mark anything secondary;
+  leave the identifying columns unmarked.
+- Row actions: keep at most two labelled buttons and put the rest in the `⋯`
+  menu via `openRowMenu(anchor, items)`.
 
 ## Adding a new master-data entity (recipe)
 
@@ -53,6 +90,14 @@ Transactional modules are designed (see `docs/ER_DIAGRAM.md`) but not built yet.
 - The **initial** migration creates the whole schema from `Base.metadata` (so it
   can never drift from the models). **All subsequent migrations must use
   `--autogenerate`** and be reviewed.
+- **Consequence — subsequent migrations must be defensive.** Because `0001` is
+  metadata-derived, a *fresh* database is created with today's schema and then
+  runs `0002+` against it, while an *existing* database runs them against the
+  old schema. Any migration that alters a table already in `0001` must guard
+  with `app.core.migration_utils.has_table()` / `has_column()` so both paths
+  converge. Skipping this breaks every fresh deploy — see `0002`–`0004`.
+- Test both paths before shipping a migration: `upgrade head` on an empty DB,
+  and on a copy of the old schema (to exercise the data backfill).
 - `alembic/env.py` reads `DATABASE_URL` from the environment, not `alembic.ini`.
 
 ## Tests

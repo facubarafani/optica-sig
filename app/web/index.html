@@ -36,7 +36,7 @@
   .sidebar .brand small{display:block;color:#7c8aa5;font-size:11px}
   .nav{padding:6px;overflow:auto;flex:1}
   .nav a{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:8px;color:#cbd5e1;font-weight:500;margin:1px 0}
-  .nav a .ic{width:18px;text-align:center;opacity:.85;font-size:15px}
+  .nav a .ic{width:18px;height:18px;opacity:.9}
   .nav a:hover{background:#1e293b;color:#fff}
   .nav a.active{background:var(--primary);color:#fff}
   .sidebar .foot{padding:12px;border-top:1px solid #1e293b;font-size:12px;color:#94a3b8}
@@ -45,7 +45,9 @@
   .topbar .crumb{font-weight:650;font-size:15px}
   .topbar .who{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:13px}
   .topbar .who .avatar{width:30px;height:30px;border-radius:50%;background:var(--primary-50);color:var(--primary);display:grid;place-items:center;font-weight:700}
-  .content{padding:22px;max-width:1180px;width:100%}
+  /* No global width cap: the data grids need the whole window. Reading-width
+     layouts (Empresa, ficha de cliente) are capped individually below. */
+  .content{padding:22px;width:100%;min-width:0}
   .menu-btn{display:none;background:none;border:0;font-size:20px;cursor:pointer}
   /* ---------- generic ---------- */
   .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
@@ -67,6 +69,11 @@
   .btn.danger{background:#fff;border-color:#fecaca;color:var(--danger)}
   .btn.danger:hover{background:var(--danger-50)}
   .btn.sm{padding:5px 10px;font-size:12px;border-radius:7px}
+  /* ---------- icons (embedded Lucide sprite) ---------- */
+  .ic{width:16px;height:16px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2;
+      stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px}
+  .ic.lg{width:18px;height:18px}
+  .btn .ic{margin-right:-1px}
   .btn.ghost{border-color:transparent;background:transparent}
   .btn.ghost:hover{background:#f1f5f9}
   /* inputs */
@@ -81,13 +88,34 @@
   /* table */
   .tbl-wrap{overflow:auto;border-radius:var(--radius)}
   table{width:100%;border-collapse:collapse;background:var(--panel);font-size:13px}
-  thead th{text-align:left;padding:10px 12px;background:#f8fafc;color:#64748b;font-weight:600;font-size:11.5px;letter-spacing:.03em;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap}
-  tbody td{padding:10px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+  thead th{text-align:left;padding:10px 10px;background:#f8fafc;color:#64748b;font-weight:600;font-size:11.5px;letter-spacing:.03em;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap}
+  tbody td{padding:9px 10px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+  /* Long free text must not push the grid into a horizontal scroll. The full
+     value stays available in the cell's title tooltip. */
+  td.trunc{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* Secondary columns drop out as the window narrows, so a wide grid degrades
+     by showing less rather than by scrolling sideways. Mark them with
+     `priority: 2 | 3` in the column definition — 3 disappears first. */
+  @media(max-width:1460px){ .col-p3{display:none} }
+  @media(max-width:1250px){ .col-p2{display:none} }
   tbody tr:last-child td{border-bottom:0}
   tbody tr:hover{background:#fbfdff}
   tr.inactive{opacity:.5}
   td.actions{text-align:right;white-space:nowrap}
-  td.actions .btn{margin-left:5px}
+  td.actions .btn{margin-left:4px}
+  /* Icon-only buttons for secondary row actions — they carry a title tooltip.
+     Five text buttons per row cost ~390px, a quarter of the product grid. */
+  .btn.ico{padding:5px 7px;line-height:1;min-width:28px;justify-content:center}
+  /* row overflow menu */
+  .rowmenu{position:absolute;z-index:60;background:var(--panel);border:1px solid var(--border);
+    border-radius:10px;box-shadow:var(--shadow-lg);padding:5px;min-width:190px;animation:pop .12s ease}
+  .rowmenu button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;
+    padding:8px 10px;border-radius:7px;font-size:13px;font-weight:500;color:var(--text);
+    cursor:pointer;text-align:left}
+  .rowmenu button:hover{background:var(--primary-50);color:var(--primary-600)}
+  .rowmenu button.danger{color:var(--danger)}
+  .rowmenu button.danger:hover{background:var(--danger-50)}
+  .rowmenu .sep{height:1px;background:var(--border);margin:5px 2px}
   td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
   .mono{font-family:var(--mono);font-size:12.5px}
   /* badges */
@@ -103,7 +131,9 @@
   .stat .k{color:var(--muted);font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:8px}
   .stat .v{font-size:28px;font-weight:750;margin-top:8px}
   .stat .v small{font-size:13px;color:var(--muted);font-weight:500}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  /* Two-column reading layouts stay narrow — stretching a form to 1900px is
+     unreadable. Data tables are deliberately not capped. */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:1180px}
   /* tabs */
   .tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:18px}
   .tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:9px 14px;font-weight:600;color:var(--muted);cursor:pointer;font-size:13.5px}
@@ -127,6 +157,26 @@
   .checklist{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;max-height:240px;overflow:auto;border:1px solid var(--border);border-radius:8px;padding:10px}
   .checklist label{display:flex;align-items:center;gap:8px;font-weight:500;font-size:13px}
   .fhelp{font-size:11.5px;color:var(--muted);margin-top:4px}
+  .fwarn{font-size:11.5px;color:var(--warn);background:var(--warn-50);border:1px solid #fde68a;border-radius:6px;padding:5px 8px;margin-top:5px}
+  /* ---------- import wizard ---------- */
+  .wizard .steps{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+  .wizard .steps span{font-size:12px;font-weight:600;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:999px;padding:5px 12px}
+  .wizard .steps span.on{background:var(--primary);border-color:var(--primary);color:#fff}
+  .wizard .steps span.done{background:var(--ok-50);border-color:#bbf7d0;color:var(--ok)}
+  .wizard table{margin-bottom:12px}
+  .wizard input[type=file]{display:block;width:100%;padding:10px;border:1px dashed var(--border);border-radius:var(--radius-sm);background:var(--bg);font-size:13px}
+  .wizard .stats{margin-bottom:16px}
+  .errlist{max-height:220px;overflow:auto;font-size:12.5px;font-family:var(--mono);background:var(--danger-50);border:1px solid #fecaca;border-radius:var(--radius-sm);padding:10px;margin-top:8px}
+  .errlist div{padding:2px 0}
+  .req{color:var(--danger)}
+  .radios{display:flex;gap:16px;flex-wrap:wrap;padding:2px 0}
+  .radios label{display:flex;align-items:center;gap:7px;font-weight:500;font-size:13px;
+    cursor:pointer;white-space:nowrap;flex:0 0 auto}
+  .pricehint{font-size:12px;color:var(--muted);margin-top:5px}
+  .pricehint b{color:var(--ok);font-size:14px}
+  .with-add{display:flex;gap:6px;align-items:stretch}
+  .with-add select{flex:1;min-width:0}
+  .with-add .add{flex:0 0 auto;font-weight:700;line-height:1}
   /* toast */
   #toasts{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:10px;z-index:80}
   .toast{background:#0f172a;color:#fff;padding:11px 15px;border-radius:9px;box-shadow:var(--shadow-lg);font-size:13px;max-width:360px;animation:slide .16s ease}
@@ -147,6 +197,44 @@
 </style>
 </head>
 <body>
+<!-- Icon sprite (Lucide, ISC licence) embedded so the console stays a single
+     self-contained file: no CDN, no font loading, no flash of missing icons.
+     Use with <svg class="ic"><use href="#i-name"/></svg>. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="i-dashboard" viewBox="0 0 24 24"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></symbol>
+<symbol id="i-package" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></symbol>
+<symbol id="i-tags" viewBox="0 0 24 24"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></symbol>
+<symbol id="i-banknote" viewBox="0 0 24 24"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01"/><path d="M18 12h.01"/></symbol>
+<symbol id="i-layers" viewBox="0 0 24 24"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+<symbol id="i-truck" viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></symbol>
+<symbol id="i-store" viewBox="0 0 24 24"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></symbol>
+<symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></symbol>
+<symbol id="i-pencil" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
+<symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+<symbol id="i-dollar" viewBox="0 0 24 24"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></symbol>
+<symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></symbol>
+<symbol id="i-rotate" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol>
+<symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></symbol>
+<symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol>
+<symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
+<symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+<symbol id="i-receipt" viewBox="0 0 24 24"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></symbol>
+<symbol id="i-sheet" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h2"/><path d="M14 13h2"/><path d="M8 17h2"/><path d="M14 17h2"/></symbol>
+<symbol id="i-transfer" viewBox="0 0 24 24"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></symbol>
+<symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></symbol>
+<symbol id="i-percent" viewBox="0 0 24 24"><line x1="19" x2="5" y1="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></symbol>
+</svg>
 <div id="root"></div>
 <div id="toasts"></div>
 
@@ -222,6 +310,36 @@ async function api(method, path, body) {
   if (txt) { try { data = JSON.parse(txt); } catch { data = txt; } }
   if (!res.ok) throw new Error(errMsg(data, res.status));
   return data;
+}
+
+/* multipart upload — Content-Type is left unset on purpose so the browser
+   adds the multipart boundary itself */
+async function apiUpload(path, file) {
+  const fd = new FormData();
+  fd.append("file", file);
+  const headers = {};
+  if (state.token) headers["Authorization"] = "Bearer " + state.token;
+  const res = await fetch(path, { method: "POST", headers, body: fd });
+  if (res.status === 401) { logout(); throw new Error("La sesión expiró. Iniciá sesión de nuevo."); }
+  const txt = await res.text();
+  let data = null;
+  if (txt) { try { data = JSON.parse(txt); } catch { data = txt; } }
+  if (!res.ok) throw new Error(errMsg(data, res.status));
+  return data;
+}
+
+/* download a binary response (the .xlsx template) */
+async function apiDownload(path, filename) {
+  const headers = {};
+  if (state.token) headers["Authorization"] = "Bearer " + state.token;
+  const res = await fetch(path, { headers });
+  if (!res.ok) { toast("No se pudo descargar la plantilla", "err"); return; }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
 }
 
 /* options cache (for dropdowns referencing other entities) */
@@ -304,23 +422,23 @@ function renderLogin(prefill = true) {
 
 /* ----------------------------- app shell ------------------------------- */
 const NAV = [
-  { route:"dashboard", label:"Inicio",          icon:"▦", perm:null },
-  { route:"products",  label:"Productos",        icon:"◫", perm:"products:read" },
-  { route:"catalog",   label:"Catálogo",         icon:"☰", perm:"products:read" },
-  { route:"pricing",   label:"Precios",          icon:"₵", perm:"pricing:read" },
-  { route:"stock",     label:"Stock",            icon:"⤰", perm:"stock:read" },
-  { route:"customers", label:"Clientes",         icon:"☺", perm:"customers:read" },
-  { route:"suppliers", label:"Proveedores",      icon:"⛟", perm:"suppliers:read" },
-  { route:"branches",  label:"Sucursales",       icon:"⌂", perm:"branches:read" },
-  { route:"users",     label:"Usuarios y Roles", icon:"⚷", perm:"users:read" },
-  { route:"company",   label:"Empresa",          icon:"⚙", perm:"company:read" },
+  { route:"dashboard", label:"Inicio",          icon:"i-dashboard", perm:null },
+  { route:"products",  label:"Productos",        icon:"i-package", perm:"products:read" },
+  { route:"catalog",   label:"Catálogo",         icon:"i-tags", perm:"products:read" },
+  { route:"pricing",   label:"Precios",          icon:"i-banknote", perm:"pricing:read" },
+  { route:"stock",     label:"Stock",            icon:"i-layers", perm:"stock:read" },
+  { route:"customers", label:"Clientes",         icon:"i-users", perm:"customers:read" },
+  { route:"suppliers", label:"Proveedores",      icon:"i-truck", perm:"suppliers:read" },
+  { route:"branches",  label:"Sucursales",       icon:"i-store", perm:"branches:read" },
+  { route:"users",     label:"Usuarios y Roles", icon:"i-shield", perm:"users:read" },
+  { route:"company",   label:"Empresa",          icon:"i-settings", perm:"company:read" },
 ];
 
 function renderApp() {
   const u = state.user;
   const initials = (u.full_name || u.email || "?").split(" ").map(s => s[0]).slice(0,2).join("").toUpperCase();
   const navHtml = NAV.filter(n => !n.perm || can(n.perm))
-    .map(n => `<a href="#/${n.route}" data-route="${n.route}"><span class="ic">${n.icon}</span>${n.label}</a>`).join("");
+    .map(n => `<a href="#/${n.route}" data-route="${n.route}"><svg class="ic lg"><use href="#${n.icon}"/></svg>${n.label}</a>`).join("");
   root.innerHTML = `
     <div class="app">
       <aside class="sidebar" id="sidebar">
@@ -331,13 +449,13 @@ function renderApp() {
       <div class="main">
         <div class="topbar">
           <div style="display:flex;align-items:center;gap:10px">
-            <button class="menu-btn" id="menuBtn">☰</button>
+            <button class="menu-btn" id="menuBtn"><svg class="ic lg"><use href="#i-menu"/></svg></button>
             <span class="crumb" id="crumb">Inicio</span>
           </div>
           <div class="who">
             <span>${esc(u.full_name || u.email)} ${u.is_superuser ? badge("admin","blue") : ""}</span>
             <span class="avatar">${esc(initials)}</span>
-            <button class="btn sm ghost" id="logoutBtn">Salir</button>
+            <button class="btn sm ghost" id="logoutBtn"><svg class="ic"><use href="#i-logout"/></svg>Salir</button>
           </div>
         </div>
         <div class="content"><div id="view"></div></div>
@@ -389,10 +507,12 @@ async function route() {
 /* ------------------------------- modal --------------------------------- */
 function openModal({ title, body, onConfirm, confirmLabel = "Guardar", wide = false }) {
   const overlay = el(`<div class="overlay"><div class="modal ${wide ? "wide" : ""}">
-      <header><h3>${esc(title)}</h3><button class="x" type="button">×</button></header>
+      <header><h3>${esc(title)}</h3><button class="x" type="button"><svg class="ic"><use href="#i-x"/></svg></button></header>
       <div class="body"></div>
       <footer></footer></div></div>`);
-  const onKeydown = (e) => { if (e.key === "Escape") close(); };
+  // Only the topmost modal reacts to Escape, so closing a nested quick-create
+  // form does not also close the form that opened it.
+  const onKeydown = (e) => { if (e.key === "Escape" && overlay === document.body.lastElementChild) close(); };
   const close = () => { document.removeEventListener("keydown", onKeydown); overlay.remove(); };
   overlay.querySelector(".body").appendChild(body);
   const foot = overlay.querySelector("footer");
@@ -432,7 +552,18 @@ async function buildForm(fields, values = {}, grid = false) {
     } else if (f.type === "select") {
       const allowEmpty = f.required ? "" : `<option value="">— ninguno —</option>`;
       const opts = (f._opts || []).map(o => `<option value="${esc(o.value)}" ${String(v) === String(o.value) ? "selected" : ""}>${esc(o.label)}</option>`).join("");
-      row.innerHTML = `<label class="fld">${esc(f.label)}${reqMark}</label><select name="${f.key}">${allowEmpty}${opts}</select>`;
+      const sel = `<select name="${f.key}">${allowEmpty}${opts}</select>`;
+      row.innerHTML = `<label class="fld">${esc(f.label)}${reqMark}</label>` + (f.quickCreate
+        ? `<div class="with-add">${sel}<button type="button" class="btn sm add" title="Crear">+</button></div>`
+        : sel);
+      if (f.quickCreate) {
+        row.querySelector("button.add").addEventListener(
+          "click", () => quickCreate(f.quickCreate, row.querySelector("select")));
+      }
+    } else if (f.type === "radio") {
+      const opts = (f._opts || []).map(o =>
+        `<label><input type="radio" name="${f.key}" value="${esc(o.value)}" ${String(v ?? f.default) === String(o.value) ? "checked" : ""}> ${esc(o.label)}</label>`).join("");
+      row.innerHTML = `<label class="fld">${esc(f.label)}${reqMark}</label><div class="radios">${opts}</div>`;
     } else if (f.type === "textarea") {
       row.innerHTML = `<label class="fld">${esc(f.label)}${reqMark}</label><textarea name="${f.key}" placeholder="${esc(f.placeholder||"")}">${esc(v ?? "")}</textarea>`;
     } else {
@@ -442,13 +573,31 @@ async function buildForm(fields, values = {}, grid = false) {
       row.innerHTML = `<label class="fld">${esc(f.label)}${reqMark}</label><input type="${type}" name="${f.key}" ${step} ${extra} placeholder="${esc(f.placeholder||"")}" value="${v != null ? esc(v) : ""}">`;
     }
     if (f.help) row.appendChild(el(`<div class="fhelp">${esc(f.help)}</div>`));
+    f._row = row;
     form.appendChild(row);
   }
-  form.read = () => {
+
+  // Fields with `showIf` appear only when the predicate holds for the current
+  // values (e.g. "Precio" only in manual pricing mode). Hidden fields are
+  // skipped by read() and by validate(), so they cannot block a save.
+  const conditional = fields.filter(f => f.showIf);
+  const applyVisibility = () => {
+    if (!conditional.length) return;
+    const current = form.read({ all: true });
+    for (const f of conditional) {
+      f._hidden = !f.showIf(current);
+      f._row.style.display = f._hidden ? "none" : "";
+    }
+  };
+  if (conditional.length) form.addEventListener("change", applyVisibility);
+
+  form.read = ({ all = false } = {}) => {
     const out = {};
     for (const f of fields) {
+      if (!all && f._hidden) continue;
       if (f.type === "checkbox") { out[f.key] = form.querySelector(`[name="${f.key}"]`).checked; continue; }
       if (f.type === "multiselect") { out[f.key] = $$(`[name="${f.key}"]:checked`, form).map(i => Number(i.value)); continue; }
+      if (f.type === "radio") { const c = form.querySelector(`[name="${f.key}"]:checked`); out[f.key] = c ? c.value : null; continue; }
       const elx = form.querySelector(`[name="${f.key}"]`);
       let raw = elx ? elx.value : "";
       if (raw === "" || raw == null) {
@@ -464,21 +613,53 @@ async function buildForm(fields, values = {}, grid = false) {
     }
     return out;
   };
+  applyVisibility();   // needs form.read, so it runs after the assignment above
   return form;
 }
 
 function validate(fields, payload) {
   for (const f of fields) {
-    if (!f.required) continue;
+    if (!f.required || f._hidden) continue;
     const v = payload[f.key];
     if (v == null || v === "" || (Array.isArray(v) && v.length === 0)) return `Falta completar "${f.label}".`;
   }
   return null;
 }
 
+/* Replace a select's options in place, keeping the current value when it is
+   still available. Used by the dependent selects of the product form. */
+function setSelectOptions(selectEl, opts, { required = false } = {}) {
+  const current = selectEl.value;
+  const allowEmpty = required ? "" : `<option value="">— ninguno —</option>`;
+  selectEl.innerHTML = allowEmpty + opts
+    .map(o => `<option value="${esc(o.value)}">${esc(o.label)}</option>`).join("");
+  if (current && opts.some(o => String(o.value) === current)) selectEl.value = current;
+}
+
+/* "+" beside a select: create the referenced entity without losing the form
+   you were filling in. `key` is a CONFIG entry (e.g. "brands"). */
+async function quickCreate(key, selectEl) {
+  const cfg = CONFIG[key];
+  if (!cfg) return;
+  await formModal({
+    title: cfg.newTitle,
+    fields: typeof cfg.fields === "function" ? cfg.fields("create") : cfg.fields,
+    grid: cfg.grid,
+    onSubmit: async (payload) => {
+      const created = await api("POST", cfg.endpoint, payload);
+      clearOptions();
+      selectEl.appendChild(el(`<option value="${esc(created.id)}">${esc(created.name)}</option>`));
+      selectEl.value = String(created.id);
+      selectEl.dispatchEvent(new Event("change", { bubbles: true }));
+      toast("Creado", "ok");
+    },
+  });
+}
+
 /* open a create/edit form modal backed by buildForm */
-async function formModal({ title, fields, values = {}, confirmLabel = "Guardar", grid = false, onSubmit }) {
+async function formModal({ title, fields, values = {}, confirmLabel = "Guardar", grid = false, onSubmit, onReady }) {
   const form = await buildForm(fields, values, grid);
+  if (onReady) await onReady(form);
   openModal({ title, body: form, confirmLabel, wide: grid, onConfirm: async (close) => {
     const payload = form.read();
     const err = validate(fields, payload);
@@ -488,18 +669,60 @@ async function formModal({ title, fields, values = {}, confirmLabel = "Guardar",
   }});
 }
 
+/* Overflow menu for secondary row actions. Keeps the grid narrow without
+   hiding anything: every action stays reachable, just one click deeper. */
+function openRowMenu(anchor, items) {
+  const existing = document.querySelector(".rowmenu");
+  if (existing) existing.remove();
+  const menu = el(`<div class="rowmenu"></div>`);
+  for (const it of items) {
+    if (!it) continue;
+    if (it.sep) { menu.appendChild(el(`<div class="sep"></div>`)); continue; }
+    const b = el(`<button type="button" class="${it.danger ? "danger" : ""}">
+      <svg class="ic"><use href="#${it.icon}"/></svg>${esc(it.label)}</button>`);
+    b.addEventListener("click", () => { close(); it.onClick(); });
+    menu.appendChild(b);
+  }
+  document.body.appendChild(menu);
+
+  // Anchor below-right of the trigger, flipping up / clamping when it would
+  // fall outside the viewport.
+  const r = anchor.getBoundingClientRect();
+  const below = r.bottom + 6;
+  const flip = below + menu.offsetHeight > window.innerHeight - 8;
+  menu.style.top = ((flip ? r.top - menu.offsetHeight - 6 : below) + window.scrollY) + "px";
+  menu.style.left = (Math.max(8, Math.min(
+    r.right - menu.offsetWidth, window.innerWidth - menu.offsetWidth - 8)) + window.scrollX) + "px";
+
+  const onOut = (e) => { if (!menu.contains(e.target)) close(); };
+  const onKey = (e) => { if (e.key === "Escape") close(); };
+  const close = () => {
+    menu.remove();
+    document.removeEventListener("mousedown", onOut, true);
+    document.removeEventListener("keydown", onKey, true);
+    window.removeEventListener("scroll", close, true);
+  };
+  setTimeout(() => {
+    document.addEventListener("mousedown", onOut, true);
+    document.addEventListener("keydown", onKey, true);
+    window.addEventListener("scroll", close, true);
+  }, 0);
+  return close;
+}
+
 function confirmDanger({ title, message, confirmLabel = "Eliminar", onConfirm }) {
   openModal({ title, confirmLabel, body: el(`<div>${esc(message)}</div>`), onConfirm: async (close) => { await onConfirm(); close(); } });
 }
 
 /* ------------------------------- table --------------------------------- */
-function renderTable(columns, rows, rowActions) {
+function renderTable(columns, rows, rowActions, ctx) {
   if (!rows || !rows.length) return `<div class="card"><div class="empty">Sin registros.</div></div>`;
-  const head = columns.map(c => `<th class="${c.align === "right" ? "num" : ""}">${esc(c.label)}</th>`).join("") + (rowActions ? "<th></th>" : "");
+  const prio = (c) => c.priority ? ` col-p${c.priority}` : "";
+  const head = columns.map(c => `<th class="${c.align === "right" ? "num" : ""}${prio(c)}">${esc(c.label)}</th>`).join("") + (rowActions ? "<th></th>" : "");
   const body = rows.map(r => {
     const cells = columns.map(c => {
       let val;
-      if (c.render) val = c.render(r[c.key], r);
+      if (c.render) val = c.render(r[c.key], r, ctx);
       else if (c.type === "bool") val = boolBadge(r[c.key]);
       else if (c.type === "money") val = fmtMoney(r[c.key]);
       else if (c.type === "num") val = fmtNum(r[c.key]);
@@ -507,7 +730,7 @@ function renderTable(columns, rows, rowActions) {
       else if (c.type === "datetime") val = fmtDateTime(r[c.key]);
       else if (c.type === "badge") val = badge(c.map ? (c.map[r[c.key]] || TITLECASE(r[c.key])) : TITLECASE(r[c.key]), c.cls || "blue");
       else val = esc(r[c.key] ?? "—");
-      return `<td class="${c.align === "right" || c.type === "money" || c.type === "num" ? "num" : ""} ${c.mono ? "mono" : ""}">${val}</td>`;
+      return `<td class="${c.align === "right" || c.type === "money" || c.type === "num" ? "num" : ""} ${c.mono ? "mono" : ""} ${c.trunc ? "trunc" : ""}${prio(c)}">${val}</td>`;
     }).join("");
     const acts = rowActions ? `<td class="actions">${rowActions(r)}</td>` : "";
     const cls = ("is_active" in r && !r.is_active) ? "inactive" : "";
@@ -548,7 +771,17 @@ const CONFIG = {
       { key:"tax_id", label:"CUIT" }, { key:"contact_name", label:"Nombre de contacto" },
       { key:"email", label:"Email", type:"email" }, { key:"phone", label:"Teléfono" },
       { key:"address", label:"Dirección" }, { key:"notes", label:"Notas", type:"textarea", full:true },
+      { key:"brand_ids", label:"Marcas que provee", type:"multiselect", full:true,
+        optionsFrom:{ endpoint:"/api/brands" },
+        help:"Al cargar un producto de este proveedor solo se ofrecen estas marcas." },
     ],
+    // Brands are an N-N relation with its own endpoint, not a supplier column.
+    extraKeys: ["brand_ids"],
+    loadExtra: async (row) => ({
+      brand_ids: (await api("GET", `/api/suppliers/${row.id}/brands`).catch(() => [])).map(b => b.id),
+    }),
+    saveExtra: async (id, extra) =>
+      api("PUT", `/api/suppliers/${id}/brands`, { brand_ids: extra.brand_ids || [] }),
     grid: true,
   },
   product_types: {
@@ -563,6 +796,22 @@ const CONFIG = {
     columns: [ { key:"id", label:"ID" }, { key:"name", label:"Nombre" }, { key:"is_active", label:"Estado", type:"bool" } ],
     fields: [ { key:"name", label:"Nombre", required:true } ],
   },
+  product_models: {
+    title: "Modelos", newTitle: "Nuevo modelo", editTitle: "Editar modelo",
+    endpoint: "/api/product-models", perm: "products", softDelete: true,
+    columns: [
+      { key:"id", label:"ID" }, { key:"name", label:"Nombre" },
+      { key:"product_type_id", label:"Tipo de producto", render:(v, r, maps) => v ? esc((maps && maps.types && maps.types[v]) || ("#"+v)) : `<span class="fhelp">todos los tipos</span>` },
+      { key:"is_active", label:"Estado", type:"bool" },
+    ],
+    maps: { types: "/api/product-types" },
+    fields: [
+      { key:"name", label:"Nombre", required:true, placeholder:"Clipper, aviador, redondo…" },
+      { key:"product_type_id", label:"Tipo de producto", type:"select", valueType:"int",
+        optionsFrom:{ endpoint:"/api/product-types" },
+        help:"Opcional. Sin tipo, el modelo aparece para todos los productos." },
+    ],
+  },
   price_categories: {
     title: "Categorías de precio", newTitle: "Nueva categoría", editTitle: "Editar categoría",
     endpoint: "/api/price-categories", perm: "pricing", softDelete: true,
@@ -574,6 +823,11 @@ const CONFIG = {
 async function resourceView(container, cfg, opts = {}) {
   const writable = can(cfg.perm + ":write");
   let showInactive = !!opts.showInactive;
+  // Optional id→name maps for columns that render a FK (see cfg.maps).
+  const maps = {};
+  for (const [name, endpoint] of Object.entries(cfg.maps || {})) {
+    maps[name] = await idMap(endpoint);
+  }
   async function load() {
     const list = await api("GET", cfg.endpoint + (showInactive ? "?include_inactive=true" : ""));
     paint(list);
@@ -584,23 +838,31 @@ async function resourceView(container, cfg, opts = {}) {
     if (mode === "edit" && cfg.softDelete) f = f.concat([{ key:"is_active", label:"Activo", type:"checkbox" }]);
     return f;
   };
-  function openForm(mode, row) {
+  async function openForm(mode, row) {
     const fields = editFields(mode, row);
+    // Some entities carry data that lives in its own endpoint (e.g. a
+    // supplier's brands, an N-N relation). cfg.loadExtra/saveExtra handle it.
+    let values = row || {};
+    if (mode === "edit" && cfg.loadExtra) values = { ...values, ...(await cfg.loadExtra(row)) };
     formModal({
       title: mode === "edit" ? cfg.editTitle : cfg.newTitle,
-      fields, values: row || {}, grid: cfg.grid,
+      fields, values, grid: cfg.grid,
       onSubmit: async (payload) => {
-        if (mode === "edit") await api("PUT", cfg.endpoint + "/" + row.id, payload);
-        else await api("POST", cfg.endpoint, payload);
+        const extra = {};
+        for (const k of (cfg.extraKeys || [])) { extra[k] = payload[k]; delete payload[k]; }
+        const saved = mode === "edit"
+          ? await api("PUT", cfg.endpoint + "/" + row.id, payload)
+          : await api("POST", cfg.endpoint, payload);
+        if (cfg.saveExtra) await cfg.saveExtra(saved.id, extra);
         clearOptions(); toast("Guardado", "ok"); await load();
       },
     });
   }
   function actions(r) {
     if (!writable) return "";
-    let h = `<button class="btn sm" data-act="edit" data-id="${r.id}">Editar</button>`;
-    if (cfg.softDelete && !r.is_active) h += `<button class="btn sm" data-act="restore" data-id="${r.id}">Restaurar</button>`;
-    else h += `<button class="btn sm danger" data-act="del" data-id="${r.id}">Desactivar</button>`;
+    let h = `<button class="btn sm" data-act="edit" data-id="${r.id}"><svg class="ic"><use href="#i-pencil"/></svg>Editar</button>`;
+    if (cfg.softDelete && !r.is_active) h += `<button class="btn sm" data-act="restore" data-id="${r.id}"><svg class="ic"><use href="#i-rotate"/></svg>Restaurar</button>`;
+    else h += `<button class="btn sm danger" data-act="del" data-id="${r.id}"><svg class="ic"><use href="#i-ban"/></svg>Desactivar</button>`;
     return h;
   }
   function paint(list) {
@@ -609,10 +871,10 @@ async function resourceView(container, cfg, opts = {}) {
         <div><h2>${esc(cfg.title)}</h2><div class="sub">${list.length} registro(s)</div></div>
         <div class="toolbar" style="margin:0">
           ${cfg.softDelete ? `<label class="switch"><input type="checkbox" id="inact" ${showInactive ? "checked" : ""}> Ver inactivos</label>` : ""}
-          ${writable ? `<button class="btn primary" id="newBtn">+ Nuevo</button>` : ""}
+          ${writable ? `<button class="btn primary" id="newBtn"><svg class="ic"><use href="#i-plus"/></svg>Nuevo</button>` : ""}
         </div>
       </div>
-      ${renderTable(cfg.columns, list, writable ? actions : null)}`;
+      ${renderTable(cfg.columns, list, writable ? actions : null, maps)}`;
     const nb = $("#newBtn", container); if (nb) nb.addEventListener("click", () => openForm("create"));
     const ic = $("#inact", container); if (ic) ic.addEventListener("change", () => { showInactive = ic.checked; load(); });
     $$("[data-act]", container).forEach(b => b.addEventListener("click", async () => {
@@ -637,6 +899,179 @@ function renderTabs(container, head, tabs) {
   show(0);
 }
 
+/* ------------------------------ export --------------------------------- */
+/* Exports use the *import* column layout, so a file can be exported, edited in
+   Excel and uploaded again. Formats mirror what the importer accepts. */
+const EXPORT_FORMATS = [
+  { fmt:"xlsx", label:"Excel (.xlsx)", icon:"i-sheet" },
+  { fmt:"csv",  label:"CSV",           icon:"i-download" },
+];
+
+function downloadExport(spec, fmt, params = {}) {
+  const qs = new URLSearchParams({ format: fmt });
+  for (const [k, v] of Object.entries(params)) if (v) qs.set(k, v);
+  apiDownload(`/api/imports/${spec}/export?${qs}`, `${spec}.${fmt}`);
+}
+
+/* `specs`: [{key, label}] — one group of formats per spec. */
+function openExportMenu(anchor, specs, params = {}) {
+  const items = [];
+  specs.forEach((s, i) => {
+    if (i) items.push({ sep:true });
+    for (const f of EXPORT_FORMATS) {
+      items.push({
+        icon: f.icon,
+        label: specs.length > 1 ? `${s.label} · ${f.label}` : f.label,
+        onClick: () => downloadExport(s.key, f.fmt, params),
+      });
+    }
+  });
+  openRowMenu(anchor, items);
+}
+
+/* =======================================================================
+   IMPORT WIZARD  (subir → mapear → previsualizar → confirmar)
+   One component for every import target; the columns come from
+   /api/imports/specs, so adding a target on the backend needs no UI change.
+   ======================================================================= */
+let _specsCache = null;
+async function importSpecs() {
+  if (!_specsCache) _specsCache = await api("GET", "/api/imports/specs").catch(() => []);
+  return _specsCache;
+}
+
+async function canImport(specKey) {
+  return (await importSpecs()).some(s => s.key === specKey);
+}
+
+async function openImportWizard(specKey, onDone) {
+  const spec = (await importSpecs()).find(s => s.key === specKey);
+  if (!spec) return toast("No tenés permisos para esta importación", "err");
+
+  const body = el(`<div class="wizard"></div>`);
+  const close = openModal({ title: `Importar — ${spec.label}`, body, wide: true });
+  step1();
+
+  function head(n) {
+    return `<div class="steps">${[["1","Archivo"],["2","Columnas"],["3","Revisión"]]
+      .map(([i,l]) => `<span class="${Number(i)===n?"on":(Number(i)<n?"done":"")}">${i}. ${l}</span>`)
+      .join("")}</div>`;
+  }
+
+  /* ---- 1. plantilla + archivo ---- */
+  function step1() {
+    body.innerHTML = `${head(1)}
+      <p class="sub">${esc(spec.description)}</p>
+      <div class="card pad" style="margin-bottom:14px">
+        <b>¿No tenés el archivo armado?</b>
+        <div class="fhelp" style="margin:4px 0 10px">Descargá la plantilla con las columnas correctas y una hoja "Referencia" con los valores válidos ya cargados.</div>
+        <button class="btn" id="tpl"><svg class="ic"><use href="#i-sheet"/></svg>Descargar plantilla .xlsx</button>
+      </div>
+      <div class="card pad">
+        <b>Subí tu archivo</b>
+        <div class="fhelp" style="margin:4px 0 10px">.xlsx o .csv. Si el proveedor te manda PDF, convertilo a Excel primero. Máx. 5.000 filas.</div>
+        <input type="file" id="file" accept=".xlsx,.xlsm,.csv,.txt">
+      </div>
+      <div id="err"></div>`;
+    $("#tpl", body).addEventListener("click", () =>
+      apiDownload(`/api/imports/${spec.key}/template`, `plantilla-${spec.key}.xlsx`));
+    $("#file", body).addEventListener("change", async (e) => {
+      const f = e.target.files[0]; if (!f) return;
+      $("#err", body).innerHTML = `<div class="fhelp">Leyendo ${esc(f.name)}…</div>`;
+      try { step2(await apiUpload(`/api/imports/${spec.key}/upload`, f)); }
+      catch (ex) { $("#err", body).innerHTML = `<div class="fwarn">${esc(ex.message)}</div>`; }
+    });
+  }
+
+  /* ---- 2. mapeo de columnas ---- */
+  function step2(up) {
+    const opt = (sel) => `<option value="">— ignorar —</option>` + up.headers
+      .map(h => `<option value="${esc(h)}" ${h === sel ? "selected" : ""}>${esc(h)}</option>`).join("");
+    body.innerHTML = `${head(2)}
+      <p class="sub"><b>${esc(up.filename)}</b> — ${up.row_count} fila(s). Confirmá a qué campo corresponde cada columna.</p>
+      <div class="card pad" style="margin-bottom:12px">
+        <label class="fld">Formato de números</label>
+        <div class="radios">
+          <label><input type="radio" name="decfmt" value="es" checked> 1.234,56 (Argentina)</label>
+          <label><input type="radio" name="decfmt" value="en"> 1,234.56 (inglés)</label>
+        </div>
+        <div class="fhelp">No se adivina: con un solo separador "1.500" puede ser 1500 o 1,5.</div>
+      </div>
+      <table><thead><tr><th>Campo</th><th>Columna del archivo</th></tr></thead>
+        <tbody>${spec.fields.map(f => `<tr>
+          <td>${esc(f.label)}${f.required ? ' <span class="req">*</span>' : ""}
+              ${f.help ? `<div class="fhelp">${esc(f.help)}</div>` : ""}</td>
+          <td><select data-key="${esc(f.key)}">${opt(up.suggested_mapping[f.key])}</select></td>
+        </tr>`).join("")}</tbody></table>
+      <div id="err"></div>
+      <div class="toolbar" style="justify-content:flex-end">
+        <button class="btn primary" id="next">Previsualizar<svg class="ic"><use href="#i-arrow-right"/></svg></button>
+      </div>`;
+    $("#next", body).addEventListener("click", async () => {
+      const mapping = {};
+      $$("[data-key]", body).forEach(s => { if (s.value) mapping[s.dataset.key] = s.value; });
+      const opts = {
+        mapping,
+        decimal_format: body.querySelector('[name="decfmt"]:checked').value,
+        create_missing: true,
+      };
+      try { step3(up, opts, await api("POST", `/api/imports/batches/${up.batch_id}/preview`, opts)); }
+      catch (ex) { $("#err", body).innerHTML = `<div class="fwarn">${esc(ex.message)}</div>`; }
+    });
+  }
+
+  /* ---- 3. vista previa + confirmación ---- */
+  function step3(up, opts, pv) {
+    const errRows = pv.errors.length ? `
+      <div class="card pad" style="margin-bottom:12px">
+        <b style="color:var(--danger)">Filas con problemas (${pv.errors.length})</b>
+        <div class="errlist">${pv.errors.slice(0, 50).map(e =>
+          `<div>Fila ${e.row}: ${esc(e.message)}</div>`).join("")}
+          ${pv.errors.length > 50 ? `<div class="fhelp">…y ${pv.errors.length - 50} más.</div>` : ""}</div>
+        <div class="fhelp" style="margin-top:8px">Corregí el archivo y volvé a subirlo. No se importa nada hasta que no haya errores.</div>
+      </div>` : "";
+
+    const missing = pv.missing_refs.length ? `
+      <div class="card pad" style="margin-bottom:12px">
+        <b>No existen todavía en el catálogo</b>
+        <div class="fhelp" style="margin:4px 0 8px">Se crean automáticamente al confirmar.</div>
+        <div class="checklist">${pv.missing_refs.map(m =>
+          `<label><input type="checkbox" checked disabled> ${esc(m.label)}: <b>${esc(m.name)}</b></label>`).join("")}</div>
+      </div>` : "";
+
+    body.innerHTML = `${head(3)}
+      <div class="stats">
+        <div class="stat"><div class="k">Se crean</div><div class="v">${pv.to_create}</div></div>
+        <div class="stat"><div class="k">Se actualizan</div><div class="v">${pv.to_update}</div></div>
+        <div class="stat"><div class="k">Con error</div><div class="v" style="color:${pv.errors.length ? "var(--danger)" : "inherit"}">${pv.errors.length}</div></div>
+      </div>
+      ${errRows}${missing}
+      <div id="err"></div>
+      <div class="toolbar" style="justify-content:space-between">
+        <button class="btn" id="back"><svg class="ic"><use href="#i-arrow-left"/></svg>Volver</button>
+        <button class="btn primary" id="go" ${pv.ok ? "" : "disabled"}>
+          ${pv.ok ? `Confirmar ${pv.to_create + pv.to_update} fila(s)` : "Corregí los errores para continuar"}</button>
+      </div>`;
+    $("#back", body).addEventListener("click", () => step2(up));
+    const go = $("#go", body);
+    if (go && pv.ok) go.addEventListener("click", async () => {
+      go.disabled = true;
+      try {
+        const res = await api("POST", `/api/imports/batches/${up.batch_id}/commit`, opts);
+        const created = Object.entries(res.created_refs || {})
+          .map(([k, v]) => `${k}: ${v.join(", ")}`).join(" · ");
+        toast(`Importado — ${res.created} nuevo(s), ${res.updated} actualizado(s)`, "ok");
+        if (created) toast("Se crearon " + created, "ok");
+        close();
+        if (onDone) await onDone();
+      } catch (ex) {
+        go.disabled = false;
+        $("#err", body).innerHTML = `<div class="fwarn">${esc(ex.message)}</div>`;
+      }
+    });
+  }
+}
+
 /* =======================================================================
    DASHBOARD
    ======================================================================= */
@@ -656,7 +1091,7 @@ async function dashboardView(view) {
   if (can("stock:read")) {
     try {
       const levels = await api("GET", "/api/stock/levels");
-      const pmap = can("products:read") ? await idMap("/api/products", "name", p => `${p.code} · ${p.name}`) : {};
+      const pmap = can("products:read") ? await idMap("/api/products", "code", p => p.description ? `${p.code} · ${p.description}` : p.code) : {};
       const bmap = can("branches:read") ? await idMap("/api/branches") : {};
       const low = levels.filter(l => l.min_stock != null && Number(l.quantity) <= Number(l.min_stock));
       lowStockHtml = `<div class="card pad"><h3 style="margin-bottom:12px">Stock bajo / agotado ${low.length ? badge(low.length, "amber") : badge("0","green")}</h3>` +
@@ -681,25 +1116,114 @@ async function dashboardView(view) {
    ======================================================================= */
 async function productsView(view) {
   const writable = can("products:write");
-  const [typeMap, brandMap, supMap, catMap] = await Promise.all([
-    idMap("/api/product-types"), idMap("/api/brands"),
+  const [typeMap, brandMap, modelMap, supMap, catMap, listMap, settings] = await Promise.all([
+    idMap("/api/product-types"), idMap("/api/brands"), idMap("/api/product-models"),
     can("suppliers:read") ? idMap("/api/suppliers") : Promise.resolve({}),
     can("pricing:read") ? idMap("/api/price-categories") : Promise.resolve({}),
+    can("pricing:read") ? idMap("/api/price-lists") : Promise.resolve({}),
+    can("company:read") ? api("GET", "/api/company/settings").catch(() => ({})) : Promise.resolve({}),
   ]);
-  const filters = { product_type_id:"", brand_id:"", supplier_id:"" };
+  const defaultPriceListId = settings.default_price_list_id || "";
+  const filters = { product_type_id:"", brand_id:"", model_id:"", supplier_id:"" };
   let showInactive = false;
 
   const baseFields = () => [
     { key:"code", label:"Código", required:true },
-    { key:"name", label:"Nombre", required:true },
-    { key:"product_type_id", label:"Tipo de producto", type:"select", required:true, valueType:"int", optionsFrom:{ endpoint:"/api/product-types" } },
-    { key:"brand_id", label:"Marca", type:"select", valueType:"int", optionsFrom:{ endpoint:"/api/brands" } },
+    { key:"product_type_id", label:"Tipo de producto", type:"select", required:true, valueType:"int", optionsFrom:{ endpoint:"/api/product-types" }, quickCreate:"product_types" },
     { key:"supplier_id", label:"Proveedor", type:"select", valueType:"int", optionsFrom:{ endpoint:"/api/suppliers" } },
-    { key:"price_category_id", label:"Categoría de precio", type:"select", valueType:"int", optionsFrom:{ endpoint:"/api/price-categories" } },
-    { key:"model", label:"Modelo" }, { key:"color", label:"Color" },
+    { key:"brand_id", label:"Marca", type:"select", valueType:"int", optionsFrom:{ endpoint:"/api/brands" }, quickCreate:"brands" },
+    { key:"model_id", label:"Modelo", type:"select", valueType:"int", optionsFrom:{ endpoint:"/api/product-models" }, quickCreate:"product_models" },
+    { key:"color", label:"Color" },
     { key:"min_stock", label:"Stock mínimo", type:"decimal", step:"0.01" },
+    // --- precio de venta ---
+    { key:"pricing_mode", label:"Precio de venta", type:"radio", full:true, default:"price_list",
+      options:[ { value:"price_list", label:"Por lista de precios" }, { value:"manual", label:"Manual" } ] },
+    { key:"sale_price", label:"Precio", type:"decimal", step:"0.01",
+      showIf:(v) => v.pricing_mode === "manual" },
+    { key:"price_list_id", label:"Lista de precios", type:"select", valueType:"int",
+      optionsFrom:{ endpoint:"/api/price-lists" },
+      showIf:(v) => v.pricing_mode !== "manual",
+      help:"Vacío = se usa la lista por defecto de la empresa." },
+    { key:"price_category_id", label:"Categoría de precio", type:"select", valueType:"int",
+      optionsFrom:{ endpoint:"/api/price-categories" },
+      showIf:(v) => v.pricing_mode !== "manual" },
     { key:"description", label:"Descripción", type:"textarea", full:true },
   ];
+
+  /* Modelo depends on the chosen type, Marca on the chosen supplier. Both are
+     repopulated live as those selects change. */
+  async function wireDependentSelects(form) {
+    const typeSel  = form.querySelector('[name="product_type_id"]');
+    const modelSel = form.querySelector('[name="model_id"]');
+    const supSel   = form.querySelector('[name="supplier_id"]');
+    const brandSel = form.querySelector('[name="brand_id"]');
+
+    // Keeps the current value visible even when it falls outside the new list,
+    // so saving an untouched form never silently drops it.
+    const keepCurrent = (sel, opts, map, note) => {
+      const cur = sel.value;
+      if (cur && !opts.some(o => String(o.value) === cur)) {
+        opts = opts.concat([{ value: cur, label: `${map[cur] || ("#" + cur)}${note}` }]);
+        return { opts, outsider: map[cur] || ("#" + cur) };
+      }
+      return { opts, outsider: null };
+    };
+
+    const setWarn = (sel, msg) => {
+      const row = sel.closest(".form-row");
+      let w = row.querySelector(".fwarn");
+      if (!msg) { if (w) w.remove(); return; }
+      if (!w) { w = el(`<div class="fwarn"></div>`); row.appendChild(w); }
+      w.textContent = msg;
+    };
+
+    async function refreshModels() {
+      const t = typeSel.value;
+      const rows = await api("GET", "/api/product-models" + (t ? `?product_type_id=${t}` : "")).catch(() => []);
+      const { opts } = keepCurrent(modelSel, rows.map(r => ({ value:r.id, label:r.name })),
+                                   modelMap, " (otro tipo)");
+      setSelectOptions(modelSel, opts);
+    }
+
+    async function refreshBrands() {
+      const s = supSel.value;
+      const rows = await api("GET", s ? `/api/suppliers/${s}/brands` : "/api/brands").catch(() => []);
+      const { opts, outsider } = keepCurrent(brandSel, rows.map(r => ({ value:r.id, label:r.name })),
+                                             brandMap, " (fuera del proveedor)");
+      setSelectOptions(brandSel, opts);
+      setWarn(brandSel, outsider && s
+        ? `"${outsider}" no está asociada a este proveedor. Se conserva, pero conviene asociarla en Proveedores.`
+        : null);
+    }
+
+    /* Live preview of the price the chosen list + category resolves to, so you
+       are not saving blind. */
+    const listSel = form.querySelector('[name="price_list_id"]');
+    const catSel  = form.querySelector('[name="price_category_id"]');
+    async function previewPrice() {
+      const row = catSel.closest(".form-row");
+      let hint = row.querySelector(".pricehint");
+      if (!hint) { hint = el(`<div class="pricehint"></div>`); row.appendChild(hint); }
+      const cat = catSel.value;
+      if (!cat) { hint.textContent = "Elegí una categoría para ver el precio."; return; }
+      const listId = listSel.value || defaultPriceListId;
+      if (!listId) { hint.textContent = "Sin lista propia ni lista por defecto en Empresa."; return; }
+      const items = await api("GET", `/api/price-lists/${listId}/items`).catch(() => []);
+      const hit = items.find(i => String(i.price_category_id) === cat);
+      hint.innerHTML = hit
+        ? `Precio resultante: <b>${fmtMoney(hit.price)}</b>`
+        : "Esa lista todavía no tiene precio para esta categoría.";
+    }
+
+    typeSel.addEventListener("change", refreshModels);
+    supSel.addEventListener("change", refreshBrands);
+    listSel.addEventListener("change", previewPrice);
+    catSel.addEventListener("change", previewPrice);
+    form.addEventListener("change", (e) => {
+      if (e.target.name === "pricing_mode") previewPrice();
+    });
+    await Promise.all([refreshModels(), refreshBrands(), previewPrice()]);
+  }
 
   async function load() {
     const qs = new URLSearchParams();
@@ -711,9 +1235,10 @@ async function productsView(view) {
 
   function openForm(mode, row) {
     let fields = baseFields();
-    if (mode === "create") fields = fields.concat([{ key:"current_cost", label:"Costo inicial", type:"decimal", step:"0.01", help:"Después de crear, cambiá el costo con la acción Costo (queda auditado)." }]);
+    if (mode === "create") fields = fields.concat([{ key:"current_cost", label:"Costo inicial", type:"decimal", step:"0.01", help:"Después de crear, cambiá el costo desde el menú ⋯ de la fila (queda auditado)." }]);
     else fields = fields.concat([{ key:"is_active", label:"Activo", type:"checkbox" }]);
     formModal({ title: (mode==="edit"?"Editar producto":"Nuevo producto"), fields, values: row || {}, grid:true,
+      onReady: wireDependentSelects,
       onSubmit: async (payload) => {
         if (mode === "edit") await api("PUT", "/api/products/" + row.id, payload);
         else await api("POST", "/api/products", payload);
@@ -745,17 +1270,35 @@ async function productsView(view) {
       [ { key:"branch_id", label:"Sucursal", render:(v)=>esc(bmap[v] || ("#"+v)) },
         { key:"quantity", label:"Cant.", type:"num", align:"right" },
         { key:"min_stock", label:"Mín", type:"num", align:"right" } ], levels)}</div>`);
-    openModal({ title:`Stock — ${row.code} · ${row.name}`, body });
+    openModal({ title:`Stock — ${row.code}${row.description ? " · " + row.description : ""}`, body });
   }
 
+  /* Only the two everyday actions are labelled; the rest live in the "⋯" menu.
+     Five buttons per row cost ~390px — a quarter of the grid — and pushed it
+     into a horizontal scroll. */
   function actions(r) {
     let h = "";
-    if (can("stock:read")) h += `<button class="btn sm" data-act="stock" data-id="${r.id}">Stock</button>`;
-    if (can("products:read")) h += `<button class="btn sm" data-act="hist" data-id="${r.id}">Historial</button>`;
-    if (writable) h += `<button class="btn sm" data-act="cost" data-id="${r.id}">Costo</button>
-      <button class="btn sm" data-act="edit" data-id="${r.id}">Editar</button>
-      ${r.is_active ? `<button class="btn sm danger" data-act="del" data-id="${r.id}">Desactivar</button>` : `<button class="btn sm" data-act="restore" data-id="${r.id}">Restaurar</button>`}`;
+    if (can("stock:read"))
+      h += `<button class="btn sm" data-act="stock" data-id="${r.id}"><svg class="ic"><use href="#i-box"/></svg>Stock</button>`;
+    if (writable)
+      h += `<button class="btn sm" data-act="edit" data-id="${r.id}"><svg class="ic"><use href="#i-pencil"/></svg>Editar</button>`;
+    h += `<button class="btn sm ico" title="Más acciones" data-act="more" data-id="${r.id}"><svg class="ic"><use href="#i-more"/></svg></button>`;
     return h;
+  }
+
+  function rowMenu(btn, row) {
+    openRowMenu(btn, [
+      { icon:"i-clock", label:"Historial de costos", onClick:() => historyModal(row) },
+      writable && { icon:"i-dollar", label:"Cambiar costo", onClick:() => costModal(row) },
+      writable && { sep:true },
+      writable && (row.is_active
+        ? { icon:"i-ban", label:"Desactivar", danger:true, onClick:() => confirmDanger({
+            title:"Desactivar producto", message:`¿Desactivar "${row.code}"?`,
+            confirmLabel:"Desactivar",
+            onConfirm: async () => { await api("DELETE", "/api/products/" + row.id); toast("Desactivado","ok"); load(); } }) }
+        : { icon:"i-rotate", label:"Restaurar", onClick: async () => {
+            await api("PUT", "/api/products/" + row.id, { is_active:true }); toast("Restaurado","ok"); load(); } }),
+    ].filter(Boolean));
   }
 
   function selectFilter(key, map, label) {
@@ -766,35 +1309,51 @@ async function productsView(view) {
   function paint(list) {
     view.innerHTML = `
       <div class="page-head"><div><h2>Productos</h2><div class="sub">${list.length} producto(s)</div></div>
-        ${writable ? `<button class="btn primary" id="newBtn">+ Nuevo producto</button>` : ""}</div>
+        <div class="toolbar" style="margin:0">
+          <button class="btn" id="expBtn"><svg class="ic"><use href="#i-download"/></svg>Exportar<svg class="ic"><use href="#i-chevron-down"/></svg></button>
+          ${writable ? `<button class="btn" id="impProd"><svg class="ic"><use href="#i-upload"/></svg>Importar productos</button>
+                        <button class="btn" id="impCost"><svg class="ic"><use href="#i-upload"/></svg>Actualizar costos</button>
+                        <button class="btn primary" id="newBtn"><svg class="ic"><use href="#i-plus"/></svg>Nuevo producto</button>` : ""}
+        </div></div>
       <div class="toolbar">
         ${selectFilter("product_type_id", typeMap, "Todos los tipos")}
         ${selectFilter("brand_id", brandMap, "Todas las marcas")}
+        ${selectFilter("model_id", modelMap, "Todos los modelos")}
         ${can("suppliers:read") ? selectFilter("supplier_id", supMap, "Todos los proveedores") : ""}
         <label class="switch"><input type="checkbox" id="inact" ${showInactive?"checked":""}> Ver inactivos</label>
       </div>
       ${renderTable([
         { key:"code", label:"Código", mono:true },
-        { key:"name", label:"Nombre" },
+        { key:"description", label:"Descripción", trunc:true,
+          render:(v)=>v ? `<span title="${esc(v)}">${esc(v)}</span>` : "—" },
         { key:"product_type_id", label:"Tipo", render:(v)=>esc(typeMap[v]||"—") },
         { key:"brand_id", label:"Marca", render:(v)=>esc(brandMap[v]||"—") },
-        { key:"price_category_id", label:"Cat.", render:(v)=>v?badge(catMap[v]||("#"+v),"gray"):"—" },
-        { key:"current_cost", label:"Costo", type:"money", align:"right" },
-        { key:"min_stock", label:"Mín", type:"num", align:"right" },
-        { key:"is_active", label:"Estado", type:"bool" },
+        { key:"model_id", label:"Modelo", priority:2, render:(v)=>esc(modelMap[v]||"—") },
+        { key:"price_category_id", label:"Cat.", priority:3, render:(v)=>v?badge(catMap[v]||("#"+v),"gray"):"—" },
+        { key:"resolved_sale_price", label:"Precio", align:"right", render:(v, r) => v != null
+            ? `<span title="${esc(r.price_source === "manual" ? "Precio manual" : ("Lista: " + (listMap[r.price_list_id] || "por defecto")))}">${fmtMoney(v)}</span>`
+            : `<span class="badge gray" title="${esc(r.price_reason || "")}">sin precio</span>` },
+        { key:"current_cost", label:"Costo", type:"money", align:"right", priority:2 },
+        { key:"min_stock", label:"Mín", type:"num", align:"right", priority:3 },
+        { key:"is_active", label:"Estado", type:"bool", priority:3 },
       ], list, actions)}`;
+    // Exporting mirrors what is on screen: same filters, same inactive toggle.
+    $("#expBtn", view).addEventListener("click", (e) => openExportMenu(
+      e.currentTarget,
+      [{ key:"products", label:"Productos" }, { key:"costs", label:"Costos" }],
+      { ...filters, include_inactive: showInactive ? "true" : "" }));
     const nb = $("#newBtn", view); if (nb) nb.addEventListener("click", () => openForm("create"));
+    const ip = $("#impProd", view);
+    if (ip) ip.addEventListener("click", () => openImportWizard("products", async () => { clearOptions(); await load(); }));
+    const icost = $("#impCost", view);
+    if (icost) icost.addEventListener("click", () => openImportWizard("costs", load));
     $("#inact", view).addEventListener("change", e => { showInactive = e.target.checked; load(); });
     $$("[data-filter]", view).forEach(s => s.addEventListener("change", () => { filters[s.dataset.filter] = s.value; load(); }));
     $$("[data-act]", view).forEach(b => b.addEventListener("click", async () => {
       const row = list.find(x => String(x.id) === b.dataset.id), act = b.dataset.act;
       if (act === "edit") openForm("edit", row);
-      else if (act === "cost") costModal(row);
-      else if (act === "hist") historyModal(row);
       else if (act === "stock") stockModal(row);
-      else if (act === "restore") { await api("PUT", "/api/products/" + row.id, { is_active:true }); toast("Restaurado","ok"); load(); }
-      else confirmDanger({ title:"Desactivar producto", message:`¿Desactivar "${row.name}"?`, confirmLabel:"Desactivar",
-        onConfirm: async () => { await api("DELETE", "/api/products/" + row.id); toast("Desactivado","ok"); load(); } });
+      else if (act === "more") rowMenu(b, row);
     }));
   }
   await load();
@@ -807,6 +1366,7 @@ async function catalogView(view) {
   renderTabs(view, "Catálogo", [
     { label:"Tipos de producto", render: (n) => resourceView(n, CONFIG.product_types) },
     { label:"Marcas",            render: (n) => resourceView(n, CONFIG.brands) },
+    { label:"Modelos",           render: (n) => resourceView(n, CONFIG.product_models) },
   ]);
 }
 
@@ -842,8 +1402,12 @@ async function priceListsTab(container) {
     async function refresh() {
       const items = await api("GET", `/api/price-lists/${list.id}/items`);
       wrap.innerHTML = `
-        ${writable ? `<div class="toolbar"><button class="btn sm primary" id="addItem">+ Agregar precio</button>
-          <button class="btn sm" id="bulk">Ajuste masivo %</button></div>` : ""}
+        <div class="toolbar">
+          ${writable ? `<button class="btn sm primary" id="addItem"><svg class="ic"><use href="#i-plus"/></svg>Agregar precio</button>
+          <button class="btn sm" id="bulk"><svg class="ic"><use href="#i-percent"/></svg>Ajuste masivo</button>
+          <button class="btn sm" id="impPrices"><svg class="ic"><use href="#i-upload"/></svg>Importar precios</button>` : ""}
+          <button class="btn sm" id="expPrices"><svg class="ic"><use href="#i-download"/></svg>Exportar<svg class="ic"><use href="#i-chevron-down"/></svg></button>
+        </div>
         ${renderTable([
           { key:"price_category_id", label:"Categoría", render:(v)=>esc(catMap[v]||("#"+v)) },
           { key:"price", label:"Precio", type:"money", align:"right" },
@@ -858,6 +1422,13 @@ async function priceListsTab(container) {
           title:"Ajuste porcentual masivo", confirmLabel:"Aplicar",
           fields:[ { key:"percentage", label:"Cambio porcentual", type:"decimal", step:"0.01", required:true, help:"ej. 10 = +10%, -5 = -5%. Se aplica a todos los ítems (auditado)." } ],
           onSubmit: async (p) => { const r = await api("POST", `/api/price-lists/${list.id}/bulk-update`, p); toast(`Se actualizaron ${r.updated_items} ítem(s)`, "ok"); refresh(); } }));
+        $("#impPrices", wrap).addEventListener("click", () => openImportWizard("price_list_items", refresh));
+      }
+      {
+        // Export is a read action — available even without pricing:write.
+        $("#expPrices", wrap).addEventListener("click", (e) => openExportMenu(
+          e.currentTarget, [{ key:"price_list_items", label:"Precios" }],
+          { price_list_id: list.id }));
         $$("[data-edit]", wrap).forEach(b => b.addEventListener("click", () => formModal({
           title:"Editar precio", fields:[ { key:"price", label:"Precio", type:"decimal", step:"0.01", required:true } ], values:{ price: b.dataset.price },
           onSubmit: async (p) => { await api("PUT", `/api/price-lists/${list.id}/items/${b.dataset.edit}`, p); toast("Guardado","ok"); refresh(); } })));
@@ -868,9 +1439,9 @@ async function priceListsTab(container) {
   }
 
   function actions(r) {
-    let h = `<button class="btn sm" data-act="items" data-id="${r.id}">Precios</button>`;
-    if (writable) h += `<button class="btn sm" data-act="edit" data-id="${r.id}">Editar</button>
-      <button class="btn sm danger" data-act="del" data-id="${r.id}">Desactivar</button>`;
+    let h = `<button class="btn sm" data-act="items" data-id="${r.id}"><svg class="ic"><use href="#i-receipt"/></svg>Precios</button>`;
+    if (writable) h += `<button class="btn sm" data-act="edit" data-id="${r.id}"><svg class="ic"><use href="#i-pencil"/></svg>Editar</button>
+      <button class="btn sm danger" data-act="del" data-id="${r.id}"><svg class="ic"><use href="#i-ban"/></svg>Desactivar</button>`;
     return h;
   }
   function paint(list) {
@@ -900,9 +1471,9 @@ async function priceListsTab(container) {
 async function stockView(view) {
   const writable = can("stock:write");
   const [pmap, bmap, prodOpts, branchOpts] = await Promise.all([
-    idMap("/api/products", "name", p => `${p.code} · ${p.name}`),
+    idMap("/api/products", "code", p => p.description ? `${p.code} · ${p.description}` : p.code),
     idMap("/api/branches"),
-    options({ endpoint:"/api/products", labelFn:p => `${p.code} · ${p.name}` }),
+    options({ endpoint:"/api/products", labelFn:p => p.description ? `${p.code} · ${p.description}` : p.code }),
     options({ endpoint:"/api/branches" }),
   ]);
   const branchSel = (key, required) => ({ key, label: key==="from_branch_id"?"Desde sucursal":key==="to_branch_id"?"Hacia sucursal":"Sucursal", type:"select", required, valueType:"int", options: branchOpts });
@@ -956,13 +1527,22 @@ async function stockView(view) {
   function render() {
     view.innerHTML = `
       <div class="page-head"><div><h2>Stock</h2><div class="sub">Existencias y movimientos por sucursal</div></div>
-        ${writable ? `<div class="toolbar" style="margin:0"><button class="btn" id="transferBtn">Transferir</button><button class="btn primary" id="moveBtn">+ Movimiento</button></div>` : ""}</div>
+        <div class="toolbar" style="margin:0">
+          <button class="btn" id="expStock"><svg class="ic"><use href="#i-download"/></svg>Exportar<svg class="ic"><use href="#i-chevron-down"/></svg></button>
+          ${writable ? `<button class="btn" id="impStock"><svg class="ic"><use href="#i-upload"/></svg>Importar stock inicial</button><button class="btn" id="transferBtn"><svg class="ic"><use href="#i-transfer"/></svg>Transferir</button><button class="btn primary" id="moveBtn"><svg class="ic"><use href="#i-plus"/></svg>Movimiento</button>` : ""}
+        </div></div>
       <div class="tabs"><button data-i="0" class="active">Existencias</button><button data-i="1">Movimientos</button></div>
       <div id="stab"></div>`;
     const body = $("#stab", view);
     const show = (i) => { $$(".tabs button", view).forEach(b => b.classList.toggle("active", Number(b.dataset.i)===i)); body.innerHTML = `<div class="loading">Cargando…</div>`; (i===0?levelsTab:movementsTab)(body); };
     $$(".tabs button", view).forEach(b => b.addEventListener("click", () => show(Number(b.dataset.i))));
-    if (writable) { $("#moveBtn", view).addEventListener("click", newMovement); $("#transferBtn", view).addEventListener("click", newTransfer); }
+    $("#expStock", view).addEventListener("click", (e) =>
+      openExportMenu(e.currentTarget, [{ key:"stock", label:"Stock" }]));
+    if (writable) {
+      $("#moveBtn", view).addEventListener("click", newMovement);
+      $("#transferBtn", view).addEventListener("click", newTransfer);
+      $("#impStock", view).addEventListener("click", () => openImportWizard("stock", render));
+    }
     show(0);
   }
   render();
@@ -994,9 +1574,9 @@ async function customersView(view) {
       onSubmit: async (p) => { if (mode==="edit") await api("PUT","/api/customers/"+row.id,p); else await api("POST","/api/customers",p); toast("Guardado","ok"); load(); } });
   }
   function actions(r) {
-    let h = `<button class="btn sm" onclick="location.hash='#/customers/${r.id}'">Abrir</button>`;
-    if (writable) h += `<button class="btn sm" data-act="edit" data-id="${r.id}">Editar</button>
-      ${r.is_active?`<button class="btn sm danger" data-act="del" data-id="${r.id}">Desactivar</button>`:`<button class="btn sm" data-act="restore" data-id="${r.id}">Restaurar</button>`}`;
+    let h = `<button class="btn sm" onclick="location.hash='#/customers/${r.id}'"><svg class="ic"><use href="#i-eye"/></svg>Abrir</button>`;
+    if (writable) h += `<button class="btn sm" data-act="edit" data-id="${r.id}"><svg class="ic"><use href="#i-pencil"/></svg>Editar</button>
+      ${r.is_active?`<button class="btn sm danger" data-act="del" data-id="${r.id}"><svg class="ic"><use href="#i-ban"/></svg>Desactivar</button>`:`<button class="btn sm" data-act="restore" data-id="${r.id}"><svg class="ic"><use href="#i-rotate"/></svg>Restaurar</button>`}`;
     return h;
   }
   function paint(list) {
@@ -1035,7 +1615,7 @@ async function customerDetailView(view, id) {
   view.innerHTML = `
     <div class="page-head">
       <div><h2>${esc(c.first_name)} ${esc(c.last_name)} ${boolBadge(c.is_active)}</h2>
-        <div class="sub"><a href="#/customers">← Todos los clientes</a></div></div>
+        <div class="sub"><a href="#/customers"><svg class="ic"><use href="#i-arrow-left"/></svg> Todos los clientes</a></div></div>
     </div>
     <div class="grid2">
       <div class="card pad">
@@ -1138,7 +1718,7 @@ async function usersTab(container) {
   }
   function actions(r) {
     if (!writable) return "";
-    return `<button class="btn sm" data-act="edit" data-id="${r.id}">Editar</button>`;
+    return `<button class="btn sm" data-act="edit" data-id="${r.id}"><svg class="ic"><use href="#i-pencil"/></svg>Editar</button>`;
   }
   function paint(list) {
     container.innerHTML = `
