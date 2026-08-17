@@ -14,7 +14,11 @@ class StockLevelRead(ORMBase):
     product_id: int
     branch_id: int
     quantity: Decimal
+    # The per-branch override, usually unset.
     min_stock: Decimal | None = None
+    # What actually applies: the override if there is one, else the product's
+    # default. Use this to decide whether a row is low, not min_stock.
+    effective_min_stock: Decimal | None = None
 
 
 class StockMovementCreate(BaseModel):

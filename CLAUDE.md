@@ -5,8 +5,11 @@ Guidance for AI assistants and contributors working in this repository.
 ## What this is
 
 Backend for a **Sistema de Gestión Integral para ópticas** (optics-store ERP),
-Argentina. This codebase currently implements the **master-data backbone** only.
-Transactional modules are designed (see `docs/ER_DIAGRAM.md`) but not built yet.
+Argentina. This codebase implements the **master-data backbone** plus the first
+transactional module, **Ventas** (sales, payments, pending accounts). The
+remaining transactional modules — caja, cuentas corrientes, trabajos externos,
+arreglos, cuentas a pagar, reportes — are designed in `docs/ER_DIAGRAM.md` but
+not built yet.
 
 ## Architecture in one screen
 
@@ -49,7 +52,16 @@ Transactional modules are designed (see `docs/ER_DIAGRAM.md`) but not built yet.
    `importer/specs.py` + one apply function in `importer/engine.py` + one row
    builder in `importer/exporters.py`; the template, the mapping UI, the
    preview and the export all derive from the spec.
-10. **Export and import share the spec, so files round-trip.** An export uses
+10. **A sale is one transaction, written only by `services.sales`.** It resolves
+    prices through `pricing.resolve_prices()` (batched), takes its number from
+    `numbering.next_number()` and discharges stock through
+    `stock.apply_movement()` — all with `commit=False`, so a failed stock check
+    leaves no number burned and no movement behind. Totals are **stored
+    snapshots**, never recomputed on read. Money is corrected by cancelling and
+    re-issuing, not by editing a sale: `SaleUpdate` only exposes status, the
+    reminder and the notes. The form's running total comes from
+    `POST /api/sales/preview`, so screen and database use the same arithmetic.
+11. **Export and import share the spec, so files round-trip.** An export uses
     the import column layout: export → edit in Excel → re-import updates by
     key instead of duplicating. Keep it that way — if you add a column to a
     spec, both directions get it. `.xlsx` writes real numeric cells (immune to

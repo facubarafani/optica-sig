@@ -58,6 +58,45 @@
   .page-head .sub{color:var(--muted);font-size:13px;margin-top:2px}
   .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
   .toolbar .grow{flex:1}
+  /* --- ventas --- */
+  .lines{width:100%;border-collapse:collapse;margin-top:4px}
+  .lines th{text-align:left;padding:6px 6px;font-size:11px;text-transform:uppercase;
+    letter-spacing:.03em;color:#64748b;border-bottom:1px solid var(--border);white-space:nowrap}
+  .lines td{padding:5px 6px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+  .lines td.num,.lines th.num{text-align:right}
+  .lines input,.lines select{padding:5px 7px;font-size:13px}
+  .lines .prod b{display:block;font-size:13px}
+  .lines .prod small{color:var(--muted);font-size:11.5px}
+  .lines .w-qty{width:74px}
+  .lines .w-price{width:110px}
+  .lines .w-disc{width:96px}
+  .lines .w-dtype{width:62px}
+  .totals{margin-top:14px;border:1px solid var(--border);border-radius:10px;padding:12px 14px;background:#f8fafc}
+  .totals dl{display:grid;grid-template-columns:1fr auto;gap:5px 18px;margin:0;font-size:13.5px}
+  .totals dt{color:var(--muted)}
+  .totals dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+  .totals .grand dt,.totals .grand dd{font-weight:800;font-size:16px;color:var(--text);
+    border-top:1px solid var(--border);padding-top:7px;margin-top:3px}
+  .totals .due dd{color:var(--danger);font-weight:700}
+  .totals .due.ok dd{color:var(--ok)}
+  .pick-group{border-top:1px solid var(--border);padding:8px 0 2px}
+  .pick-group:first-child{border-top:0}
+  .pick-group h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;
+    color:var(--muted);margin:0 0 5px}
+  .pick-row{display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+    background:none;border:1px solid transparent;border-radius:8px;padding:7px 9px;cursor:pointer;font:inherit}
+  .pick-row:hover{background:var(--primary-50);border-color:#c7ddfb}
+  .pick-row .code{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted)}
+  .pick-row .grow{flex:1;min-width:0}
+  .pick-row .price{font-weight:700;font-variant-numeric:tabular-nums}
+  .pick-row[disabled]{opacity:.55;cursor:not-allowed}
+  .paylist{display:flex;flex-direction:column;gap:7px}
+  .payrow{display:flex;gap:7px;align-items:center}
+  .payrow .amt{width:130px}
+  .searchbox{position:relative;display:inline-flex;align-items:center}
+  .searchbox .ic{position:absolute;left:9px;color:var(--muted);pointer-events:none}
+  .searchbox input{padding-left:30px}
+  .searchbox input::-webkit-search-cancel-button{cursor:pointer}
   .loading{padding:40px;text-align:center;color:var(--muted)}
   .empty{padding:36px;text-align:center;color:var(--muted)}
   /* buttons */
@@ -154,6 +193,11 @@
   form.form.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px}
   form.form.grid2 .form-row{margin-bottom:0}
   form.form.grid2 .form-row.full{grid-column:1/-1}
+  /* label + a "+" on the same line, for widgets that cannot host the button
+     inline the way .with-add does (checklists). */
+  .fld-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:5px}
+  .fld-head label.fld{margin-bottom:0}
+  .fld-head .add{flex:0 0 auto;font-weight:700;line-height:1;padding:3px 9px}
   .checklist{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;max-height:240px;overflow:auto;border:1px solid var(--border);border-radius:8px;padding:10px}
   .checklist label{display:flex;align-items:center;gap:8px;font-weight:500;font-size:13px}
   .fhelp{font-size:11.5px;color:var(--muted);margin-top:4px}
@@ -177,6 +221,17 @@
   .with-add{display:flex;gap:6px;align-items:stretch}
   .with-add select{flex:1;min-width:0}
   .with-add .add{flex:0 0 auto;font-weight:700;line-height:1}
+  /* colour swatches. A native <select> cannot paint its own options the same
+     way across browsers, so the chip beside it mirrors the current choice. */
+  .swatch{width:15px;height:15px;border-radius:4px;border:1px solid rgba(15,23,42,.18);
+    flex:0 0 auto;display:inline-block;vertical-align:-2px;background:#fff}
+  .swatch.none{background:repeating-linear-gradient(45deg,#fff,#fff 3px,#e2e8f0 3px,#e2e8f0 6px)}
+  .swatch-cell{display:inline-flex;align-items:center;gap:7px}
+  .with-add .swatch{width:20px;height:auto;align-self:stretch;border-radius:6px}
+  .colorpick{display:flex;gap:8px;align-items:center}
+  .colorpick input[type=color]{flex:0 0 46px;height:36px;padding:2px;cursor:pointer}
+  .colorpick .hex{font-family:var(--mono,ui-monospace,monospace);font-size:12.5px;color:var(--muted)}
+  .colorpick .clear{flex:0 0 auto}
   /* toast */
   #toasts{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:10px;z-index:80}
   .toast{background:#0f172a;color:#fff;padding:11px 15px;border-radius:9px;box-shadow:var(--shadow-lg);font-size:13px;max-width:360px;animation:slide .16s ease}
@@ -211,6 +266,7 @@
 <symbol id="i-store" viewBox="0 0 24 24"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/></symbol>
 <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></symbol>
 <symbol id="i-settings" viewBox="0 0 24 24"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
 <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></symbol>
 <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
 <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></symbol>
@@ -257,7 +313,12 @@ const ENUM_ES = {
   supplier_type: { merchandise: "Mercadería", laboratory: "Laboratorio", workshop: "Taller" },
   movement_type: { inbound: "Ingreso", outbound: "Egreso", adjustment: "Ajuste", transfer: "Transferencia" },
   treatment_type: { myopia: "Miopía", astigmatism: "Astigmatismo", hyperopia: "Hipermetropía", presbyopia: "Presbicia", other: "Otro" },
+  payment_method: { cash: "Efectivo", transfer: "Transferencia", card: "Tarjeta" },
+  sale_status: { quote: "Presupuesto", confirmed: "Confirmada", pending: "Pendiente", delivered: "Entregada", cancelled: "Anulada" },
 };
+const PAYMENT_METHOD_OPTIONS = Object.entries(ENUM_ES.payment_method)
+  .map(([value, label]) => ({ value, label }));
+const SALE_STATUS_BADGE = { quote:"gray", confirmed:"blue", pending:"amber", delivered:"green", cancelled:"red" };
 
 /* ----------------------------- tiny helpers ----------------------------- */
 const $  = (s, r = document) => r.querySelector(s);
@@ -265,6 +326,87 @@ const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = (v) => (v == null ? "" : String(v).replace(/[&<>"']/g, c =>
   ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])));
 const el = (html) => { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+
+/* Wait for typing to pause before firing. Search boxes hit the API on every
+   keystroke otherwise. */
+function debounce(fn, ms = 250) {
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+
+/* A <select> bound to a filter bag, so `bag[key]` is what the API receives. */
+function filterSelect(bag, key, map, label) {
+  const opts = Object.entries(map).map(([id, name]) =>
+    `<option value="${esc(id)}" ${String(bag[key]) === String(id) ? "selected" : ""}>${esc(name)}</option>`).join("");
+  return `<select class="inp-sm" data-filter="${esc(key)}" style="width:auto"><option value="">${esc(label)}</option>${opts}</select>`;
+}
+
+/* Filter bag → query string, dropping anything unset so the API sees only the
+   filters actually in play. */
+function queryString(bag) {
+  const p = new URLSearchParams();
+  for (const [k, v] of Object.entries(bag)) {
+    if (v === "" || v == null || v === false) continue;
+    p.set(k, v === true ? "true" : v);
+  }
+  const s = p.toString();
+  return s ? "?" + s : "";
+}
+
+/* The filtered-list pattern shared by Stock, Ventas and Cuentas pendientes:
+   paint the toolbar once, then refill only the results below it. Re-rendering
+   the toolbar on each keystroke would take the caret out of the search box. */
+function wireFilters(scope, bag, reload) {
+  const debounced = debounce(reload, 250);
+  const input = $("input[type=search]", scope);
+  if (input) {
+    input.addEventListener("input", () => { bag.q = input.value.trim(); debounced(); });
+    // "search" fires on the little ✕ — clearing should feel immediate.
+    input.addEventListener("search", () => { bag.q = input.value.trim(); reload(); });
+  }
+  $$("[data-filter]", scope).forEach(s => s.addEventListener("change", () => {
+    bag[s.dataset.filter] = s.value; reload();
+  }));
+  $$("[data-toggle]", scope).forEach(c => c.addEventListener("change", () => {
+    bag[c.dataset.toggle] = c.checked; reload();
+  }));
+}
+
+/* Fetch with the bag as the query string and paint the rows. `onRowClick`
+   makes the whole row open something (a sale, say). */
+function resultsInto(body, endpoint, bag, columns, empty, onRowClick) {
+  body.innerHTML = `<div class="loading">Cargando…</div>`;
+  return api("GET", endpoint + queryString(bag))
+    .then(rows => {
+      body.innerHTML = rows.length
+        ? renderTable(columns, rows)
+        : `<div class="empty">${esc(empty)}</div>`;
+      if (!onRowClick) return;
+      $$("tbody tr", body).forEach((tr, i) => {
+        tr.style.cursor = "pointer";
+        tr.addEventListener("click", () => onRowClick(rows[i]));
+      });
+    })
+    .catch(e => body.innerHTML = `<div class="card error">${esc(e.message)}</div>`);
+}
+
+/* A search box with the magnifier tucked inside it. */
+function searchBox(id, value, placeholder, width = "260px") {
+  return `<span class="searchbox" style="width:${width}">
+    <svg class="ic"><use href="#i-search"/></svg>
+    <input class="inp-sm" id="${esc(id)}" type="search" value="${esc(value || "")}" placeholder="${esc(placeholder)}">
+  </span>`;
+}
+
+/* A colour chip followed by its name. `hex` may be null — a colour without a
+   tone still shows, with a hatched chip instead of a filled one. */
+function swatchCell(hex, label) {
+  const valid = /^#[0-9a-f]{6}$/i.test(hex || "");
+  const chip = valid
+    ? `<span class="swatch" style="background:${esc(hex)}"></span>`
+    : `<span class="swatch none"></span>`;
+  return `<span class="swatch-cell">${chip}${esc(label ?? "")}</span>`;
+}
 
 function toast(msg, type = "") {
   const t = el(`<div class="toast ${type}">${esc(msg)}</div>`);
@@ -348,10 +490,16 @@ async function apiDownload(path, filename) {
 /* options cache (for dropdowns referencing other entities) */
 const _optCache = new Map();
 function clearOptions() { _optCache.clear(); }
-async function options({ endpoint, value = "id", label = "name", labelFn }) {
+async function options({ endpoint, value = "id", label = "name", labelFn, metaFn }) {
   if (!_optCache.has(endpoint)) _optCache.set(endpoint, api("GET", endpoint).catch(() => []));
   const rows = await _optCache.get(endpoint);
-  return (rows || []).map(r => ({ value: r[value], label: labelFn ? labelFn(r) : r[label] }));
+  // `meta` carries whatever the widget needs beyond the label — the colour
+  // select uses it for the swatch.
+  return (rows || []).map(r => ({
+    value: r[value],
+    label: labelFn ? labelFn(r) : r[label],
+    meta: metaFn ? metaFn(r) : undefined,
+  }));
 }
 async function idMap(endpoint, label = "name", labelFn) {
   const rows = await (_optCache.has(endpoint) ? _optCache.get(endpoint) : (_optCache.set(endpoint, api("GET", endpoint).catch(() => [])), _optCache.get(endpoint)));
@@ -430,6 +578,8 @@ const NAV = [
   { route:"catalog",   label:"Catálogo",         icon:"i-tags", perm:"products:read" },
   { route:"pricing",   label:"Precios",          icon:"i-banknote", perm:"pricing:read" },
   { route:"stock",     label:"Stock",            icon:"i-layers", perm:"stock:read" },
+  { route:"sales",     label:"Ventas",           icon:"i-receipt", perm:"sales:read" },
+  { route:"pending",   label:"Cuentas pendientes", icon:"i-clock", perm:"sales:read" },
   { route:"customers", label:"Clientes",         icon:"i-users", perm:"customers:read" },
   { route:"suppliers", label:"Proveedores",      icon:"i-truck", perm:"suppliers:read" },
   { route:"branches",  label:"Sucursales",       icon:"i-store", perm:"branches:read" },
@@ -494,6 +644,8 @@ async function route() {
       case "catalog":   await catalogView(view); break;
       case "pricing":   await pricingView(view); break;
       case "stock":     await stockView(view); break;
+      case "sales":     await salesView(view); break;
+      case "pending":   await pendingView(view); break;
       case "customers": arg ? await customerDetailView(view, arg) : await customersView(view); break;
       case "suppliers": await resourceView(view, CONFIG.suppliers); break;
       case "branches":  await resourceView(view, CONFIG.branches); break;
@@ -550,19 +702,75 @@ async function buildForm(fields, values = {}, grid = false) {
       row.innerHTML = `<label class="switch"><input type="checkbox" name="${f.key}" ${v ? "checked" : ""}> ${esc(f.label)}</label>`;
     } else if (f.type === "multiselect") {
       const sel = new Set((v || []).map(String));
-      const boxes = (f._opts || []).map(o => `<label><input type="checkbox" name="${f.key}" value="${esc(o.value)}" ${sel.has(String(o.value)) ? "checked" : ""}> ${esc(o.label)}</label>`).join("");
-      row.innerHTML = `<label class="fld">${esc(f.label)}${reqMark}</label><div class="checklist">${boxes || '<span class="fhelp">ninguno</span>'}</div>`;
+      const box = (o, checked) => `<label><input type="checkbox" name="${f.key}" value="${esc(o.value)}" ${checked ? "checked" : ""}> ${esc(o.label)}</label>`;
+      const boxes = (f._opts || []).map(o => box(o, sel.has(String(o.value)))).join("");
+      const quick = f.quickCreate && canQuickCreate(f.quickCreate);
+      const head = quick
+        ? `<div class="fld-head"><label class="fld">${esc(f.label)}${reqMark}</label><button type="button" class="btn sm add" title="Crear">+</button></div>`
+        : `<label class="fld">${esc(f.label)}${reqMark}</label>`;
+      row.innerHTML = `${head}<div class="checklist">${boxes || '<span class="fhelp">ninguno</span>'}</div>`;
+      if (quick) {
+        const list = row.querySelector(".checklist");
+        row.querySelector("button.add").addEventListener("click", () => quickCreate(f.quickCreate, (created) => {
+          const placeholder = list.querySelector(".fhelp");
+          if (placeholder) placeholder.remove();
+          // Created from here means "I want this one", so it arrives ticked.
+          const added = el(box({ value: created.id, label: created.name }, true));
+          list.appendChild(added);
+          added.scrollIntoView({ block: "nearest" });
+        }));
+      }
     } else if (f.type === "select") {
       const allowEmpty = f.required ? "" : `<option value="">— ninguno —</option>`;
       const opts = (f._opts || []).map(o => `<option value="${esc(o.value)}" ${String(v) === String(o.value) ? "selected" : ""}>${esc(o.label)}</option>`).join("");
       const sel = `<select name="${f.key}">${allowEmpty}${opts}</select>`;
-      row.innerHTML = `<label class="fld">${esc(f.label)}${reqMark}</label>` + (f.quickCreate
-        ? `<div class="with-add">${sel}<button type="button" class="btn sm add" title="Crear">+</button></div>`
+      const quick = f.quickCreate && canQuickCreate(f.quickCreate);
+      const addBtn = quick ? `<button type="button" class="btn sm add" title="Crear">+</button>` : "";
+      const chip = f.swatch ? `<span class="swatch none"></span>` : "";
+      row.innerHTML = `<label class="fld">${esc(f.label)}${reqMark}</label>` + ((addBtn || chip)
+        ? `<div class="with-add">${chip}${sel}${addBtn}</div>`
         : sel);
-      if (f.quickCreate) {
-        row.querySelector("button.add").addEventListener(
-          "click", () => quickCreate(f.quickCreate, row.querySelector("select")));
+      const selectEl = row.querySelector("select");
+      if (f.swatch) {
+        // value → colour, kept on the element so a quick-created colour can be
+        // added to it and painted without rebuilding the form.
+        selectEl._meta = new Map((f._opts || []).map(o => [String(o.value), o.meta]));
+        const chipEl = row.querySelector(".swatch");
+        const paint = () => {
+          const hex = selectEl._meta.get(selectEl.value);
+          chipEl.classList.toggle("none", !hex);
+          chipEl.style.background = hex || "";
+        };
+        selectEl.addEventListener("change", paint);
+        paint();
       }
+      if (quick) {
+        row.querySelector("button.add").addEventListener("click", () => quickCreate(f.quickCreate, (created) => {
+          selectEl.appendChild(el(`<option value="${esc(created.id)}">${esc(created.name)}</option>`));
+          // Keep a swatch-backed select in sync with what was just created.
+          const metaFn = f.optionsFrom && f.optionsFrom.metaFn;
+          if (selectEl._meta && metaFn) selectEl._meta.set(String(created.id), metaFn(created));
+          selectEl.value = String(created.id);
+          selectEl.dispatchEvent(new Event("change", { bubbles: true }));
+        }));
+      }
+    } else if (f.type === "color") {
+      // <input type="color"> always holds a colour, but "sin tono" is a real
+      // state (the swatch is optional), so emptiness is tracked beside it.
+      const cur = v || "";
+      row.innerHTML = `<label class="fld">${esc(f.label)}${reqMark}</label>
+        <div class="colorpick">
+          <input type="color" name="${f.key}" value="${esc(cur || "#1a1a1a")}">
+          <span class="hex"></span>
+          <button type="button" class="btn sm clear">Sin tono</button>
+        </div>`;
+      const input = row.querySelector('input[type="color"]');
+      const hexEl = row.querySelector(".hex");
+      input._empty = !cur;
+      const sync = () => { hexEl.textContent = input._empty ? "sin tono" : input.value; };
+      input.addEventListener("input", () => { input._empty = false; sync(); });
+      row.querySelector("button.clear").addEventListener("click", () => { input._empty = true; sync(); });
+      sync();
     } else if (f.type === "radio") {
       const opts = (f._opts || []).map(o =>
         `<label><input type="radio" name="${f.key}" value="${esc(o.value)}" ${String(v ?? f.default) === String(o.value) ? "checked" : ""}> ${esc(o.label)}</label>`).join("");
@@ -601,6 +809,7 @@ async function buildForm(fields, values = {}, grid = false) {
       if (f.type === "checkbox") { out[f.key] = form.querySelector(`[name="${f.key}"]`).checked; continue; }
       if (f.type === "multiselect") { out[f.key] = $$(`[name="${f.key}"]:checked`, form).map(i => Number(i.value)); continue; }
       if (f.type === "radio") { const c = form.querySelector(`[name="${f.key}"]:checked`); out[f.key] = c ? c.value : null; continue; }
+      if (f.type === "color") { const c = form.querySelector(`[name="${f.key}"]`); out[f.key] = c._empty ? null : c.value; continue; }
       const elx = form.querySelector(`[name="${f.key}"]`);
       let raw = elx ? elx.value : "";
       if (raw === "" || raw == null) {
@@ -639,9 +848,18 @@ function setSelectOptions(selectEl, opts, { required = false } = {}) {
   if (current && opts.some(o => String(o.value) === current)) selectEl.value = current;
 }
 
-/* "+" beside a select: create the referenced entity without losing the form
-   you were filling in. `key` is a CONFIG entry (e.g. "brands"). */
-async function quickCreate(key, selectEl) {
+/* Can the current user create the entity behind a quick-create button? The
+   target has its own permission (a brand is products:write, not suppliers:write),
+   so the "+" is hidden rather than offered and then refused with a 403. */
+function canQuickCreate(key) {
+  const cfg = CONFIG[key];
+  return !!cfg && can(cfg.perm + ":write");
+}
+
+/* "+" beside a select or a checklist: create the referenced entity without
+   losing the form you were filling in. `key` is a CONFIG entry (e.g. "brands");
+   `adopt(created)` drops the new row into whichever widget asked for it. */
+async function quickCreate(key, adopt) {
   const cfg = CONFIG[key];
   if (!cfg) return;
   await formModal({
@@ -650,10 +868,8 @@ async function quickCreate(key, selectEl) {
     grid: cfg.grid,
     onSubmit: async (payload) => {
       const created = await api("POST", cfg.endpoint, payload);
-      clearOptions();
-      selectEl.appendChild(el(`<option value="${esc(created.id)}">${esc(created.name)}</option>`));
-      selectEl.value = String(created.id);
-      selectEl.dispatchEvent(new Event("change", { bubbles: true }));
+      clearOptions();     // the cached option lists are now stale
+      adopt(created);
       toast("Creado", "ok");
     },
   });
@@ -775,8 +991,9 @@ const CONFIG = {
       { key:"email", label:"Email", type:"email" }, { key:"phone", label:"Teléfono" },
       { key:"address", label:"Dirección" }, { key:"notes", label:"Notas", type:"textarea", full:true },
       { key:"brand_ids", label:"Marcas que provee", type:"multiselect", full:true,
-        optionsFrom:{ endpoint:"/api/brands" },
-        help:"Al cargar un producto de este proveedor solo se ofrecen estas marcas." },
+        optionsFrom:{ endpoint:"/api/brands" }, quickCreate:"brands",
+        help:"Al cargar un producto de este proveedor solo se ofrecen estas marcas. "
+             + "Con «+» se da de alta una marca nueva sin salir de esta pantalla." },
     ],
     // Brands are an N-N relation with its own endpoint, not a supplier column.
     extraKeys: ["brand_ids"],
@@ -798,6 +1015,39 @@ const CONFIG = {
     endpoint: "/api/brands", perm: "products", softDelete: true,
     columns: [ { key:"id", label:"ID" }, { key:"name", label:"Nombre" }, { key:"is_active", label:"Estado", type:"bool" } ],
     fields: [ { key:"name", label:"Nombre", required:true } ],
+  },
+  payment_accounts: {
+    title: "Cuentas", newTitle: "Nueva cuenta", editTitle: "Editar cuenta",
+    endpoint: "/api/payment-accounts", perm: "sales", softDelete: true,
+    columns: [
+      { key:"id", label:"ID" }, { key:"name", label:"Nombre" },
+      { key:"method", label:"Forma de pago habitual",
+        render:(v)=> v ? badge(ENUM_ES.payment_method[v] || v, "blue") : `<span class="fhelp">cualquiera</span>` },
+      { key:"notes", label:"Notas", priority:2 },
+      { key:"is_active", label:"Estado", type:"bool" },
+    ],
+    fields: [
+      { key:"name", label:"Nombre", required:true, placeholder:"Santander, MercadoPago, Efectivo caja…" },
+      { key:"method", label:"Forma de pago habitual", type:"select", options: PAYMENT_METHOD_OPTIONS,
+        help:"Se preselecciona al cobrar con esta cuenta. Opcional." },
+      { key:"notes", label:"Notas", type:"textarea" },
+    ],
+  },
+  colors: {
+    title: "Colores", newTitle: "Nuevo color", editTitle: "Editar color",
+    endpoint: "/api/colors", perm: "products", softDelete: true,
+    columns: [
+      { key:"id", label:"ID" },
+      { key:"name", label:"Nombre", render:(v, r) => swatchCell(r.hex_code, v) },
+      { key:"hex_code", label:"Tono", priority:2,
+        render:(v) => v ? `<code>${esc(v)}</code>` : `<span class="fhelp">sin tono</span>` },
+      { key:"is_active", label:"Estado", type:"bool" },
+    ],
+    fields: [
+      { key:"name", label:"Nombre", required:true, placeholder:"Negro, Havana, Carey…" },
+      { key:"hex_code", label:"Tono", type:"color",
+        help:"Sólo para mostrar: es el cuadradito que acompaña al color en las listas." },
+    ],
   },
   product_models: {
     title: "Modelos", newTitle: "Nuevo modelo", editTitle: "Editar modelo",
@@ -1087,16 +1337,18 @@ async function dashboardView(view) {
   let lowStockHtml = "";
   if (can("stock:read")) {
     try {
-      const levels = await api("GET", "/api/stock/levels");
+      // Let the API decide what "low" means — it compares against the branch
+      // override *or* the product default, which the old client-side filter on
+      // min_stock alone could not see (it is almost always null).
+      const low = await api("GET", "/api/stock/levels?low_only=true");
       const pmap = can("products:read") ? await idMap("/api/products", "code", p => p.description ? `${p.code} · ${p.description}` : p.code) : {};
       const bmap = can("branches:read") ? await idMap("/api/branches") : {};
-      const low = levels.filter(l => l.min_stock != null && Number(l.quantity) <= Number(l.min_stock));
       lowStockHtml = `<div class="card pad"><h3 style="margin-bottom:12px">Stock bajo / agotado ${low.length ? badge(low.length, "amber") : badge("0","green")}</h3>` +
         (low.length ? renderTable(
           [ { key:"product_id", label:"Producto", render:(v)=>esc(pmap[v] || ("#"+v)) },
             { key:"branch_id", label:"Sucursal", render:(v)=>esc(bmap[v] || ("#"+v)) },
             { key:"quantity", label:"Cant.", type:"num", align:"right" },
-            { key:"min_stock", label:"Mín", type:"num", align:"right" } ], low)
+            { key:"effective_min_stock", label:"Mín", type:"num", align:"right" } ], low)
         : `<div class="empty" style="padding:14px">Todo por encima del mínimo 👍</div>`) + `</div>`;
     } catch {}
   }
@@ -1113,9 +1365,11 @@ async function dashboardView(view) {
    ======================================================================= */
 async function productsView(view) {
   const writable = can("products:write");
-  const [typeMap, brandMap, modelMap, supMap, codeRows, priceLists, settings] = await Promise.all([
+  const [typeMap, brandMap, modelMap, supMap, colorRows, codeRows, priceLists, settings] = await Promise.all([
     idMap("/api/product-types"), idMap("/api/brands"), idMap("/api/product-models"),
     can("suppliers:read") ? idMap("/api/suppliers") : Promise.resolve({}),
+    // Read whole rather than via idMap: the grid needs each colour's tone too.
+    api("GET", "/api/colors").catch(() => []),
     can("pricing:read") ? api("GET", "/api/price-category-codes").catch(() => []) : Promise.resolve([]),
     can("pricing:read") ? api("GET", "/api/price-lists").catch(() => []) : Promise.resolve([]),
     can("company:read") ? api("GET", "/api/company/settings").catch(() => ({})) : Promise.resolve({}),
@@ -1124,6 +1378,8 @@ async function productsView(view) {
   // currency as well as their name.
   const listMap = Object.fromEntries(priceLists.map(l => [l.id, l.name]));
   const listCurrency = Object.fromEntries(priceLists.map(l => [l.id, l.currency]));
+  const colorMap = Object.fromEntries(colorRows.map(c => [c.id, c.name]));
+  const colorHex = Object.fromEntries(colorRows.map(c => [c.id, c.hex_code]));
   const defaultPriceListId = settings.default_price_list_id || "";
   /* Products are tagged by code, so the picker offers every code some list can
      price — the code then resolves inside whichever list applies. */
@@ -1131,7 +1387,7 @@ async function productsView(view) {
     value: r.code,
     label: r.list_count > 1 ? `${r.code} · en ${r.list_count} listas` : r.code,
   }));
-  const filters = { product_type_id:"", brand_id:"", model_id:"", supplier_id:"" };
+  const filters = { product_type_id:"", brand_id:"", model_id:"", supplier_id:"", color_id:"" };
   let showInactive = false;
 
   const baseFields = () => [
@@ -1140,7 +1396,8 @@ async function productsView(view) {
     { key:"supplier_id", label:"Proveedor", type:"select", valueType:"int", optionsFrom:{ endpoint:"/api/suppliers" } },
     { key:"brand_id", label:"Marca", type:"select", valueType:"int", optionsFrom:{ endpoint:"/api/brands" }, quickCreate:"brands" },
     { key:"model_id", label:"Modelo", type:"select", valueType:"int", optionsFrom:{ endpoint:"/api/product-models" }, quickCreate:"product_models" },
-    { key:"color", label:"Color" },
+    { key:"color_id", label:"Color", type:"select", valueType:"int", swatch:true,
+      optionsFrom:{ endpoint:"/api/colors", metaFn: c => c.hex_code }, quickCreate:"colors" },
     { key:"min_stock", label:"Stock mínimo", type:"decimal", step:"0.01" },
     // --- precio de venta ---
     { key:"pricing_mode", label:"Precio de venta", type:"radio", full:true, default:"price_list",
@@ -1328,6 +1585,7 @@ async function productsView(view) {
         ${selectFilter("brand_id", brandMap, "Todas las marcas")}
         ${selectFilter("model_id", modelMap, "Todos los modelos")}
         ${can("suppliers:read") ? selectFilter("supplier_id", supMap, "Todos los proveedores") : ""}
+        ${selectFilter("color_id", colorMap, "Todos los colores")}
         <label class="switch"><input type="checkbox" id="inact" ${showInactive?"checked":""}> Ver inactivos</label>
       </div>
       ${renderTable([
@@ -1337,6 +1595,8 @@ async function productsView(view) {
         { key:"product_type_id", label:"Tipo", render:(v)=>esc(typeMap[v]||"—") },
         { key:"brand_id", label:"Marca", render:(v)=>esc(brandMap[v]||"—") },
         { key:"model_id", label:"Modelo", priority:2, render:(v)=>esc(modelMap[v]||"—") },
+        { key:"color_id", label:"Color", priority:2,
+          render:(v)=> v && colorMap[v] ? swatchCell(colorHex[v], colorMap[v]) : "—" },
         { key:"price_category_code", label:"Cat.", priority:3, render:(v)=>v?badge(v,"gray"):"—" },
         { key:"resolved_sale_price", label:"Precio", align:"right", render:(v, r) => v != null
             ? `<span title="${esc(r.price_source === "manual" ? "Precio manual" : ("Lista: " + (listMap[r.price_list_id] || "por defecto")))}">${fmtMoney(v, r.price_currency)}</span>`
@@ -1368,13 +1628,583 @@ async function productsView(view) {
 }
 
 /* =======================================================================
-   CATALOG (product types + brands)
+   VENTAS
+   The form never does its own arithmetic: every keystroke asks
+   /api/sales/preview for the totals, so what is on screen and what gets
+   saved are computed by the same code.
+   ======================================================================= */
+const todayISO = () => new Date().toISOString().slice(0, 10);
+const customerLabel = (c) => `${c.last_name}, ${c.first_name}` +
+  (c.document_number ? ` · ${c.document_number}` : "");
+
+/* Turn the working draft into the body the API expects: blanks become absent
+   rather than "" (which Pydantic would reject as a bad number). */
+function saleBody(draft) {
+  const opt = (v) => (v === "" || v == null ? null : v);
+  return {
+    customer_id: opt(draft.customer_id) ? Number(draft.customer_id) : null,
+    branch_id: opt(draft.branch_id) ? Number(draft.branch_id) : null,
+    status: draft.status || "confirmed",
+    items: draft.items.map(i => ({
+      product_id: i.product_id,
+      quantity: i.quantity || "1",
+      ...(opt(i.unit_price) != null ? { unit_price: i.unit_price } : {}),
+      ...(opt(i.discount_value) != null && Number(i.discount_value) > 0
+        ? { discount_type: i.discount_type || "percent", discount_value: i.discount_value }
+        : {}),
+    })),
+    ...(opt(draft.discount_value) != null && Number(draft.discount_value) > 0
+      ? { discount_type: draft.discount_type || "percent", discount_value: draft.discount_value }
+      : {}),
+    payments: draft.payments
+      .filter(p => opt(p.amount) != null && Number(p.amount) > 0)
+      .map(p => ({
+        amount: p.amount, method: p.method || "cash",
+        ...(opt(p.account_id) ? { account_id: Number(p.account_id) } : {}),
+        ...(opt(p.reference) ? { reference: p.reference } : {}),
+      })),
+    promised_payment_date: opt(draft.promised_payment_date),
+    reminder_note: opt(draft.reminder_note),
+    notes: opt(draft.notes),
+  };
+}
+
+/* Product picker: search, then pick a colour.
+   Results are grouped by marca+modelo, so the colours of the same frame sit
+   together and the choice is "which colour", not "which of these codes". */
+async function pickProduct(branchId, onPick) {
+  const [brandMap, modelMap, colorRows] = await Promise.all([
+    idMap("/api/brands"), idMap("/api/product-models"),
+    api("GET", "/api/colors").catch(() => []),
+  ]);
+  const colorMap = Object.fromEntries(colorRows.map(c => [c.id, c]));
+  const stock = {};
+  if (branchId) {
+    for (const lvl of await api("GET", `/api/stock/levels?branch_id=${branchId}`).catch(() => []))
+      stock[lvl.product_id] = lvl.quantity;
+  }
+
+  const body = el(`<div>
+    <div class="toolbar">${searchBox("pq", "", "Buscar por código o descripción…", "100%")}</div>
+    <div id="presults" style="max-height:52vh;overflow:auto"></div>
+  </div>`);
+  const results = $("#presults", body);
+
+  const paint = (rows) => {
+    if (!rows.length) {
+      results.innerHTML = `<div class="empty">Sin resultados.</div>`;
+      return;
+    }
+    // Same marca + modelo → same frame, different colour.
+    const groups = new Map();
+    for (const p of rows) {
+      const key = `${p.brand_id || 0}|${p.model_id || 0}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(p);
+    }
+    results.innerHTML = [...groups.entries()].map(([key, items]) => {
+      const [b, m] = key.split("|");
+      const title = [brandMap[b], modelMap[m]].filter(Boolean).join(" · ") || "Sin marca";
+      const rowsHtml = items.map(p => {
+        const color = p.color_id ? colorMap[p.color_id] : null;
+        const qty = stock[p.id];
+        const out = branchId && (qty == null || Number(qty) <= 0);
+        const stockLabel = !branchId ? ""
+          : out ? `<span class="badge red">sin stock</span>`
+                : `<span class="badge gray">${fmtNum(qty)} en stock</span>`;
+        return `<button type="button" class="pick-row" data-id="${p.id}">
+          ${color ? swatchCell(color.hex_code, color.name) : `<span class="fhelp">sin color</span>`}
+          <span class="grow"><span class="code">${esc(p.code)}</span> ${esc(p.description || "")}</span>
+          ${stockLabel}
+          <span class="price">${p.resolved_sale_price != null
+            ? fmtMoney(p.resolved_sale_price, p.price_currency) : "—"}</span>
+        </button>`;
+      }).join("");
+      return `<div class="pick-group"><h4>${esc(title)}</h4>${rowsHtml}</div>`;
+    }).join("");
+    $$(".pick-row", results).forEach(b => b.addEventListener("click", () => {
+      const product = rows.find(p => String(p.id) === b.dataset.id);
+      // Carry the colour's name along; the sale line shows it under the code.
+      const color = product.color_id ? colorMap[product.color_id] : null;
+      onPick({ ...product, color_name: color ? color.name : "" });
+      close();
+    }));
+  };
+
+  const load = async (q) => {
+    results.innerHTML = `<div class="loading">Buscando…</div>`;
+    paint(await api("GET", `/api/products${q ? "?q=" + encodeURIComponent(q) : ""}`)
+      .catch(() => []));
+  };
+  const input = $("input[type=search]", body);
+  const search_ = debounce(() => load(input.value.trim()), 220);
+  input.addEventListener("input", search_);
+
+  const close = openModal({ title:"Agregar producto", body, wide:true });
+  input.focus();
+  load("");
+}
+
+/* The new-sale form. */
+async function newSaleModal(onDone) {
+  const [customers, branchOpts, accounts, settings] = await Promise.all([
+    api("GET", "/api/customers").catch(() => []),
+    options({ endpoint:"/api/branches" }),
+    api("GET", "/api/payment-accounts").catch(() => []),
+    api("GET", "/api/company/settings").catch(() => ({})),
+  ]);
+  const draft = {
+    customer_id: "", branch_id: settings.default_branch_id || "", status: "confirmed",
+    items: [], discount_type: "percent", discount_value: "",
+    payments: [], promised_payment_date: "", reminder_note: "", notes: "",
+  };
+  let totals = null;
+
+  const body = el(`<div>
+    <div class="form grid2">
+      <div class="form-row"><label class="fld">Cliente</label>
+        <select name="customer_id"><option value="">— consumidor final —</option>
+        ${customers.map(c => `<option value="${c.id}">${esc(customerLabel(c))}</option>`).join("")}</select>
+        <div class="fhelp">Obligatorio si queda saldo pendiente.</div></div>
+      <div class="form-row"><label class="fld">Sucursal</label>
+        <select name="branch_id"><option value="">— ninguna —</option>
+        ${branchOpts.map(o => `<option value="${o.value}" ${String(draft.branch_id)===String(o.value)?"selected":""}>${esc(o.label)}</option>`).join("")}</select>
+        <div class="fhelp">De acá se descuenta el stock.</div></div>
+    </div>
+
+    <div class="form-row full" style="margin-top:6px">
+      <div class="fld-head"><label class="fld">Productos <span class="req">*</span></label>
+        <button type="button" class="btn sm" id="addLine"><svg class="ic"><use href="#i-plus"/></svg>Agregar producto</button></div>
+      <table class="lines"><thead><tr>
+        <th>Producto</th><th class="num w-qty">Cant.</th><th class="num">Precio unit.</th>
+        <th>Descuento</th><th class="num">Total</th><th></th>
+      </tr></thead><tbody id="lineBody"></tbody></table>
+      <div class="fhelp" id="noLines">Todavía no agregaste productos.</div>
+    </div>
+
+    <div class="form grid2" style="margin-top:12px">
+      <div class="form-row"><label class="fld">Descuento sobre el total</label>
+        <div class="with-add">
+          <select name="discount_type" style="max-width:110px">
+            <option value="percent">%</option><option value="amount">$</option>
+          </select>
+          <input name="discount_value" type="number" step="0.01" min="0" placeholder="0">
+        </div></div>
+      <div class="form-row"><label class="fld">Estado</label>
+        <select name="status">
+          <option value="confirmed">Confirmada</option>
+          <option value="quote">Presupuesto (no descuenta stock)</option>
+        </select></div>
+    </div>
+
+    <div class="form-row full" style="margin-top:10px">
+      <div class="fld-head"><label class="fld">Abonado</label>
+        <button type="button" class="btn sm" id="addPay"><svg class="ic"><use href="#i-plus"/></svg>Agregar pago</button></div>
+      <div class="paylist" id="payList"></div>
+      <div class="fhelp" id="noPays">Sin pagos: queda todo como saldo pendiente.</div>
+    </div>
+
+    <div class="totals" id="totals"></div>
+
+    <div class="form grid2" id="reminderBox" style="margin-top:12px;display:none">
+      <div class="form-row"><label class="fld">Fecha en que promete pagar</label>
+        <input name="promised_payment_date" type="date"></div>
+      <div class="form-row"><label class="fld">Recordatorio</label>
+        <input name="reminder_note" placeholder="Llamar antes del mediodía…"></div>
+    </div>
+    <div class="form-row full" style="margin-top:8px">
+      <label class="fld">Notas</label><textarea name="notes" rows="2"></textarea></div>
+  </div>`);
+
+  const lineBody = $("#lineBody", body);
+  const payList = $("#payList", body);
+  const totalsBox = $("#totals", body);
+  const reminderBox = $("#reminderBox", body);
+
+  const bind = (name, key) => {
+    const elx = body.querySelector(`[name="${name}"]`);
+    elx.addEventListener("input", () => { draft[key] = elx.value; refresh(); });
+    elx.addEventListener("change", () => { draft[key] = elx.value; refresh(); });
+  };
+  ["customer_id","branch_id","status","discount_type","discount_value",
+   "promised_payment_date","reminder_note","notes"].forEach(k => bind(k, k));
+
+  function paintLines() {
+    $("#noLines", body).style.display = draft.items.length ? "none" : "";
+    lineBody.innerHTML = draft.items.map((it, i) => {
+      const t = totals && totals.items[i];
+      return `<tr data-i="${i}">
+        <td class="prod"><b>${esc(it.label)}</b><small>${esc(it.code)}${it.color ? " · " + esc(it.color) : ""}</small></td>
+        <td class="num"><input class="w-qty" data-f="quantity" type="number" step="0.01" min="0.01" value="${esc(it.quantity)}"></td>
+        <td class="num"><input class="w-price" data-f="unit_price" type="number" step="0.01" min="0"
+              value="${esc(it.unit_price)}" placeholder="${esc(it.suggested ?? "")}" title="Vacío = precio de lista"></td>
+        <td><div style="display:flex;gap:4px">
+          <select class="w-dtype" data-f="discount_type">
+            <option value="percent" ${it.discount_type!=="amount"?"selected":""}>%</option>
+            <option value="amount" ${it.discount_type==="amount"?"selected":""}>$</option>
+          </select>
+          <input class="w-disc" data-f="discount_value" type="number" step="0.01" min="0" value="${esc(it.discount_value)}" placeholder="0">
+        </div></td>
+        <td class="num" data-total>${t ? fmtMoney(t.line_total, totals.currency) : "—"}</td>
+        <td><button type="button" class="btn sm ghost" data-del="${i}" title="Quitar"><svg class="ic"><use href="#i-x"/></svg></button></td>
+      </tr>`;
+    }).join("");
+    $$("[data-f]", lineBody).forEach(inp => inp.addEventListener("input", () => {
+      const i = Number(inp.closest("tr").dataset.i);
+      draft.items[i][inp.dataset.f] = inp.value;
+      refresh({ keepLines: true });
+    }));
+    $$("[data-del]", lineBody).forEach(b => b.addEventListener("click", () => {
+      draft.items.splice(Number(b.dataset.del), 1); refresh();
+    }));
+  }
+
+  function paintPays() {
+    $("#noPays", body).style.display = draft.payments.length ? "none" : "";
+    payList.innerHTML = draft.payments.map((p, i) => `
+      <div class="payrow" data-i="${i}">
+        <input class="amt" data-f="amount" type="number" step="0.01" min="0" value="${esc(p.amount)}" placeholder="Importe">
+        <select data-f="method" style="width:auto">
+          ${PAYMENT_METHOD_OPTIONS.map(o => `<option value="${o.value}" ${p.method===o.value?"selected":""}>${esc(o.label)}</option>`).join("")}
+        </select>
+        <select data-f="account_id" style="width:auto"><option value="">— sin cuenta —</option>
+          ${accounts.map(a => `<option value="${a.id}" ${String(p.account_id)===String(a.id)?"selected":""}>${esc(a.name)}</option>`).join("")}
+        </select>
+        <input data-f="reference" value="${esc(p.reference || "")}" placeholder="Referencia" style="width:130px">
+        <button type="button" class="btn sm ghost" data-delpay="${i}"><svg class="ic"><use href="#i-x"/></svg></button>
+      </div>`).join("");
+    $$("[data-f]", payList).forEach(inp => inp.addEventListener("input", () => {
+      const i = Number(inp.closest(".payrow").dataset.i);
+      draft.payments[i][inp.dataset.f] = inp.value;
+      // Choosing an account suggests its usual method, without forcing it.
+      if (inp.dataset.f === "account_id") {
+        const acc = accounts.find(a => String(a.id) === inp.value);
+        if (acc && acc.method) {
+          draft.payments[i].method = acc.method;
+          inp.closest(".payrow").querySelector('[data-f="method"]').value = acc.method;
+        }
+      }
+      refresh({ keepPays: true });
+    }));
+    $$("[data-delpay]", payList).forEach(b => b.addEventListener("click", () => {
+      draft.payments.splice(Number(b.dataset.delpay), 1); refresh();
+    }));
+  }
+
+  function paintTotals(err) {
+    if (err) { totalsBox.innerHTML = `<div style="color:var(--danger);font-size:13px">${esc(err)}</div>`; return; }
+    if (!totals) { totalsBox.innerHTML = `<div class="fhelp">Agregá un producto para ver el total.</div>`; return; }
+    const owes = Number(totals.balance) > 0;
+    totalsBox.innerHTML = `<dl>
+      <dt>Subtotal</dt><dd>${fmtMoney(totals.subtotal, totals.currency)}</dd>
+      ${Number(totals.discount_amount) > 0
+        ? `<dt>Descuento sobre el total</dt><dd>− ${fmtMoney(totals.discount_amount, totals.currency)}</dd>` : ""}
+      <div class="grand" style="display:contents"><dt>TOTAL</dt><dd>${fmtMoney(totals.total, totals.currency)}</dd></div>
+      <dt>Abonado</dt><dd>${fmtMoney(totals.paid_amount, totals.currency)}</dd>
+      <div class="due ${owes ? "" : "ok"}" style="display:contents">
+        <dt>${owes ? "Saldo que debe" : "Saldo"}</dt><dd>${fmtMoney(totals.balance, totals.currency)}</dd></div>
+    </dl>`;
+    reminderBox.style.display = owes ? "" : "none";
+  }
+
+  /* Write the new line totals into the cells rather than re-rendering the
+     rows: the preview lands ~200ms after a keystroke, and a repaint would
+     take the caret out of the field being typed into. */
+  function updateLineTotals() {
+    $$("tr[data-i]", lineBody).forEach(tr => {
+      const t = totals && totals.items[Number(tr.dataset.i)];
+      tr.querySelector("[data-total]").innerHTML =
+        t ? fmtMoney(t.line_total, totals.currency) : "—";
+    });
+  }
+
+  const askTotals = debounce(async () => {
+    if (!draft.items.length) { totals = null; paintTotals(); updateLineTotals(); return; }
+    try {
+      totals = await api("POST", "/api/sales/preview", saleBody(draft));
+      paintTotals(); updateLineTotals();
+    } catch (e) { totals = null; paintTotals(e.message); updateLineTotals(); }
+  }, 200);
+
+  function refresh({ keepLines = false, keepPays = false } = {}) {
+    if (!keepLines) paintLines();
+    if (!keepPays) paintPays();
+    askTotals();
+  }
+
+  $("#addLine", body).addEventListener("click", () => pickProduct(draft.branch_id, (p) => {
+    draft.items.push({
+      product_id: p.id, label: p.description || p.code, code: p.code,
+      color: p.color_name || "", quantity: "1", unit_price: "",
+      suggested: p.resolved_sale_price, discount_type: "percent", discount_value: "",
+    });
+    refresh();
+  }));
+  $("#addPay", body).addEventListener("click", () => {
+    // Pre-fill with what is still owed: the common case is "paga todo".
+    const owed = totals ? totals.balance : "";
+    draft.payments.push({ amount: owed && Number(owed) > 0 ? owed : "", method: "cash", account_id: "", reference: "" });
+    refresh();
+  });
+
+  refresh();
+  openModal({
+    title: "Nueva venta", body, wide: true, confirmLabel: "Registrar venta",
+    onConfirm: async (close) => {
+      if (!draft.items.length) return toast("Agregá al menos un producto.", "err");
+      try {
+        const sale = await api("POST", "/api/sales", saleBody(draft));
+        toast(`Venta ${sale.number} registrada`, "ok");
+        close(); clearOptions(); onDone && onDone();
+      } catch (e) { toast(e.message, "err"); }
+    },
+  });
+}
+
+/* Sale detail: what was sold, what was paid, what is still owed. */
+async function saleDetailModal(id, onDone) {
+  const [sale, pmap, cmap, bmap, accounts] = await Promise.all([
+    api("GET", `/api/sales/${id}`),
+    idMap("/api/products", "code", p => p.description ? `${p.code} · ${p.description}` : p.code),
+    idMap("/api/customers", "id", customerLabel),
+    idMap("/api/branches"),
+    api("GET", "/api/payment-accounts").catch(() => []),
+  ]);
+  const accMap = Object.fromEntries(accounts.map(a => [a.id, a.name]));
+  const owes = Number(sale.balance) > 0 && sale.status !== "cancelled";
+  const writable = can("sales:write");
+
+  const body = el(`<div>
+    <dl class="kv">
+      <dt>Cliente</dt><dd>${esc(sale.customer_id ? cmap[sale.customer_id] : "Consumidor final")}</dd>
+      <dt>Fecha</dt><dd>${fmtDateTime(sale.sold_at)}</dd>
+      <dt>Sucursal</dt><dd>${esc(sale.branch_id ? (bmap[sale.branch_id] || "—") : "—")}</dd>
+      <dt>Estado</dt><dd>${badge(ENUM_ES.sale_status[sale.status] || sale.status, SALE_STATUS_BADGE[sale.status] || "gray")}</dd>
+      ${sale.notes ? `<dt>Notas</dt><dd>${esc(sale.notes)}</dd>` : ""}
+    </dl>
+    <table class="lines" style="margin-top:14px"><thead><tr>
+      <th>Producto</th><th class="num">Cant.</th><th class="num">Precio</th><th class="num">Desc.</th><th class="num">Total</th>
+    </tr></thead><tbody>
+      ${sale.items.map(i => `<tr>
+        <td>${esc(pmap[i.product_id] || ("#" + i.product_id))}${i.price_overridden ? ` ${badge("precio manual","amber")}` : ""}</td>
+        <td class="num">${fmtNum(i.quantity)}</td>
+        <td class="num">${fmtMoney(i.unit_price)}</td>
+        <td class="num">${Number(i.discount_amount) > 0 ? "− " + fmtMoney(i.discount_amount) : "—"}</td>
+        <td class="num">${fmtMoney(i.line_total)}</td></tr>`).join("")}
+    </tbody></table>
+    <div class="totals">
+      <dl><dt>Subtotal</dt><dd>${fmtMoney(sale.subtotal)}</dd>
+      ${Number(sale.discount_amount) > 0 ? `<dt>Descuento</dt><dd>− ${fmtMoney(sale.discount_amount)}</dd>` : ""}
+      <div class="grand" style="display:contents"><dt>TOTAL</dt><dd>${fmtMoney(sale.total)}</dd></div>
+      <dt>Abonado</dt><dd>${fmtMoney(sale.paid_amount)}</dd>
+      <div class="due ${owes ? "" : "ok"}" style="display:contents"><dt>Saldo</dt><dd>${fmtMoney(sale.balance)}</dd></div></dl>
+    </div>
+    <h4 style="margin:16px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)">Pagos</h4>
+    ${sale.payments.length ? `<table class="lines"><tbody>
+      ${sale.payments.map(p => `<tr>
+        <td>${fmtDateTime(p.paid_at)}</td>
+        <td>${badge(ENUM_ES.payment_method[p.method] || p.method, "blue")}</td>
+        <td>${esc(p.account_id ? (accMap[p.account_id] || "—") : "—")}</td>
+        <td>${esc(p.reference || "")}</td>
+        <td class="num">${fmtMoney(p.amount)}</td></tr>`).join("")}
+    </tbody></table>` : `<div class="fhelp">Sin pagos registrados.</div>`}
+    ${sale.promised_payment_date ? `<div class="fwarn" style="margin-top:12px">
+      Prometió pagar el ${fmtDate(sale.promised_payment_date)}${sale.reminder_note ? " · " + esc(sale.reminder_note) : ""}</div>` : ""}
+    <div class="toolbar" style="margin:16px 0 0">
+      ${writable && owes ? `<button class="btn primary" id="payBtn"><svg class="ic"><use href="#i-dollar"/></svg>Registrar pago</button>` : ""}
+      ${writable && owes ? `<button class="btn" id="remBtn"><svg class="ic"><use href="#i-clock"/></svg>Recordatorio</button>` : ""}
+      ${writable && sale.status !== "cancelled" ? `<button class="btn danger" id="cancelBtn"><svg class="ic"><use href="#i-ban"/></svg>Anular</button>` : ""}
+    </div>
+  </div>`);
+
+  const close = openModal({ title: `Venta ${sale.number}`, body, wide: true });
+  const done = () => { close(); onDone && onDone(); };
+
+  const pay = $("#payBtn", body);
+  if (pay) pay.addEventListener("click", () => paymentModal(sale, accounts, done));
+  const rem = $("#remBtn", body);
+  if (rem) rem.addEventListener("click", () => reminderModal(sale, done));
+  const cancel = $("#cancelBtn", body);
+  if (cancel) cancel.addEventListener("click", () => confirmDanger({
+    title: "Anular venta",
+    message: `Se devuelve el stock de ${sale.number} y la venta queda anulada. Los pagos ya registrados se conservan.`,
+    confirmLabel: "Anular",
+    onConfirm: async () => {
+      await api("POST", `/api/sales/${sale.id}/cancel`);
+      toast("Venta anulada", "ok"); done();
+    },
+  }));
+}
+
+function paymentModal(sale, accounts, onDone) {
+  formModal({
+    title: `Registrar pago · ${sale.number}`, grid: true, confirmLabel: "Registrar",
+    values: { amount: sale.balance, method: "cash" },
+    fields: [
+      { key:"amount", label:"Importe", type:"decimal", step:"0.01", required:true,
+        help:`Saldo pendiente: ${fmtMoney(sale.balance)}` },
+      { key:"method", label:"Forma de pago", type:"select", required:true, options: PAYMENT_METHOD_OPTIONS },
+      { key:"account_id", label:"Cuenta", type:"select", valueType:"int",
+        options: accounts.map(a => ({ value:a.id, label:a.name })), quickCreate:"payment_accounts" },
+      { key:"reference", label:"Referencia" },
+      { key:"note", label:"Nota", type:"textarea", full:true },
+    ],
+    onSubmit: async (p) => {
+      await api("POST", `/api/sales/${sale.id}/payments`, p);
+      toast("Pago registrado", "ok"); onDone && onDone();
+    },
+  });
+}
+
+function reminderModal(sale, onDone) {
+  formModal({
+    title: `Recordatorio · ${sale.number}`, grid: true, confirmLabel: "Guardar",
+    values: { promised_payment_date: sale.promised_payment_date, reminder_note: sale.reminder_note },
+    fields: [
+      { key:"promised_payment_date", label:"Fecha en que promete pagar", type:"date",
+        help:"Aparece en Cuentas pendientes y se marca en rojo si se vence." },
+      { key:"reminder_note", label:"Nota", full:true, placeholder:"Llamar antes del mediodía…" },
+    ],
+    onSubmit: async (p) => {
+      await api("PUT", `/api/sales/${sale.id}`, p);
+      toast("Recordatorio guardado", "ok"); onDone && onDone();
+    },
+  });
+}
+
+async function salesView(view) {
+  renderTabs(view, "Ventas", [
+    { label:"Ventas", render: (n) => salesListTab(n) },
+    { label:"Cuentas", render: (n) => resourceView(n, CONFIG.payment_accounts) },
+  ]);
+}
+
+async function salesListTab(n) {
+  const writable = can("sales:write");
+  const [cmap, bmap] = await Promise.all([
+    can("customers:read") ? idMap("/api/customers", "id", customerLabel) : Promise.resolve({}),
+    can("branches:read") ? idMap("/api/branches") : Promise.resolve({}),
+  ]);
+  const f = { q:"", status:"", branch_id:"", sold_from:"", sold_to:"", pending_only:false };
+
+  n.innerHTML = `
+    <div class="toolbar">
+      ${writable ? `<button class="btn primary" id="newSale"><svg class="ic"><use href="#i-plus"/></svg>Nueva venta</button>` : ""}
+      ${searchBox("sq", "", "Buscar por número, cliente o recordatorio…", "320px")}
+      ${filterSelect(f, "status", ENUM_ES.sale_status, "Todos los estados")}
+      ${filterSelect(f, "branch_id", bmap, "Todas las sucursales")}
+      <label class="switch"><input type="checkbox" data-toggle="pending_only"> Sólo con saldo</label>
+    </div>
+    <div class="toolbar" style="margin-top:-6px">
+      <span class="fhelp">Vendidas entre</span>
+      <input class="inp-sm" type="date" data-filter="sold_from" style="width:auto">
+      <span class="fhelp">y</span>
+      <input class="inp-sm" type="date" data-filter="sold_to" style="width:auto">
+    </div>
+    <div id="salesBody"></div>`;
+
+  const body = $("#salesBody", n);
+  const reload = () => resultsInto(body, "/api/sales", f, [
+    { key:"number", label:"Número", mono:true },
+    { key:"sold_at", label:"Fecha", type:"datetime" },
+    { key:"customer_id", label:"Cliente", render:(v)=>esc(v ? (cmap[v] || ("#"+v)) : "Consumidor final") },
+    { key:"branch_id", label:"Sucursal", priority:3, render:(v)=>esc(v ? (bmap[v]||"—") : "—") },
+    { key:"total", label:"Total", type:"money", align:"right" },
+    { key:"paid_amount", label:"Abonado", type:"money", align:"right", priority:2 },
+    { key:"balance", label:"Saldo", align:"right", render:(v, r) => Number(v) > 0 && r.status !== "cancelled"
+        ? `<b style="color:var(--danger)">${fmtMoney(v)}</b>` : `<span class="fhelp">${fmtMoney(v)}</span>` },
+    { key:"promised_payment_date", label:"Promete pagar", priority:2, render:(v, r) => {
+        if (!v || Number(r.balance) <= 0) return "—";
+        const late = v < todayISO();
+        return `${fmtDate(v)} ${late ? badge("vencido","red") : ""}`; } },
+    { key:"status", label:"Estado", render:(v)=>badge(ENUM_ES.sale_status[v] || v, SALE_STATUS_BADGE[v] || "gray") },
+  ], "Ninguna venta coincide con la búsqueda.", (row) => saleDetailModal(row.id, reload));
+
+  wireFilters(n, f, reload);
+  const nb = $("#newSale", n);
+  if (nb) nb.addEventListener("click", () => newSaleModal(reload));
+  reload();
+}
+
+/* =======================================================================
+   CUENTAS PENDIENTES
+   Every sale that still owes money, by customer or by the day they promised.
+   ======================================================================= */
+async function pendingView(view) {
+  const [cmap, summary] = await Promise.all([
+    can("customers:read") ? idMap("/api/customers", "id", customerLabel) : Promise.resolve({}),
+    api("GET", "/api/sales/pending/summary"),
+  ]);
+  const f = { pending_only: true, q:"", due_from:"", due_to:"", overdue_only:false };
+
+  const stat = (label, value, sub, cls) =>
+    `<div class="stat"><div class="k">${esc(label)}</div>
+      <div class="v" ${cls ? `style="color:var(--${cls})"` : ""}>${value}<small> ${esc(sub || "")}</small></div></div>`;
+
+  view.innerHTML = `
+    <div class="page-head"><div><h2>Cuentas pendientes</h2>
+      <div class="sub">Ventas con saldo, y el día que cada cliente prometió pagar</div></div></div>
+    <div class="stats">
+      ${stat("Total a cobrar", fmtMoney(summary.total_pending), `en ${summary.count} venta(s)`)}
+      ${stat("Vencido", fmtMoney(summary.overdue_amount), `${summary.overdue_count} venta(s)`, summary.overdue_count ? "danger" : null)}
+      ${stat("Vence hoy", fmtMoney(summary.due_today_amount), `${summary.due_today_count} venta(s)`, summary.due_today_count ? "warn" : null)}
+      ${stat("Sin fecha", summary.undated_count, "sin recordatorio")}
+    </div>
+    <div class="toolbar">
+      ${searchBox("pq", "", "Buscar por cliente, número o nota…", "320px")}
+      <label class="switch"><input type="checkbox" data-toggle="overdue_only"> Sólo vencidas</label>
+      <span class="fhelp">Prometido entre</span>
+      <input class="inp-sm" type="date" data-filter="due_from" style="width:auto">
+      <span class="fhelp">y</span>
+      <input class="inp-sm" type="date" data-filter="due_to" style="width:auto">
+      <button class="btn sm" id="dueToday">Vence hoy</button>
+      <button class="btn sm" id="clearDates">Limpiar fechas</button>
+    </div>
+    <div id="pendBody"></div>`;
+
+  const body = $("#pendBody", view);
+  const reload = () => resultsInto(body, "/api/sales", f, [
+    { key:"number", label:"Número", mono:true },
+    { key:"customer_id", label:"Cliente", render:(v)=>esc(v ? (cmap[v] || ("#"+v)) : "Consumidor final") },
+    { key:"sold_at", label:"Vendida", type:"date", priority:2 },
+    { key:"total", label:"Total", type:"money", align:"right", priority:3 },
+    { key:"paid_amount", label:"Abonado", type:"money", align:"right", priority:2 },
+    { key:"balance", label:"Debe", align:"right",
+      render:(v)=>`<b style="color:var(--danger)">${fmtMoney(v)}</b>` },
+    { key:"promised_payment_date", label:"Promete pagar", render:(v)=>{
+        if (!v) return `<span class="fhelp">sin fecha</span>`;
+        const late = v < todayISO(), today = v === todayISO();
+        return `${fmtDate(v)} ${late ? badge("vencido","red") : today ? badge("hoy","amber") : ""}`; } },
+    { key:"reminder_note", label:"Recordatorio", priority:2, trunc:true,
+      render:(v)=>v ? `<span title="${esc(v)}">${esc(v)}</span>` : "—" },
+  ], "Nada pendiente 👍", (row) => saleDetailModal(row.id, () => refreshAll()));
+
+  async function refreshAll() { await pendingView(view); }
+
+  wireFilters(view, f, reload);
+  $("#dueToday", view).addEventListener("click", () => {
+    f.due_from = f.due_to = todayISO();
+    view.querySelector('[data-filter="due_from"]').value = f.due_from;
+    view.querySelector('[data-filter="due_to"]').value = f.due_to;
+    reload();
+  });
+  $("#clearDates", view).addEventListener("click", () => {
+    f.due_from = f.due_to = "";
+    $$('[type="date"]', view).forEach(i => i.value = "");
+    reload();
+  });
+  reload();
+}
+
+/* =======================================================================
+   CATALOG (product types + brands + models + colours)
    ======================================================================= */
 async function catalogView(view) {
   renderTabs(view, "Catálogo", [
     { label:"Tipos de producto", render: (n) => resourceView(n, CONFIG.product_types) },
     { label:"Marcas",            render: (n) => resourceView(n, CONFIG.brands) },
     { label:"Modelos",           render: (n) => resourceView(n, CONFIG.product_models) },
+    { label:"Colores",           render: (n) => resourceView(n, CONFIG.colors) },
   ]);
 }
 
@@ -1672,12 +2502,20 @@ async function pricingView(view) {
    ======================================================================= */
 async function stockView(view) {
   const writable = can("stock:write");
-  const [pmap, bmap, prodOpts, branchOpts] = await Promise.all([
+  const [pmap, bmap, typeMap, brandMap, colorMap, prodOpts, branchOpts] = await Promise.all([
     idMap("/api/products", "code", p => p.description ? `${p.code} · ${p.description}` : p.code),
     idMap("/api/branches"),
+    can("products:read") ? idMap("/api/product-types") : Promise.resolve({}),
+    can("products:read") ? idMap("/api/brands") : Promise.resolve({}),
+    can("products:read") ? idMap("/api/colors") : Promise.resolve({}),
     options({ endpoint:"/api/products", labelFn:p => p.description ? `${p.code} · ${p.description}` : p.code }),
     options({ endpoint:"/api/branches" }),
   ]);
+  // Filters live out here so they survive tab switches and reloads. The API
+  // does the filtering — these bags are turned straight into query strings.
+  const lf = { q:"", branch_id:"", product_type_id:"", brand_id:"", color_id:"", low_only:false };
+  const mf = { q:"", branch_id:"", movement_type:"" };
+  let tab = 0;
   const branchSel = (key, required) => ({ key, label: key==="from_branch_id"?"Desde sucursal":key==="to_branch_id"?"Hacia sucursal":"Sucursal", type:"select", required, valueType:"int", options: branchOpts });
   const prodSel = { key:"product_id", label:"Producto", type:"select", required:true, valueType:"int", options: prodOpts };
 
@@ -1701,29 +2539,53 @@ async function stockView(view) {
   }
 
   function levelsTab(n) {
-    api("GET", "/api/stock/levels").then(levels => {
-      n.innerHTML = renderTable([
-        { key:"product_id", label:"Producto", render:(v)=>esc(pmap[v]||("#"+v)) },
-        { key:"branch_id", label:"Sucursal", render:(v)=>esc(bmap[v]||("#"+v)) },
-        { key:"quantity", label:"Cantidad", type:"num", align:"right",
-          render:(v,r)=>{ const low = r.min_stock!=null && Number(v)<=Number(r.min_stock); return `${fmtNum(v)} ${low?badge("bajo","amber"):""}`; } },
-        { key:"min_stock", label:"Mín", type:"num", align:"right" },
-      ], levels);
-    }).catch(e => n.innerHTML = `<div class="card error">${esc(e.message)}</div>`);
+    n.innerHTML = `
+      <div class="toolbar">
+        ${searchBox("lq", lf.q, "Buscar por código o descripción…", "280px")}
+        ${filterSelect(lf, "branch_id", bmap, "Todas las sucursales")}
+        ${filterSelect(lf, "product_type_id", typeMap, "Todos los tipos")}
+        ${filterSelect(lf, "brand_id", brandMap, "Todas las marcas")}
+        ${filterSelect(lf, "color_id", colorMap, "Todos los colores")}
+        <label class="switch"><input type="checkbox" data-toggle="low_only" ${lf.low_only?"checked":""}> Sólo stock bajo</label>
+      </div>
+      <div id="lbody"></div>`;
+    const body = $("#lbody", n);
+    const reload = () => resultsInto(body, "/api/stock/levels", lf, [
+      { key:"product_id", label:"Producto", render:(v)=>esc(pmap[v]||("#"+v)) },
+      { key:"branch_id", label:"Sucursal", render:(v)=>esc(bmap[v]||("#"+v)) },
+      { key:"quantity", label:"Cantidad", type:"num", align:"right",
+        // effective_min_stock, not min_stock: the per-branch override is
+        // almost always unset, so the product default is what applies.
+        render:(v,r)=>{ const min = r.effective_min_stock; const low = min!=null && Number(v)<=Number(min);
+                        return `${fmtNum(v)} ${low?badge("bajo","amber"):""}`; } },
+      { key:"effective_min_stock", label:"Mín", type:"num", align:"right",
+        render:(v,r)=>`${fmtNum(v)}${r.min_stock!=null?' <span class="fhelp">(sucursal)</span>':""}` },
+    ], "Ningún producto coincide con la búsqueda.");
+    wireFilters(n, lf, reload);
+    reload();
   }
+
   function movementsTab(n) {
-    api("GET", "/api/stock/movements?limit=100").then(mv => {
-      n.innerHTML = renderTable([
-        { key:"created_at", label:"Fecha", type:"datetime" },
-        { key:"product_id", label:"Producto", render:(v)=>esc(pmap[v]||("#"+v)) },
-        { key:"branch_id", label:"Sucursal", render:(v)=>esc(bmap[v]||("#"+v)) },
-        { key:"movement_type", label:"Tipo", type:"badge", cls:"blue", map: ENUM_ES.movement_type },
-        { key:"quantity", label:"Cant.", type:"num", align:"right" },
-        { key:"resulting_quantity", label:"Resultante", type:"num", align:"right" },
-        { key:"counterpart_branch_id", label:"Contraparte", render:(v)=>v?esc(bmap[v]||("#"+v)):"—" },
-        { key:"reference", label:"Ref." },
-      ], mv);
-    }).catch(e => n.innerHTML = `<div class="card error">${esc(e.message)}</div>`);
+    n.innerHTML = `
+      <div class="toolbar">
+        ${searchBox("mq", mf.q, "Buscar por producto, referencia o nota…", "300px")}
+        ${filterSelect(mf, "branch_id", bmap, "Todas las sucursales")}
+        ${filterSelect(mf, "movement_type", ENUM_ES.movement_type, "Todos los tipos")}
+      </div>
+      <div id="mbody"></div>`;
+    const body = $("#mbody", n);
+    const reload = () => resultsInto(body, "/api/stock/movements", { ...mf, limit:100 }, [
+      { key:"created_at", label:"Fecha", type:"datetime" },
+      { key:"product_id", label:"Producto", render:(v)=>esc(pmap[v]||("#"+v)) },
+      { key:"branch_id", label:"Sucursal", render:(v)=>esc(bmap[v]||("#"+v)) },
+      { key:"movement_type", label:"Tipo", type:"badge", cls:"blue", map: ENUM_ES.movement_type },
+      { key:"quantity", label:"Cant.", type:"num", align:"right" },
+      { key:"resulting_quantity", label:"Resultante", type:"num", align:"right", priority:2 },
+      { key:"counterpart_branch_id", label:"Contraparte", priority:3, render:(v)=>v?esc(bmap[v]||("#"+v)):"—" },
+      { key:"reference", label:"Ref." },
+    ], "Ningún movimiento coincide con la búsqueda.");
+    wireFilters(n, mf, reload);
+    reload();
   }
 
   function render() {
@@ -1733,19 +2595,20 @@ async function stockView(view) {
           <button class="btn" id="expStock"><svg class="ic"><use href="#i-download"/></svg>Exportar<svg class="ic"><use href="#i-chevron-down"/></svg></button>
           ${writable ? `<button class="btn" id="impStock"><svg class="ic"><use href="#i-upload"/></svg>Importar stock inicial</button><button class="btn" id="transferBtn"><svg class="ic"><use href="#i-transfer"/></svg>Transferir</button><button class="btn primary" id="moveBtn"><svg class="ic"><use href="#i-plus"/></svg>Movimiento</button>` : ""}
         </div></div>
-      <div class="tabs"><button data-i="0" class="active">Existencias</button><button data-i="1">Movimientos</button></div>
+      <div class="tabs"><button data-i="0" class="${tab===0?"active":""}">Existencias</button><button data-i="1" class="${tab===1?"active":""}">Movimientos</button></div>
       <div id="stab"></div>`;
     const body = $("#stab", view);
-    const show = (i) => { $$(".tabs button", view).forEach(b => b.classList.toggle("active", Number(b.dataset.i)===i)); body.innerHTML = `<div class="loading">Cargando…</div>`; (i===0?levelsTab:movementsTab)(body); };
+    const show = (i) => { tab = i; $$(".tabs button", view).forEach(b => b.classList.toggle("active", Number(b.dataset.i)===i)); (i===0?levelsTab:movementsTab)(body); };
     $$(".tabs button", view).forEach(b => b.addEventListener("click", () => show(Number(b.dataset.i))));
+    // The file mirrors what is on screen — same filters as the Existencias tab.
     $("#expStock", view).addEventListener("click", (e) =>
-      openExportMenu(e.currentTarget, [{ key:"stock", label:"Stock" }]));
+      openExportMenu(e.currentTarget, [{ key:"stock", label:"Stock" }], { ...lf }));
     if (writable) {
       $("#moveBtn", view).addEventListener("click", newMovement);
       $("#transferBtn", view).addEventListener("click", newTransfer);
       $("#impStock", view).addEventListener("click", () => openImportWizard("stock", render));
     }
-    show(0);
+    show(tab);
   }
   render();
 }

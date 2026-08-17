@@ -22,9 +22,10 @@ from app.models.auth import Permission, Role, User
 from app.models.branch import Branch
 from app.models.company import Company, CompanySettings
 from app.models.customer import Customer
-from app.models.enums import StockMovementType, SupplierType
+from app.models.enums import PaymentMethod, StockMovementType, SupplierType
 from app.models.pricing import PriceCategory, PriceList
-from app.models.product import Brand, Product, ProductModel, ProductType
+from app.models.product import Brand, Color, Product, ProductModel, ProductType
+from app.models.sales import PaymentAccount
 from app.models.supplier import Supplier, supplier_brands
 from app.schemas.stock import StockMovementCreate
 from app.services import numbering, pricing, stock as stock_service
@@ -46,11 +47,14 @@ PERMISSIONS: list[tuple[str, str]] = [
     ("stock:write", "Create stock movements"),
     ("customers:read", "View customers"),
     ("customers:write", "Manage customers"),
+    ("sales:read", "View sales & pending accounts"),
+    ("sales:write", "Register sales & payments"),
 ]
 
 SALESPERSON_PERMS = {
     "products:read", "pricing:read", "stock:read", "stock:write",
     "customers:read", "customers:write", "branches:read", "suppliers:read",
+    "sales:read", "sales:write",
 }
 
 
@@ -143,6 +147,21 @@ def run() -> None:
         brand_a, _ = get_or_create(db, Brand, company_id=cid, name="RayBan")
         brand_b, _ = get_or_create(db, Brand, company_id=cid, name="Vulk")
 
+        # --- colours: a starter palette so the dropdown is not empty on day 1 ---
+        colors = {}
+        for name, hex_code in [
+            ("Negro", "#1a1a1a"), ("Blanco", "#f5f5f5"), ("Gris", "#8a8f98"),
+            ("Marrón", "#6b4423"), ("Havana", "#8b5a2b"), ("Carey", "#7a4a1e"),
+            ("Dorado", "#c9a227"), ("Plateado", "#b7bcc4"), ("Azul", "#1f4e9c"),
+            ("Celeste", "#5fa8e8"), ("Verde", "#2f7a4d"), ("Rojo", "#c02b2b"),
+            ("Bordó", "#7b1f2b"), ("Rosa", "#e08fa8"), ("Violeta", "#6b3fa0"),
+            ("Transparente", "#e8ecf1"),
+        ]:
+            colors[name], _ = get_or_create(
+                db, Color, defaults={"hex_code": hex_code},
+                company_id=cid, name=name,
+            )
+
         # --- price list + its category ladder (cheapest first) ---
         price_list, _ = get_or_create(
             db, PriceList, defaults={"is_default": True, "currency": "ARS"},
@@ -185,18 +204,18 @@ def run() -> None:
 
         # --- products ---
         products_spec = [
-            ("ARM-001", "Armazón clásico negro", pt_frames, brand_a, models["Clipper"], "AC", "20000"),
-            ("SOL-001", "Lente de sol aviador", pt_sun, brand_a, models["Aviador"], "AB", "12000"),
-            ("LC-001", "Lentes de contacto mensual", pt_contact, brand_b, None, "AA", "6000"),
+            ("ARM-001", "Armazón clásico negro", pt_frames, brand_a, models["Clipper"], "Negro", "AC", "20000"),
+            ("SOL-001", "Lente de sol aviador", pt_sun, brand_a, models["Aviador"], "Dorado", "AB", "12000"),
+            ("LC-001", "Lentes de contacto mensual", pt_contact, brand_b, None, "Transparente", "AA", "6000"),
         ]
         created_products: list[Product] = []
-        for code, description, ptype, brand, model, cat_code, cost in products_spec:
+        for code, description, ptype, brand, model, color, cat_code, cost in products_spec:
             prod, was_new = get_or_create(
                 db, Product,
                 defaults={
                     "description": description, "product_type_id": ptype.id,
                     "brand_id": brand.id, "model_id": model.id if model else None,
-                    "supplier_id": supplier.id,
+                    "supplier_id": supplier.id, "color_id": colors[color].id,
                     "price_category_code": cat_code, "current_cost": Decimal(cost),
                     "min_stock": Decimal("2"),
                 },
@@ -212,6 +231,18 @@ def run() -> None:
             defaults={"document_type": "DNI", "document_number": "30111222", "phone": "11-5555-0000"},
             company_id=cid, first_name="Juan", last_name="Pérez",
         )
+
+        # --- payment accounts (where the money lands) ---
+        for name, method in [
+            ("Efectivo caja", PaymentMethod.CASH),
+            ("Santander", PaymentMethod.TRANSFER),
+            ("MercadoPago", PaymentMethod.TRANSFER),
+            ("Posnet Visa/Master", PaymentMethod.CARD),
+        ]:
+            get_or_create(
+                db, PaymentAccount, defaults={"method": method},
+                company_id=cid, name=name,
+            )
 
         # --- document number sequences ---
         for key in (numbering.KEY_SALE, numbering.KEY_QUOTE, numbering.KEY_WORK_ORDER, numbering.KEY_REPAIR):

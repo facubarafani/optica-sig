@@ -7,6 +7,8 @@ in sync. ``resulting_quantity`` snapshots the level after the movement for audit
 from __future__ import annotations
 
 from datetime import datetime
+from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     DateTime,
@@ -17,11 +19,14 @@ from sqlalchemy import (
     UniqueConstraint,
     func,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 from app.models.base import CompanyMixin, IDMixin
 from app.models.enums import StockMovementType
+
+if TYPE_CHECKING:
+    from app.models.product import Product
 
 
 class StockLevel(IDMixin, CompanyMixin, Base):
@@ -39,6 +44,19 @@ class StockLevel(IDMixin, CompanyMixin, Base):
     quantity: Mapped[float] = mapped_column(Numeric(12, 2), default=0, nullable=False)
     # Optional per-branch override of Product.min_stock.
     min_stock: Mapped[float | None] = mapped_column(Numeric(12, 2))
+
+    product: Mapped["Product"] = relationship(lazy="joined")
+
+    @property
+    def effective_min_stock(self) -> Decimal:
+        """The minimum that actually applies here: the branch override, else the
+        product's default. ``min_stock`` alone is almost always NULL, so anything
+        deciding "is this low?" must use this instead — see
+        ``services.stock.list_levels(low_only=True)``, which is its SQL twin.
+        """
+        if self.min_stock is not None:
+            return Decimal(self.min_stock)
+        return Decimal(self.product.min_stock if self.product else 0)
 
 
 class StockMovement(IDMixin, CompanyMixin, Base):

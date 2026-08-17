@@ -378,7 +378,7 @@ def _apply_products(db, parsed, *, company_id, user_id) -> dict:
             by_code[_norm(v["code"])] = product
 
         for src, dst in (
-            ("description", "description"), ("color", "color"),
+            ("description", "description"), ("color", "color_id"),
             ("product_type", "product_type_id"), ("brand", "brand_id"),
             ("model", "model_id"), ("supplier", "supplier_id"),
             ("min_stock", "min_stock"), ("sale_price", "sale_price"),

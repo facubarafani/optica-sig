@@ -29,6 +29,24 @@ class Brand(IDMixin, CompanyMixin, TimestampMixin, SoftDeleteMixin, Base):
     name: Mapped[str] = mapped_column(String(80), nullable=False)
 
 
+class Color(IDMixin, CompanyMixin, TimestampMixin, SoftDeleteMixin, Base):
+    """A colour in the shop's palette ("Negro", "Havana", "Carey").
+
+    Master data rather than free text on the product: it keeps one canonical
+    spelling, makes "todos los armazones negros" a real filter, and gives the
+    console a swatch to draw. ``hex_code`` is that swatch — presentation only,
+    nothing resolves against it, so it may be NULL for a colour nobody has
+    picked a shade for yet.
+    """
+
+    __tablename__ = "colors"
+    __table_args__ = (UniqueConstraint("company_id", "name", name="uq_color_name"),)
+
+    name: Mapped[str] = mapped_column(String(80), nullable=False)
+    # "#rrggbb", lower-cased by the schema validator.
+    hex_code: Mapped[str | None] = mapped_column(String(7))
+
+
 class ProductModel(IDMixin, CompanyMixin, TimestampMixin, SoftDeleteMixin, Base):
     """Modelo / forma del producto (clipper, aviador, redondo...).
 
@@ -53,10 +71,12 @@ class Product(IDMixin, CompanyMixin, TimestampMixin, SoftDeleteMixin, Base):
 
     code: Mapped[str] = mapped_column(String(40), nullable=False)
     description: Mapped[str | None] = mapped_column(String(500))
-    color: Mapped[str | None] = mapped_column(String(60))
 
     product_type_id: Mapped[int] = mapped_column(
         ForeignKey("product_types.id", ondelete="RESTRICT"), nullable=False
+    )
+    color_id: Mapped[int | None] = mapped_column(
+        ForeignKey("colors.id", ondelete="SET NULL")
     )
     brand_id: Mapped[int | None] = mapped_column(
         ForeignKey("brands.id", ondelete="SET NULL")
@@ -100,3 +120,4 @@ class Product(IDMixin, CompanyMixin, TimestampMixin, SoftDeleteMixin, Base):
     product_type: Mapped["ProductType"] = relationship(lazy="joined")
     brand: Mapped["Brand | None"] = relationship(lazy="joined")
     model: Mapped["ProductModel | None"] = relationship(lazy="joined")
+    color: Mapped["Color | None"] = relationship(lazy="joined")
