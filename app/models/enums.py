@@ -57,15 +57,31 @@ class TreatmentType(str, enum.Enum):
     OTHER = "other"               # otro
 
 
-# --- Reserved for transactional modules (out of scope this session, shown in
-#     the ER diagram). Defined here so states are controlled from day one. ---
-
 class SaleStatus(str, enum.Enum):
     QUOTE = "quote"               # presupuesto
     CONFIRMED = "confirmed"       # confirmada
     PENDING = "pending"           # pendiente
     DELIVERED = "delivered"       # entregada
     CANCELLED = "cancelled"       # cancelada
+
+
+class PaymentMethod(str, enum.Enum):
+    """How the customer handed the money over."""
+
+    CASH = "cash"                 # efectivo
+    TRANSFER = "transfer"         # transferencia
+    CARD = "card"                 # tarjeta
+
+
+class DiscountType(str, enum.Enum):
+    """How a discount value is read: a fixed sum, or a share of the base."""
+
+    AMOUNT = "amount"             # importe fijo ($)
+    PERCENT = "percent"           # porcentaje (%)
+
+
+# --- Reserved for transactional modules not built yet (shown in the ER
+#     diagram). Defined here so states are controlled from day one. ---
 
 
 class ExternalWorkType(str, enum.Enum):

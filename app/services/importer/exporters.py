@@ -22,9 +22,9 @@ from sqlalchemy.orm import Session
 
 from app.models.branch import Branch
 from app.models.pricing import PriceCategory, PriceList
-from app.models.product import Brand, Product, ProductModel, ProductType
-from app.models.stock import StockLevel
+from app.models.product import Brand, Color, Product, ProductModel, ProductType
 from app.models.supplier import Supplier
+from app.services import stock as stock_service
 from app.services.importer.specs import ImportSpec
 
 
@@ -48,6 +48,7 @@ def _products(db: Session, company_id: int, opts: dict) -> list[dict]:
     brands = _name_map(db, Brand, company_id)
     models = _name_map(db, ProductModel, company_id)
     suppliers = _name_map(db, Supplier, company_id)
+    colors = _name_map(db, Color, company_id)
     lists_ = _name_map(db, PriceList, company_id)
 
     stmt = select(Product).where(Product.company_id == company_id)
@@ -56,6 +57,7 @@ def _products(db: Session, company_id: int, opts: dict) -> list[dict]:
     for field, key in (
         ("product_type_id", "product_type_id"), ("brand_id", "brand_id"),
         ("model_id", "model_id"), ("supplier_id", "supplier_id"),
+        ("color_id", "color_id"),
     ):
         if opts.get(key):
             stmt = stmt.where(getattr(Product, field) == opts[key])
@@ -69,7 +71,7 @@ def _products(db: Session, company_id: int, opts: dict) -> list[dict]:
             "brand": brands.get(p.brand_id),
             "model": models.get(p.model_id),
             "supplier": suppliers.get(p.supplier_id),
-            "color": p.color,
+            "color": colors.get(p.color_id),
             "current_cost": p.current_cost,
             "min_stock": p.min_stock,
             # The enum *value*, which is what the import spec accepts.
@@ -100,16 +102,27 @@ def _stock(db: Session, company_id: int, opts: dict) -> list[dict]:
         ).all()
     }
     branches = _name_map(db, Branch, company_id)
-    stmt = select(StockLevel).where(StockLevel.company_id == company_id)
-    if opts.get("branch_id"):
-        stmt = stmt.where(StockLevel.branch_id == opts["branch_id"])
-    rows = []
-    for lvl in db.execute(stmt.order_by(StockLevel.id)).scalars():
-        rows.append({
+    # Delegated rather than re-queried: the Stock screen and this export must
+    # agree on what the filters mean, so only one place defines it.
+    levels = stock_service.list_levels(
+        db,
+        company_id=company_id,
+        branch_id=opts.get("branch_id"),
+        q=opts.get("q"),
+        product_type_id=opts.get("product_type_id"),
+        brand_id=opts.get("brand_id"),
+        color_id=opts.get("color_id"),
+        low_only=bool(opts.get("low_only")),
+        include_inactive=bool(opts.get("include_inactive")),
+    )
+    rows = [
+        {
             "product": products.get(lvl.product_id),
             "branch": branches.get(lvl.branch_id),
             "quantity": lvl.quantity,
-        })
+        }
+        for lvl in levels
+    ]
     return [r for r in rows if r["product"] and r["branch"]]
 
 

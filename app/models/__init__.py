@@ -17,15 +17,18 @@ from app.models.company import Company, CompanySettings
 from app.models.customer import Customer, Prescription, TreatmentHistory
 from app.models.imports import ImportBatch
 from app.models.enums import (
+    DiscountType,
     ExternalWorkStatus,
     ExternalWorkType,
+    PaymentMethod,
     SaleStatus,
     StockMovementType,
     SupplierType,
     TreatmentType,
 )
 from app.models.pricing import CostHistory, PriceCategory, PriceList
-from app.models.product import Brand, Product, ProductModel, ProductType
+from app.models.product import Brand, Color, Product, ProductModel, ProductType
+from app.models.sales import PaymentAccount, Sale, SaleItem, SalePayment
 from app.models.stock import StockLevel, StockMovement
 from app.models.supplier import Supplier, supplier_brands
 
@@ -49,6 +52,7 @@ __all__ = [
     "PriceCategory",
     "PriceList",
     "Brand",
+    "Color",
     "Product",
     "ProductModel",
     "ProductType",
@@ -56,10 +60,16 @@ __all__ = [
     "StockMovement",
     "Supplier",
     "supplier_brands",
+    "PaymentAccount",
+    "Sale",
+    "SaleItem",
+    "SalePayment",
     # enums
     "SupplierType",
     "StockMovementType",
     "TreatmentType",
+    "DiscountType",
+    "PaymentMethod",
     "SaleStatus",
     "ExternalWorkType",
     "ExternalWorkStatus",

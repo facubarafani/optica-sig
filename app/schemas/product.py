@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import re
 from decimal import Decimal
 
 from pydantic import BaseModel, field_validator
 
 from app.models.enums import PricingMode
 from app.schemas.common import SoftDeleteRead
+
+_HEX_RE = re.compile(r"^#?(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
 
 
 def _norm_category_code(v: str | None) -> str | None:
@@ -14,6 +17,25 @@ def _norm_category_code(v: str | None) -> str | None:
         return None
     code = str(v).strip().upper()
     return code or None
+
+
+def _norm_hex(v: str | None) -> str | None:
+    """Normalise a swatch to ``#rrggbb``.
+
+    Accepts what a human or an ``<input type="color">`` might send: with or
+    without the ``#``, 3 or 6 digits, any case. Blank means "no swatch".
+    """
+    if v is None:
+        return None
+    raw = str(v).strip()
+    if not raw:
+        return None
+    if not _HEX_RE.match(raw):
+        raise ValueError('El color debe ser hexadecimal, por ejemplo "#1a1a1a".')
+    digits = raw.lstrip("#").lower()
+    if len(digits) == 3:
+        digits = "".join(c * 2 for c in digits)
+    return f"#{digits}"
 
 
 # --- product type ---------------------------------------------------------
@@ -47,6 +69,33 @@ class BrandRead(SoftDeleteRead):
     name: str
 
 
+# --- color ----------------------------------------------------------------
+class ColorCreate(BaseModel):
+    name: str
+    hex_code: str | None = None
+
+    @field_validator("hex_code")
+    @classmethod
+    def _clean_hex(cls, v: str | None) -> str | None:
+        return _norm_hex(v)
+
+
+class ColorUpdate(BaseModel):
+    name: str | None = None
+    hex_code: str | None = None
+    is_active: bool | None = None
+
+    @field_validator("hex_code")
+    @classmethod
+    def _clean_hex(cls, v: str | None) -> str | None:
+        return _norm_hex(v)
+
+
+class ColorRead(SoftDeleteRead):
+    name: str
+    hex_code: str | None = None
+
+
 # --- product model ("Modelo": clipper, aviador, redondo...) ----------------
 class ProductModelCreate(BaseModel):
     name: str
@@ -69,7 +118,7 @@ class ProductModelRead(SoftDeleteRead):
 class ProductBase(BaseModel):
     code: str
     description: str | None = None
-    color: str | None = None
+    color_id: int | None = None
     product_type_id: int
     brand_id: int | None = None
     model_id: int | None = None
@@ -96,7 +145,7 @@ class ProductCreate(ProductBase):
 class ProductUpdate(BaseModel):
     code: str | None = None
     description: str | None = None
-    color: str | None = None
+    color_id: int | None = None
     product_type_id: int | None = None
     brand_id: int | None = None
     model_id: int | None = None

@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 
 from app.models.branch import Branch
 from app.models.pricing import PriceList
-from app.models.product import Brand, Product, ProductModel, ProductType
+from app.models.product import Brand, Color, Product, ProductModel, ProductType
 from app.models.supplier import Supplier
 
 # Reference targets a column can point at, by name.
@@ -21,6 +21,7 @@ REFS = {
     "product_type": (ProductType, "Tipo de producto", True),
     "brand": (Brand, "Marca", True),
     "model": (ProductModel, "Modelo", True),
+    "color": (Color, "Color", True),
     "supplier": (Supplier, "Proveedor", False),
     "branch": (Branch, "Sucursal", False),
     "price_list": (PriceList, "Lista de precios", False),
@@ -76,7 +77,9 @@ PRODUCTS = ImportSpec(
         Field("model", "Modelo", kind="ref", ref="model", example="Clipper"),
         Field("supplier", "Proveedor", kind="ref", ref="supplier",
               example="Distribuidora Óptica SA"),
-        Field("color", "Color", example="Negro"),
+        Field("color", "Color", kind="ref", ref="color", example="Negro",
+              help="Se busca en el catálogo de colores; si no existe, se crea "
+                   "(sin tono, se le puede asignar después)."),
         Field("current_cost", "Costo", kind="decimal", example="20000,00"),
         Field("min_stock", "Stock mínimo", kind="decimal", example="2"),
         Field("pricing_mode", "Modo de precio", kind="enum",

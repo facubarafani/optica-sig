@@ -259,8 +259,12 @@ def export(
     brand_id: int | None = None,
     model_id: int | None = None,
     supplier_id: int | None = None,
+    color_id: int | None = None,
     branch_id: int | None = None,
     price_list_id: int | None = None,
+    # Stock: the screen's search box and "sólo stock bajo" toggle.
+    q: str | None = None,
+    low_only: bool = False,
     db: Session = Depends(get_db),
     company_id: int = Depends(get_company_id),
     current_user: User = Depends(get_current_user),
@@ -277,8 +281,9 @@ def export(
             db, spec, company_id=company_id,
             include_inactive=include_inactive,
             product_type_id=product_type_id, brand_id=brand_id,
-            model_id=model_id, supplier_id=supplier_id,
+            model_id=model_id, supplier_id=supplier_id, color_id=color_id,
             branch_id=branch_id, price_list_id=price_list_id,
+            q=q, low_only=low_only,
         )
         content, media_type = exporters.render(spec, rows, format)
     except exporters.ExportError as exc:

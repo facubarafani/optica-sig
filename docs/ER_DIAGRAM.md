@@ -18,7 +18,7 @@ vía `number_sequence`.
 | 5 | Productos y stock | ✅ | `product_type`, `brand`, `product_model`, `product`, `supplier_brands`, `stock_level`, `stock_movement` |
 | 6 | Precios y costos | ✅ | `price_list`, `price_category` (escalera AA..ZZ), `cost_history` |
 | 7 | Clientes | ✅ | `customer`, `prescription`, `treatment_history` |
-| 8 | Ventas | 🟡 | `sale`, `sale_item`, `payment` |
+| 8 | Ventas | ✅ | `sale`, `sale_item`, `sale_payment`, `payment_account` |
 | 9 | Caja | 🟡 | `cash_register_session`, `cash_movement` |
 | 10 | Cuentas corrientes (clientes) | 🟡 | `customer_account`, `account_entry` |
 | 11 | Trabajos externos (lab/taller) | 🟡 | `external_work` |
@@ -440,5 +440,19 @@ erDiagram
   misma transacción. Las transferencias generan dos movimientos `transfer`.
 - **Numeración**: ventas/presupuestos/órdenes/arreglos usan `number_sequence`
   (prefijos `V-`, `P-`, `OT-`, `AR-`).
+- **Ventas (implementado)**: el módulo construido difiere del diagrama en tres
+  puntos, porque el diagrama no los contemplaba:
+  - **Descuentos** en dos niveles (`discount_type` + `discount_value`, importe o
+    porcentaje): por línea y sobre el subtotal. El importe resultante se guarda
+    (`discount_amount`) para que un comprobante no lo recalcule.
+  - **`payment_account`** (Santander, MercadoPago, caja…) es dato maestro y
+    cuelga de cada pago; `payment` se llama `sale_payment`.
+  - **`promised_payment_date` + `reminder_note`** en la venta alimentan
+    "cuentas pendientes". Es deliberadamente más simple que
+    `account_entry.estimated_collection_date`: la cuenta corriente completa
+    (módulo 10) sigue pendiente y sustituirá esto cuando se construya.
+  - `total`/`paid_amount`/`balance` son **snapshots** que escribe
+    `services.sales`; nunca se recalculan al leer, así un cambio de precio no
+    reescribe lo que se le cobró a un cliente.
 - **Auditoría**: cambios de precio, costo, categoría y stock se registran en
   `change_history` (valor anterior/nuevo, usuario, fecha).

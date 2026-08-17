@@ -7,10 +7,12 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session, contains_eager
 
+from app.core import search
 from app.models.enums import StockMovementType
+from app.models.product import Product
 from app.models.stock import StockLevel, StockMovement
 from app.schemas.stock import StockMovementCreate, StockTransferCreate
 from app.services import audit
@@ -38,13 +40,51 @@ def list_levels(
     company_id: int,
     product_id: int | None = None,
     branch_id: int | None = None,
+    q: str | None = None,
+    product_type_id: int | None = None,
+    brand_id: int | None = None,
+    color_id: int | None = None,
+    low_only: bool = False,
+    include_inactive: bool = False,
 ) -> list[StockLevel]:
-    stmt = select(StockLevel).where(StockLevel.company_id == company_id)
+    """Stock on hand, narrowed by any combination of the filters.
+
+    Everything but ``product_id``/``branch_id`` reaches through to the product,
+    so the join is unconditional — it also feeds ``effective_min_stock``.
+    """
+    stmt = (
+        select(StockLevel)
+        .join(StockLevel.product)
+        # Reuse the join we already need for filtering to satisfy the eager load,
+        # instead of letting lazy="joined" add a second one.
+        .options(contains_eager(StockLevel.product))
+        .where(StockLevel.company_id == company_id)
+    )
+    if not include_inactive:
+        stmt = stmt.where(Product.is_active.is_(True))
     if product_id is not None:
         stmt = stmt.where(StockLevel.product_id == product_id)
     if branch_id is not None:
         stmt = stmt.where(StockLevel.branch_id == branch_id)
-    return list(db.execute(stmt.order_by(StockLevel.id)).scalars().all())
+    if product_type_id is not None:
+        stmt = stmt.where(Product.product_type_id == product_type_id)
+    if brand_id is not None:
+        stmt = stmt.where(Product.brand_id == brand_id)
+    if color_id is not None:
+        stmt = stmt.where(Product.color_id == color_id)
+    if low_only:
+        # The SQL twin of StockLevel.effective_min_stock: branch override first,
+        # product default second. Reading StockLevel.min_stock alone would miss
+        # nearly every low row, because the override is rarely set.
+        stmt = stmt.where(
+            StockLevel.quantity
+            <= func.coalesce(StockLevel.min_stock, Product.min_stock)
+        )
+    if (term := search.matches(q, Product.code, Product.description)) is not None:
+        stmt = stmt.where(term)
+    # Product code reads far better than insertion order for a stock list.
+    stmt = stmt.order_by(Product.code, StockLevel.branch_id)
+    return list(db.execute(stmt).unique().scalars().all())
 
 
 def _get_or_create_level(
@@ -218,12 +258,28 @@ def list_movements(
     company_id: int,
     product_id: int | None = None,
     branch_id: int | None = None,
+    q: str | None = None,
+    movement_type: StockMovementType | None = None,
     limit: int = 100,
 ) -> list[StockMovement]:
+    """The movement ledger, newest first.
+
+    ``q`` searches the product (code, description) and the movement's own
+    reference and note — the ledger is usually searched by document number.
+    """
     stmt = select(StockMovement).where(StockMovement.company_id == company_id)
     if product_id is not None:
         stmt = stmt.where(StockMovement.product_id == product_id)
     if branch_id is not None:
         stmt = stmt.where(StockMovement.branch_id == branch_id)
+    if movement_type is not None:
+        stmt = stmt.where(StockMovement.movement_type == movement_type)
+    if search.terms(q):
+        stmt = stmt.join(Product, Product.id == StockMovement.product_id)
+        term = search.matches(
+            q, Product.code, Product.description,
+            StockMovement.reference, StockMovement.note,
+        )
+        stmt = stmt.where(term)
     stmt = stmt.order_by(StockMovement.id.desc()).limit(limit)
     return list(db.execute(stmt).scalars().all())

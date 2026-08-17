@@ -3,6 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.core import search
 from app.core.crud import CRUDBase
 from app.core.database import get_db
 from app.core.deps import get_company_id, require_permission
@@ -50,10 +51,14 @@ def list_products(
     brand_id: int | None = None,
     model_id: int | None = None,
     supplier_id: int | None = None,
+    color_id: int | None = None,
+    q: str | None = None,
     db: Session = Depends(get_db),
     company_id: int = Depends(get_company_id),
     _: object = Depends(require_permission("products:read")),
 ):
+    """``q`` matches the code or the description, ignoring case and accents."""
+    term = search.matches(q, Product.code, Product.description)
     products = crud.list(
         db,
         company_id=company_id,
@@ -65,7 +70,9 @@ def list_products(
             "brand_id": brand_id,
             "model_id": model_id,
             "supplier_id": supplier_id,
+            "color_id": color_id,
         },
+        extra_where=[term] if term is not None else None,
     )
     return _with_prices(db, products, company_id)
 

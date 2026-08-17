@@ -8,6 +8,7 @@ from app.core.database import get_db
 from app.core.deps import get_company_id, require_permission
 from app.models.auth import User
 from app.models.company import CompanySettings
+from app.models.enums import StockMovementType
 from app.schemas.stock import (
     StockLevelRead,
     StockMovementCreate,
@@ -30,12 +31,29 @@ def _allow_negative(db: Session, company_id: int) -> bool:
 def list_levels(
     product_id: int | None = None,
     branch_id: int | None = None,
+    q: str | None = None,
+    product_type_id: int | None = None,
+    brand_id: int | None = None,
+    color_id: int | None = None,
+    low_only: bool = False,
+    include_inactive: bool = False,
     db: Session = Depends(get_db),
     company_id: int = Depends(get_company_id),
     _: object = Depends(require_permission("stock:read")),
 ):
+    """Stock on hand. ``q`` matches the product code or description, ignoring
+    case and accents; several words must all match, in any order."""
     return stock_service.list_levels(
-        db, company_id=company_id, product_id=product_id, branch_id=branch_id
+        db,
+        company_id=company_id,
+        product_id=product_id,
+        branch_id=branch_id,
+        q=q,
+        product_type_id=product_type_id,
+        brand_id=brand_id,
+        color_id=color_id,
+        low_only=low_only,
+        include_inactive=include_inactive,
     )
 
 
@@ -43,13 +61,22 @@ def list_levels(
 def list_movements(
     product_id: int | None = None,
     branch_id: int | None = None,
+    q: str | None = None,
+    movement_type: StockMovementType | None = None,
     limit: int = 100,
     db: Session = Depends(get_db),
     company_id: int = Depends(get_company_id),
     _: object = Depends(require_permission("stock:read")),
 ):
+    """The movement ledger. ``q`` also matches the reference and the note."""
     return stock_service.list_movements(
-        db, company_id=company_id, product_id=product_id, branch_id=branch_id, limit=limit
+        db,
+        company_id=company_id,
+        product_id=product_id,
+        branch_id=branch_id,
+        q=q,
+        movement_type=movement_type,
+        limit=limit,
     )
 
 
