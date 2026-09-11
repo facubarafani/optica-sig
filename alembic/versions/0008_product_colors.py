@@ -24,8 +24,15 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # See app/core/migration_utils.py: a database created by 0001_initial after
-    # this change already has both the table and the FK column.
+    # See app/core/migration_utils.py. A database created by 0001_initial today
+    # is already past 0010, which replaced ``products.color_id`` with the
+    # ``product_colors`` link table — so there is nothing here for it to do, and
+    # adding the column back only for 0010 to drop it again would be churn.
+    if has_table("product_colors"):
+        return
+
+    # A database created by 0001_initial between this revision and 0010 already
+    # has both the table and the FK column.
     if not has_table("colors"):
         op.create_table(
             "colors",

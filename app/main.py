@@ -50,3 +50,13 @@ def root() -> RedirectResponse:
 @app.get("/app", include_in_schema=False)
 def web_console() -> FileResponse:
     return FileResponse(WEB_DIR / "index.html")
+
+
+# --- Provider admin console ----------------------------------------------
+# A separate page, not a section of /app: the tenant console is shipped to every
+# optics shop, and the provider screens have no business being in that bundle
+# where a permission bug could reveal them. Same origin, same conventions, its
+# own file and its own token scope.
+@app.get("/admin", include_in_schema=False)
+def admin_console() -> FileResponse:
+    return FileResponse(WEB_DIR / "admin.html")

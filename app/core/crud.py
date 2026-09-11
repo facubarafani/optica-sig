@@ -57,9 +57,14 @@ class CRUDBase(Generic[ModelT, CreateT, UpdateT]):
         include_inactive: bool = False,
         filters: dict[str, Any] | None = None,
         extra_where: list[Any] | None = None,
+        order_by: Any | None = None,
     ) -> list[ModelT]:
         """``filters`` are plain equality checks; ``extra_where`` takes any
-        SQLAlchemy condition, for things equality cannot express (text search)."""
+        SQLAlchemy condition, for things equality cannot express (text search).
+
+        ``order_by`` defaults to insertion order, which is the honest default
+        for master data; pass a column where the caller's screen needs another.
+        """
         stmt = select(self.model)
         stmt = self._scoped(stmt, company_id, include_inactive)
         for field, value in (filters or {}).items():
@@ -67,7 +72,8 @@ class CRUDBase(Generic[ModelT, CreateT, UpdateT]):
                 stmt = stmt.where(getattr(self.model, field) == value)
         for condition in (extra_where or []):
             stmt = stmt.where(condition)
-        stmt = stmt.order_by(self.model.id).offset(skip).limit(limit)
+        stmt = stmt.order_by(order_by if order_by is not None else self.model.id)
+        stmt = stmt.offset(skip).limit(limit)
         return list(db.execute(stmt).scalars().all())
 
     # -- writes ------------------------------------------------------------

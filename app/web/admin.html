@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SGI Óptica — Plataforma</title>
+<style>
+  /* Deliberately violet where the tenant console is blue. The two apps look
+     alike enough to share muscle memory and different enough that nobody
+     mistakes "suspender empresa" for a shop screen. */
+  :root{
+    --bg:#f6f5fa; --panel:#ffffff; --border:#e5e3ee; --text:#1f2937; --muted:#6b7280;
+    --primary:#7c3aed; --primary-600:#6d28d9; --primary-50:#f5f0ff;
+    --danger:#dc2626; --danger-50:#fef2f2; --ok:#16a34a; --ok-50:#f0fdf4;
+    --warn:#d97706; --warn-50:#fffbeb;
+    --radius:10px; --shadow:0 1px 3px rgba(16,24,40,.08),0 1px 2px rgba(16,24,40,.04);
+    --shadow-lg:0 12px 32px rgba(16,24,40,.18); --sidebar:224px;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.45}
+  a{color:var(--primary);text-decoration:none}
+  h1,h2,h3{margin:0;font-weight:650}
+  /* login */
+  .login-wrap{min-height:100%;display:grid;place-items:center;padding:24px}
+  .login-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);width:370px;max-width:100%;padding:28px}
+  .login-card .brand{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+  .login-card .brand .logo{width:34px;height:34px;border-radius:9px;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:800}
+  .login-card h1{font-size:19px}
+  .login-card p.sub{color:var(--muted);margin:2px 0 20px;font-size:13px}
+  .hint{margin-top:16px;font-size:12px;color:var(--muted);text-align:center}
+  /* shell */
+  .app{display:grid;grid-template-columns:var(--sidebar) 1fr;min-height:100%}
+  .sidebar{background:#1b1430;color:#cfc9de;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+  .sidebar .brand{display:flex;align-items:center;gap:10px;padding:18px 18px 14px}
+  .sidebar .brand .logo{width:30px;height:30px;border-radius:8px;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:800}
+  .sidebar .brand b{color:#fff;font-size:15px}
+  .sidebar .brand small{display:block;color:#9c93b5;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+  .nav{padding:6px;overflow:auto;flex:1}
+  .nav a{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:8px;color:#cfc9de;font-weight:500;margin:1px 0}
+  .nav a .ic{width:18px;height:18px;opacity:.9}
+  .nav a:hover{background:#2a2044;color:#fff}
+  .nav a.active{background:var(--primary);color:#fff}
+  .sidebar .foot{padding:12px;border-top:1px solid #2a2044;font-size:12px;color:#9c93b5}
+  .main{display:flex;flex-direction:column;min-width:0}
+  .topbar{height:56px;background:var(--panel);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:5}
+  .topbar .crumb{font-weight:650;font-size:15px}
+  .topbar .who{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:13px}
+  .topbar .who .avatar{width:30px;height:30px;border-radius:50%;background:var(--primary-50);color:var(--primary);display:grid;place-items:center;font-weight:700}
+  .content{padding:22px;width:100%;min-width:0}
+  .menu-btn{display:none;background:none;border:0;font-size:20px;cursor:pointer}
+  /* generic */
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .card.pad{padding:18px}
+  .page-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+  .page-head h2{font-size:20px}
+  .page-head .sub{color:var(--muted);font-size:13px;margin-top:2px}
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+  .loading,.empty{padding:38px;text-align:center;color:var(--muted)}
+  .btn{appearance:none;border:1px solid var(--border);background:var(--panel);color:var(--text);padding:8px 14px;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:background .12s,border-color .12s}
+  .btn:hover{background:#faf9fd}
+  .btn:disabled{opacity:.55;cursor:not-allowed}
+  .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+  .btn.primary:hover{background:var(--primary-600)}
+  .btn.danger{background:#fff;border-color:#fecaca;color:var(--danger)}
+  .btn.danger:hover{background:var(--danger-50)}
+  .btn.sm{padding:5px 10px;font-size:12px;border-radius:7px}
+  .btn.ghost{border-color:transparent;background:transparent}
+  .btn.ghost:hover{background:#f1eff7}
+  .btn.ico{padding:5px 7px;line-height:1;min-width:28px;justify-content:center}
+  .ic{width:16px;height:16px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2;
+      stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px}
+  .ic.lg{width:18px;height:18px}
+  /* inputs */
+  label.fld{display:block;font-size:12.5px;font-weight:600;color:#374151;margin-bottom:5px}
+  label.fld .req{color:var(--danger)}
+  input,select,textarea{width:100%;font:inherit;color:var(--text);background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 10px;outline:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-50)}
+  .searchbox{position:relative;display:inline-flex;align-items:center}
+  .searchbox .ic{position:absolute;left:9px;color:var(--muted);pointer-events:none}
+  .searchbox input{padding-left:30px;min-width:260px}
+  /* table */
+  .tbl-wrap{overflow:auto;border-radius:var(--radius)}
+  table{width:100%;border-collapse:collapse;background:var(--panel);font-size:13px}
+  thead th{text-align:left;padding:10px;background:#faf9fd;color:#6b6480;font-weight:600;font-size:11.5px;letter-spacing:.03em;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap}
+  tbody td{padding:9px 10px;border-bottom:1px solid #f4f2f9;vertical-align:middle}
+  tbody tr:last-child td{border-bottom:0}
+  tbody tr:hover{background:#fdfcff}
+  tr.inactive{opacity:.55}
+  td.actions{text-align:right;white-space:nowrap}
+  td.actions .btn{margin-left:4px}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  td.trunc{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mono{font-family:var(--mono);font-size:12.5px}
+  /* Secondary columns drop as the window narrows, same convention as /app. */
+  @media(max-width:1460px){ .col-p3{display:none} }
+  @media(max-width:1250px){ .col-p2{display:none} }
+  /* row overflow menu */
+  .rowmenu{position:absolute;z-index:60;background:var(--panel);border:1px solid var(--border);
+    border-radius:10px;box-shadow:var(--shadow-lg);padding:5px;min-width:200px}
+  .rowmenu button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;
+    padding:8px 10px;border-radius:7px;font-size:13px;font-weight:500;color:var(--text);cursor:pointer;text-align:left}
+  .rowmenu button:hover{background:var(--primary-50);color:var(--primary-600)}
+  .rowmenu button.danger{color:var(--danger)}
+  .rowmenu button.danger:hover{background:var(--danger-50)}
+  .rowmenu .sep{height:1px;background:var(--border);margin:5px 2px}
+  /* badges + stats */
+  .badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:600;line-height:1.5}
+  .badge.green{background:var(--ok-50);color:var(--ok)}
+  .badge.gray{background:#f1f5f9;color:#64748b}
+  .badge.violet{background:var(--primary-50);color:var(--primary)}
+  .badge.amber{background:var(--warn-50);color:var(--warn)}
+  .badge.red{background:var(--danger-50);color:var(--danger)}
+  .stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:22px}
+  .stat{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow)}
+  .stat .k{color:var(--muted);font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .stat .v{font-size:28px;font-weight:750;margin-top:8px}
+  /* modal */
+  .overlay{position:fixed;inset:0;background:rgba(27,20,48,.45);display:grid;place-items:center;padding:20px;z-index:50}
+  .modal{background:var(--panel);border-radius:14px;box-shadow:var(--shadow-lg);width:520px;max-width:100%;max-height:90vh;display:flex;flex-direction:column}
+  .modal.wide{width:760px}
+  .modal header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+  .modal header h3{font-size:16px}
+  .modal .body{padding:20px;overflow:auto}
+  .modal footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px}
+  .x{background:none;border:0;font-size:20px;line-height:1;cursor:pointer;color:var(--muted)}
+  form.form .form-row{margin-bottom:14px}
+  form.form.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px}
+  form.form.grid2 .form-row{margin-bottom:0}
+  form.form.grid2 .form-row.full{grid-column:1/-1}
+  .fhelp{font-size:11.5px;color:var(--muted);margin-top:4px}
+  .switch{display:flex;align-items:center;gap:8px;font-size:13px;color:#374151;font-weight:500;cursor:pointer;user-select:none}
+  .switch input{width:auto}
+  [hidden]{display:none!important}
+  .sect{font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);
+    font-weight:700;margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--border)}
+  form.form.grid2 .sect{grid-column:1/-1}
+  .kv{display:grid;grid-template-columns:150px 1fr;gap:8px 14px;font-size:13.5px}
+  .kv dt{color:var(--muted);font-weight:600}
+  .kv dd{margin:0}
+  /* the credentials handed over after provisioning */
+  .creds{background:var(--primary-50);border:1px solid #ddd0fb;border-radius:10px;padding:14px 16px;margin-top:6px}
+  .creds dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-size:14px}
+  .creds dt{color:var(--muted);font-weight:600}
+  .creds dd{margin:0;font-family:var(--mono);font-weight:600}
+  .warnbox{background:var(--warn-50);border:1px solid #fde68a;border-radius:8px;padding:10px 12px;
+    font-size:12.5px;color:#92400e;margin-top:12px}
+  /* toast */
+  #toasts{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:10px;z-index:80}
+  .toast{background:#1b1430;color:#fff;padding:11px 15px;border-radius:9px;box-shadow:var(--shadow-lg);font-size:13px;max-width:380px}
+  .toast.err{background:var(--danger)}
+  .toast.ok{background:var(--ok)}
+  @media(max-width:820px){
+    .app{grid-template-columns:1fr}
+    .sidebar{position:fixed;left:0;top:0;width:240px;z-index:40;transform:translateX(-100%);transition:transform .2s}
+    .sidebar.open{transform:none}
+    .menu-btn{display:block}
+    form.form.grid2{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<!-- Icon sprite (Lucide, ISC licence), embedded so this console stays a single
+     self-contained file: no CDN, no font loading, no offline breakage. Only the
+     icons this app uses — it is not a copy of the tenant console's sprite. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="i-store" viewBox="0 0 24 24"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></symbol>
+<symbol id="i-scroll" viewBox="0 0 24 24"><path d="M15 12h-5"/><path d="M15 8h-5"/><path d="M19 17V5a2 2 0 0 0-2-2H4"/><path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H10a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+<symbol id="i-package" viewBox="0 0 24 24"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></symbol>
+<symbol id="i-receipt" viewBox="0 0 24 24"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+<symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></symbol>
+<symbol id="i-login" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></symbol>
+<symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></symbol>
+<symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></symbol>
+<symbol id="i-rotate" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol>
+<symbol id="i-pencil" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
+<symbol id="i-mail" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></symbol>
+<symbol id="i-key" viewBox="0 0 24 24"><path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L18.9 4"/><path d="m21 2-9.6 9.6"/><circle cx="7.5" cy="15.5" r="5.5"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></symbol>
+</svg>
+<div id="root"></div>
+<div id="toasts"></div>
+
+<script>
+"use strict";
+/* =========================================================================
+   SGI Óptica — consola de PLATAFORMA (proveedor), en un solo archivo.
+   Alta y soporte de ópticas clientes. Servida en /admin, mismo origen que la
+   API, y autenticada con un token de scope "platform": este login no puede
+   tocar los datos de una óptica por vías normales, y el login de una óptica
+   no puede entrar acá.
+   Convención: código en inglés, textos de usuario en español.
+   ========================================================================= */
+
+const TOKEN_KEY = "sgi_platform_token";   // distinto del "sgi_token" de /app
+const TENANT_TOKEN_KEY = "sgi_token";     // el que lee la consola del cliente
+const state = { token: null, user: null, tenants: [] };
+const root = document.getElementById("root");
+
+/* ----------------------------- tiny helpers ---------------------------- */
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = (v) => (v == null ? "" : String(v).replace(/[&<>"']/g, c =>
+  ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])));
+const el = (html) => { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+const badge = (text, cls) => `<span class="badge ${cls}">${esc(text)}</span>`;
+
+function fmtDate(v) {
+  if (!v) return "—";
+  const d = new Date(v);
+  if (isNaN(d)) return "—";
+  return d.toLocaleDateString("es-AR", { day:"2-digit", month:"2-digit", year:"numeric" });
+}
+function fmtDateTime(v) {
+  if (!v) return "—";
+  const d = new Date(v);
+  if (isNaN(d)) return "—";
+  return d.toLocaleString("es-AR", { day:"2-digit", month:"2-digit", year:"2-digit", hour:"2-digit", minute:"2-digit" });
+}
+
+function toast(msg, type = "") {
+  const t = el(`<div class="toast ${type}">${esc(msg)}</div>`);
+  $("#toasts").appendChild(t);
+  setTimeout(() => t.remove(), 4200);
+}
+
+/* ----------------------------- API client ------------------------------ */
+function errMsg(data, status) {
+  if (data == null) return `HTTP ${status}`;
+  if (typeof data === "string") return data;
+  const d = data.detail;
+  if (typeof d === "string") return d;
+  if (Array.isArray(d)) return d.map(e => `${(e.loc || []).slice(1).join(".") || "campo"}: ${e.msg}`).join("; ");
+  return JSON.stringify(data);
+}
+
+async function api(method, path, body) {
+  const headers = {};
+  if (state.token) headers["Authorization"] = "Bearer " + state.token;
+  const opts = { method, headers };
+  if (body !== undefined) { headers["Content-Type"] = "application/json"; opts.body = JSON.stringify(body); }
+  const res = await fetch(path, opts);
+  if (res.status === 401) { logout(); throw new Error("La sesión expiró. Ingresá de nuevo."); }
+  if (res.status === 204) return null;
+  const txt = await res.text();
+  let data = null;
+  if (txt) { try { data = JSON.parse(txt); } catch { data = txt; } }
+  if (!res.ok) throw new Error(errMsg(data, res.status));
+  return data;
+}
+
+/* ----------------------------- modal ----------------------------------- */
+function openModal({ title, body, onConfirm, confirmLabel = "Guardar", wide = false, danger = false }) {
+  const overlay = el(`
+    <div class="overlay">
+      <div class="modal ${wide ? "wide" : ""}">
+        <header><h3>${esc(title)}</h3><button class="x" type="button">&times;</button></header>
+        <div class="body"></div>
+        <footer>
+          <button class="btn" data-act="cancel" type="button">Cancelar</button>
+          ${onConfirm ? `<button class="btn ${danger ? "danger" : "primary"}" data-act="ok" type="button">${esc(confirmLabel)}</button>` : ""}
+        </footer>
+      </div>
+    </div>`);
+  const bodyEl = $(".body", overlay);
+  bodyEl.append(typeof body === "string" ? el(`<div>${body}</div>`) : body);
+  const close = () => overlay.remove();
+  $(".x", overlay).addEventListener("click", close);
+  $('[data-act=cancel]', overlay).addEventListener("click", close);
+  overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) close(); });
+  const ok = $('[data-act=ok]', overlay);
+  if (ok) {
+    ok.addEventListener("click", async () => {
+      ok.disabled = true;
+      try { const done = await onConfirm(bodyEl); if (done !== false) close(); }
+      catch (err) { toast(err.message || "Error", "err"); }
+      finally { ok.disabled = false; }
+    });
+  }
+  document.body.appendChild(overlay);
+  const first = $("input,select,textarea", bodyEl);
+  if (first) first.focus();
+  return { overlay, close, body: bodyEl };
+}
+
+function confirmDialog({ title, message, confirmLabel = "Confirmar", danger = false, onConfirm }) {
+  return openModal({
+    title, body: `<p style="margin:0">${message}</p>`,
+    confirmLabel, danger, onConfirm,
+  });
+}
+
+/* row overflow menu — same convention as the tenant console: at most two
+   labelled buttons per row, everything else lives in the ⋯ menu. */
+let _openMenu = null;
+function openRowMenu(anchor, items) {
+  if (_openMenu) { _openMenu.remove(); _openMenu = null; }
+  const menu = el(`<div class="rowmenu"></div>`);
+  for (const it of items) {
+    if (it === "-") { menu.appendChild(el(`<div class="sep"></div>`)); continue; }
+    const b = el(`<button type="button" class="${it.danger ? "danger" : ""}">
+      ${it.icon ? `<svg class="ic"><use href="#${it.icon}"/></svg>` : ""}${esc(it.label)}</button>`);
+    b.addEventListener("click", () => { menu.remove(); _openMenu = null; it.onClick(); });
+    menu.appendChild(b);
+  }
+  document.body.appendChild(menu);
+  const r = anchor.getBoundingClientRect();
+  menu.style.top = `${window.scrollY + r.bottom + 5}px`;
+  menu.style.left = `${Math.max(8, window.scrollX + r.right - menu.offsetWidth)}px`;
+  _openMenu = menu;
+  setTimeout(() => {
+    const off = (e) => {
+      if (menu.contains(e.target)) return;
+      menu.remove(); _openMenu = null; document.removeEventListener("mousedown", off);
+    };
+    document.addEventListener("mousedown", off);
+  }, 0);
+}
+
+/* ----------------------------- auth ------------------------------------ */
+function logout() {
+  state.token = null; state.user = null; state.tenants = [];
+  localStorage.removeItem(TOKEN_KEY);
+  renderLogin();
+}
+
+function renderLogin() {
+  root.innerHTML = `
+    <div class="login-wrap">
+      <form class="login-card" id="loginForm">
+        <div class="brand"><div class="logo">P</div><div><h1>SGI Plataforma</h1></div></div>
+        <p class="sub">Consola del proveedor — alta y soporte de ópticas.</p>
+        <div class="form-row">
+          <label class="fld">Email</label>
+          <input name="email" type="email" autocomplete="username" required>
+        </div>
+        <div class="form-row" style="margin-top:14px">
+          <label class="fld">Contraseña</label>
+          <input name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <button class="btn primary" type="submit" style="width:100%;justify-content:center;margin-top:18px">Ingresar</button>
+        <div class="hint">Esta no es la consola de una óptica. Para eso, <a href="/app">/app</a>.</div>
+      </form>
+    </div>`;
+  $("#loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = $("#loginForm button"); btn.disabled = true; btn.textContent = "Ingresando…";
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: $("[name=email]").value.trim(), password: $("[name=password]").value }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(errMsg(data, res.status));
+      state.token = data.access_token;
+      localStorage.setItem(TOKEN_KEY, state.token);
+      state.user = await api("GET", "/api/admin/me");
+      renderApp();
+    } catch (err) {
+      toast(err.message || "Error al ingresar", "err");
+      btn.disabled = false; btn.textContent = "Ingresar";
+    }
+  });
+}
+
+/* ----------------------------- shell ----------------------------------- */
+const NAV = [
+  { route: "tenants", label: "Ópticas",  icon: "i-store" },
+  { route: "audit",   label: "Auditoría", icon: "i-scroll" },
+];
+
+function renderApp() {
+  const u = state.user;
+  const initials = (u.full_name || u.email || "?").split(" ").map(s => s[0]).slice(0,2).join("").toUpperCase();
+  root.innerHTML = `
+    <div class="app">
+      <aside class="sidebar" id="sidebar">
+        <div class="brand"><div class="logo">P</div><div><b>SGI Óptica</b><small>Plataforma</small></div></div>
+        <nav class="nav">${NAV.map(n =>
+          `<a href="#/${n.route}" data-route="${n.route}"><svg class="ic lg"><use href="#${n.icon}"/></svg>${n.label}</a>`).join("")}</nav>
+        <div class="foot">Consola del proveedor</div>
+      </aside>
+      <div class="main">
+        <div class="topbar">
+          <div style="display:flex;align-items:center;gap:10px">
+            <button class="menu-btn" id="menuBtn"><svg class="ic lg"><use href="#i-menu"/></svg></button>
+            <span class="crumb" id="crumb">Ópticas</span>
+          </div>
+          <div class="who">
+            <span>${esc(u.full_name || u.email)}</span>
+            <span class="avatar">${esc(initials)}</span>
+            <button class="btn sm ghost" id="logoutBtn"><svg class="ic"><use href="#i-logout"/></svg>Salir</button>
+          </div>
+        </div>
+        <div class="content"><div id="view"></div></div>
+      </div>
+    </div>`;
+  $("#logoutBtn").addEventListener("click", logout);
+  $("#menuBtn").addEventListener("click", () => $("#sidebar").classList.toggle("open"));
+  $$("#sidebar .nav a").forEach(a => a.addEventListener("click", () => $("#sidebar").classList.remove("open")));
+  window.addEventListener("hashchange", route);
+  route();
+}
+
+function highlightNav(section) {
+  $$("#sidebar .nav a").forEach(a => a.classList.toggle("active", a.dataset.route === section));
+  const n = NAV.find(x => x.route === section);
+  const crumb = $("#crumb"); if (crumb) crumb.textContent = n ? n.label : "—";
+}
+
+const VIEWS = { tenants: viewTenants, audit: viewAudit };
+
+async function route() {
+  if (!state.user) return;
+  const sec = (location.hash.replace(/^#\//, "") || "tenants").split("/")[0];
+  const view = $("#view");
+  if (!view) return;
+  highlightNav(sec);
+  view.innerHTML = `<div class="loading">Cargando…</div>`;
+  const fn = VIEWS[sec] || viewTenants;
+  try { await fn(view); }
+  catch (err) { view.innerHTML = `<div class="card pad" style="color:var(--danger)">${esc(err.message)}</div>`; }
+}
+
+/* ----------------------------- ópticas ---------------------------------- */
+async function viewTenants(view) {
+  state.tenants = await api("GET", "/api/admin/tenants");
+  const active = state.tenants.filter(t => t.is_active);
+  view.innerHTML = `
+    <div class="page-head">
+      <div><h2>Ópticas</h2><div class="sub">Clientes en el sistema. Cada una es una empresa aislada.</div></div>
+      <button class="btn primary" id="newTenant"><svg class="ic"><use href="#i-plus"/></svg>Nueva óptica</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="k"><svg class="ic"><use href="#i-store"/></svg>Activas</div><div class="v">${active.length}</div></div>
+      <div class="stat"><div class="k"><svg class="ic"><use href="#i-ban"/></svg>Suspendidas</div><div class="v">${state.tenants.length - active.length}</div></div>
+      <div class="stat"><div class="k"><svg class="ic"><use href="#i-users"/></svg>Usuarios</div><div class="v">${state.tenants.reduce((n,t) => n + t.user_count, 0)}</div></div>
+      <div class="stat"><div class="k"><svg class="ic"><use href="#i-receipt"/></svg>Ventas</div><div class="v">${state.tenants.reduce((n,t) => n + t.sale_count, 0)}</div></div>
+    </div>
+    <div class="toolbar">
+      <span class="searchbox"><svg class="ic"><use href="#i-search"/></svg>
+        <input type="search" id="q" placeholder="Buscar por nombre o CUIT…"></span>
+    </div>
+    <div class="tbl-wrap card" id="tblWrap"></div>`;
+  $("#newTenant").addEventListener("click", openNewTenant);
+  const draw = (q = "") => {
+    const needle = q.trim().toLowerCase();
+    const rows = state.tenants.filter(t =>
+      !needle || (t.name || "").toLowerCase().includes(needle) || (t.tax_id || "").toLowerCase().includes(needle));
+    $("#tblWrap").innerHTML = renderTenantTable(rows);
+    wireTenantRows();
+  };
+  $("#q").addEventListener("input", (e) => draw(e.target.value));
+  draw();
+}
+
+function renderTenantTable(rows) {
+  if (!rows.length) return `<div class="empty">No hay ópticas que coincidan.</div>`;
+  return `<table>
+    <thead><tr>
+      <th class="num" style="width:56px">ID</th>
+      <th>Óptica</th>
+      <th class="col-p2">CUIT</th>
+      <th class="col-p3">Contacto</th>
+      <th class="num">Usuarios</th>
+      <th class="num col-p2">Productos</th>
+      <th class="num col-p2">Ventas</th>
+      <th class="col-p3">Alta</th>
+      <th>Estado</th>
+      <th></th>
+    </tr></thead>
+    <tbody>${rows.map(t => `
+      <tr class="${t.is_active ? "" : "inactive"}" data-id="${t.id}">
+        <td class="num mono">${t.id}</td>
+        <td><b>${esc(t.name)}</b>${t.legal_name ? `<div class="fhelp">${esc(t.legal_name)}</div>` : ""}</td>
+        <td class="col-p2 mono">${esc(t.tax_id || "—")}</td>
+        <td class="col-p3 trunc" title="${esc(t.email || "")}">${esc(t.email || "—")}</td>
+        <td class="num">${t.user_count}</td>
+        <td class="num col-p2">${t.product_count}</td>
+        <td class="num col-p2">${t.sale_count}</td>
+        <td class="col-p3">${fmtDate(t.created_at)}</td>
+        <td>${t.is_active ? badge("Activa","green") : badge("Suspendida","red")}</td>
+        <td class="actions">
+          <button class="btn sm" data-act="detail"><svg class="ic"><use href="#i-eye"/></svg>Ver</button>
+          <button class="btn sm ico" data-act="menu" title="Más acciones"><svg class="ic"><use href="#i-more"/></svg></button>
+        </td>
+      </tr>`).join("")}</tbody></table>`;
+}
+
+function wireTenantRows() {
+  $$("#tblWrap tbody tr").forEach(tr => {
+    const id = Number(tr.dataset.id);
+    const t = state.tenants.find(x => x.id === id);
+    $('[data-act=detail]', tr).addEventListener("click", () => openTenantDetail(id));
+    $('[data-act=menu]', tr).addEventListener("click", (e) => openRowMenu(e.currentTarget, [
+      { label: "Ingresar como soporte", icon: "i-login", onClick: () => impersonate(t) },
+      { label: "Editar datos", icon: "i-pencil", onClick: () => openEditTenant(t) },
+      { label: "Agregar administrador", icon: "i-users", onClick: () => openAddAdmin(t) },
+      "-",
+      t.is_active
+        ? { label: "Suspender", icon: "i-ban", danger: true, onClick: () => toggleTenant(t, false) }
+        : { label: "Reactivar", icon: "i-rotate", onClick: () => toggleTenant(t, true) },
+    ]));
+  });
+}
+
+/* --- alta ---------------------------------------------------------------
+   The form is the whole onboarding: one POST provisions the company, its
+   settings, roles, admin user, branch, palette, price list and counters. */
+function openNewTenant() {
+  const form = el(`
+    <form class="form grid2">
+      <div class="form-row full">
+        <label class="fld">Nombre de la óptica <span class="req">*</span></label>
+        <input name="name" required placeholder="Óptica San Martín">
+      </div>
+      <div class="form-row">
+        <label class="fld">Razón social</label>
+        <input name="legal_name" placeholder="San Martín S.R.L.">
+      </div>
+      <div class="form-row">
+        <label class="fld">CUIT</label>
+        <input name="tax_id" placeholder="30-12345678-9">
+      </div>
+      <div class="form-row">
+        <label class="fld">Email de la empresa</label>
+        <input name="email" type="email" placeholder="contacto@optica.com">
+      </div>
+      <div class="form-row">
+        <label class="fld">Teléfono</label>
+        <input name="phone">
+      </div>
+      <div class="form-row full">
+        <label class="fld">Dirección</label>
+        <input name="address">
+      </div>
+      <div class="form-row">
+        <label class="fld">Moneda</label>
+        <select name="currency"><option value="ARS">ARS — Pesos</option><option value="USD">USD — Dólares</option></select>
+      </div>
+      <div class="sect">Usuario administrador</div>
+      <div class="form-row">
+        <label class="fld">Nombre <span class="req">*</span></label>
+        <input name="admin_full_name" value="Administrador" required>
+      </div>
+      <div class="form-row">
+        <label class="fld">Email <span class="req">*</span></label>
+        <input name="admin_email" type="email" required placeholder="dueño@optica.com">
+      </div>
+      <div class="form-row full">
+        <label class="switch"><input type="checkbox" name="use_password"> Definir la contraseña yo</label>
+        <div class="fhelp">Por defecto le mandamos un correo para que la elija él mismo — así nunca manejamos la credencial de un cliente. Marcá esto sólo si su email todavía no funciona.</div>
+      </div>
+      <div class="form-row full" id="pwdRow" hidden>
+        <label class="fld">Contraseña inicial</label>
+        <input name="admin_password" minlength="8" value="${randomPassword()}">
+        <div class="fhelp">Se la dictás una vez y la cambia desde su consola. No queda guardada en claro ni se puede volver a ver.</div>
+      </div>
+    </form>`);
+  $("[name=use_password]", form).addEventListener("change", (e) => {
+    $("#pwdRow", form).hidden = !e.target.checked;
+  });
+
+  openModal({
+    title: "Nueva óptica", body: form, wide: true, confirmLabel: "Crear óptica",
+    onConfirm: async () => {
+      const data = Object.fromEntries(new FormData(form).entries());
+      const usePassword = data.use_password === "on";
+      delete data.use_password;
+      if (!usePassword) delete data.admin_password;
+      for (const k of ["legal_name","tax_id","email","phone","address"]) if (!data[k]) delete data[k];
+      if (!data.name || !data.admin_email) {
+        toast("Completá los campos obligatorios", "err"); return false;
+      }
+      if (usePassword && (data.admin_password || "").length < 8) {
+        toast("La contraseña necesita al menos 8 caracteres", "err"); return false;
+      }
+      const created = await api("POST", "/api/admin/tenants", data);
+      showCredentials(created);
+      route();
+    },
+  });
+}
+
+/* A password that is easy to read out over the phone: no ambiguous glyphs. */
+function randomPassword() {
+  const alphabet = "abcdefghijkmnpqrstuvwxyz23456789";
+  const bytes = crypto.getRandomValues(new Uint8Array(12));
+  return [...bytes].map(b => alphabet[b % alphabet.length]).join("");
+}
+
+function showCredentials(created) {
+  const intro = `<p style="margin:0 0 4px">
+      <b>${esc(created.company.name)}</b> quedó lista para usar, con sus roles,
+      sucursal, lista de precios y numeradores.
+    </p>`;
+
+  // Three outcomes worth telling apart: we mailed an invitation, we set a
+  // password to read out, or the invitation failed to send and someone has to
+  // do something about it.
+  let body;
+  if (created.admin_password) {
+    body = intro + `
+      <div class="creds"><dl>
+        <dt>Consola</dt><dd>/app</dd>
+        <dt>Email</dt><dd>${esc(created.admin_email)}</dd>
+        <dt>Contraseña</dt><dd>${esc(created.admin_password)}</dd>
+      </dl></div>
+      <div class="warnbox">Anotá la contraseña ahora: se guarda hasheada y esta es la única vez que se muestra.</div>`;
+  } else if (created.invitation_sent) {
+    body = intro + `
+      <div class="creds"><dl>
+        <dt>Invitación</dt><dd>enviada</dd>
+        <dt>Email</dt><dd>${esc(created.admin_email)}</dd>
+      </dl></div>
+      <p class="fhelp" style="margin-top:10px">Define su propia contraseña desde el enlace. Vence en 7 días; podés reenviarlo desde la ficha de la óptica.</p>`;
+  } else {
+    body = intro + `
+      <div class="warnbox">
+        La óptica se creó, pero <b>no se pudo enviar la invitación</b> a
+        ${esc(created.admin_email)}. Revisá la configuración de correo
+        (EMAIL_BACKEND) y reenviala desde la ficha de la óptica.
+      </div>`;
+  }
+  openModal({ title: "Óptica creada", body });
+}
+
+function openEditTenant(t) {
+  const form = el(`
+    <form class="form grid2">
+      <div class="form-row full"><label class="fld">Nombre</label><input name="name" value="${esc(t.name)}"></div>
+      <div class="form-row"><label class="fld">Razón social</label><input name="legal_name" value="${esc(t.legal_name || "")}"></div>
+      <div class="form-row"><label class="fld">CUIT</label><input name="tax_id" value="${esc(t.tax_id || "")}"></div>
+      <div class="form-row"><label class="fld">Email</label><input name="email" value="${esc(t.email || "")}"></div>
+      <div class="form-row"><label class="fld">Teléfono</label><input name="phone" value="${esc(t.phone || "")}"></div>
+      <div class="form-row full"><label class="fld">Dirección</label><input name="address" value="${esc(t.address || "")}"></div>
+    </form>`);
+  openModal({
+    title: `Editar — ${t.name}`, body: form, wide: true,
+    onConfirm: async () => {
+      await api("PUT", `/api/admin/tenants/${t.id}`, Object.fromEntries(new FormData(form).entries()));
+      toast("Datos actualizados", "ok");
+      route();
+    },
+  });
+}
+
+function toggleTenant(t, activate) {
+  confirmDialog({
+    title: activate ? `Reactivar ${t.name}` : `Suspender ${t.name}`,
+    message: activate
+      ? "Vuelven a poder ingresar y operar normalmente."
+      : `Nadie de <b>${esc(t.name)}</b> va a poder ingresar, y las sesiones abiertas dejan de funcionar en el próximo pedido. Sus datos quedan intactos.`,
+    confirmLabel: activate ? "Reactivar" : "Suspender",
+    danger: !activate,
+    onConfirm: async () => {
+      await api("POST", `/api/admin/tenants/${t.id}/${activate ? "reactivate" : "suspend"}`);
+      toast(activate ? "Óptica reactivada" : "Óptica suspendida", "ok");
+      route();
+    },
+  });
+}
+
+/* --- soporte: entrar como el cliente ------------------------------------ */
+function impersonate(t) {
+  const form = el(`
+    <form class="form">
+      <p style="margin:0 0 14px">
+        Vas a entrar a <b>${esc(t.name)}</b> como su administrador, en una pestaña nueva.
+        El acceso queda registrado en auditoría y vence a los 30 minutos.
+      </p>
+      <div class="form-row">
+        <label class="fld">Motivo (queda en el registro)</label>
+        <input name="reason" placeholder="Consulta por stock que no cierra">
+      </div>
+    </form>`);
+  openModal({
+    title: "Ingresar como soporte", body: form, confirmLabel: "Ingresar",
+    onConfirm: async () => {
+      const reason = new FormData(form).get("reason") || null;
+      const res = await api("POST", `/api/admin/tenants/${t.id}/impersonate`, { reason });
+      // Same origin, so /app reads this straight out of localStorage. The
+      // provider token lives under a different key and is left untouched.
+      localStorage.setItem(TENANT_TOKEN_KEY, res.access_token);
+      window.open("/app", "_blank");
+      toast(`Sesión de soporte abierta como ${res.user_email}`, "ok");
+    },
+  });
+}
+
+/* --- ficha de una óptica ------------------------------------------------ */
+async function openTenantDetail(id) {
+  const t = state.tenants.find(x => x.id === id);
+  const [users, audit] = await Promise.all([
+    api("GET", `/api/admin/tenants/${id}/users`),
+    api("GET", `/api/admin/audit?company_id=${id}&limit=20`),
+  ]);
+  const body = el(`<div>
+    <dl class="kv">
+      <dt>Razón social</dt><dd>${esc(t.legal_name || "—")}</dd>
+      <dt>CUIT</dt><dd class="mono">${esc(t.tax_id || "—")}</dd>
+      <dt>Contacto</dt><dd>${esc(t.email || "—")}${t.phone ? " · " + esc(t.phone) : ""}</dd>
+      <dt>Dirección</dt><dd>${esc(t.address || "—")}</dd>
+      <dt>Moneda</dt><dd>${esc(t.currency)}</dd>
+      <dt>Estado</dt><dd>${t.is_active ? badge("Activa","green") : badge("Suspendida","red")}</dd>
+      <dt>Alta</dt><dd>${fmtDate(t.created_at)}</dd>
+    </dl>
+    <div class="sect">Usuarios (${users.length})</div>
+    <div class="tbl-wrap" style="border:1px solid var(--border)">
+      <table><thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Estado</th><th></th></tr></thead>
+      <tbody>${users.map(u => `
+        <tr data-uid="${u.id}">
+          <td>${esc(u.full_name)}</td>
+          <td class="mono">${esc(u.email)}</td>
+          <td>${u.is_superuser ? badge("Admin","violet") : badge("Staff","gray")}</td>
+          <td>${u.is_active ? badge("Activo","green") : badge("Inactivo","gray")}</td>
+          <td class="actions">
+            <button class="btn sm ico" data-act="invite" title="Reenviar invitación por email">
+              <svg class="ic"><use href="#i-mail"/></svg></button>
+            <button class="btn sm ico" data-act="pwd" title="Definir contraseña yo">
+              <svg class="ic"><use href="#i-key"/></svg></button>
+          </td>
+        </tr>`).join("")}</tbody></table>
+    </div>
+    <div class="sect">Actividad de plataforma</div>
+    ${audit.length ? `<div class="tbl-wrap" style="border:1px solid var(--border)">
+      <table><thead><tr><th>Cuándo</th><th>Acción</th><th>Detalle</th></tr></thead>
+      <tbody>${audit.map(a => `<tr>
+        <td>${fmtDateTime(a.created_at)}</td>
+        <td>${badge(ACTION_ES[a.action] || a.action, ACTION_BADGE[a.action] || "gray")}</td>
+        <td class="trunc" title="${esc(a.detail || "")}">${esc(a.detail || "—")}</td>
+      </tr>`).join("")}</tbody></table></div>`
+      : `<div class="empty" style="padding:20px">Sin actividad registrada.</div>`}
+  </div>`);
+
+  $$('[data-act=pwd]', body).forEach(btn => btn.addEventListener("click", () => {
+    const uid = Number(btn.closest("tr").dataset.uid);
+    openResetPassword(t, users.find(x => x.id === uid));
+  }));
+  $$('[data-act=invite]', body).forEach(btn => btn.addEventListener("click", () => {
+    const uid = Number(btn.closest("tr").dataset.uid);
+    resendInvitation(t, users.find(x => x.id === uid));
+  }));
+
+  openModal({ title: t.name, body, wide: true });
+}
+
+function openAddAdmin(t) {
+  const form = el(`
+    <form class="form grid2">
+      <div class="form-row"><label class="fld">Nombre <span class="req">*</span></label><input name="full_name" value="Administrador" required></div>
+      <div class="form-row"><label class="fld">Email <span class="req">*</span></label><input name="email" type="email" required></div>
+      <div class="form-row full">
+        <label class="fld">&nbsp;</label>
+        <label class="switch"><input type="checkbox" name="use_password"> Definir la contraseña yo</label>
+        <div class="fhelp">Por defecto recibe un correo para elegirla. Se crea como administrador de <b>${esc(t.name)}</b>, con acceso total dentro de su empresa.</div>
+      </div>
+      <div class="form-row full" id="pwdRow2" hidden>
+        <label class="fld">Contraseña</label>
+        <input name="password" minlength="8" value="${randomPassword()}">
+      </div>
+    </form>`);
+  $("[name=use_password]", form).addEventListener("change", (e) => {
+    $("#pwdRow2", form).hidden = !e.target.checked;
+  });
+  openModal({
+    title: `Nuevo administrador — ${t.name}`, body: form, wide: true, confirmLabel: "Crear",
+    onConfirm: async () => {
+      const data = Object.fromEntries(new FormData(form).entries());
+      const usePassword = data.use_password === "on";
+      delete data.use_password;
+      if (!usePassword) delete data.password;
+      if (usePassword && (data.password || "").length < 8) {
+        toast("La contraseña necesita al menos 8 caracteres", "err"); return false;
+      }
+      const res = await api("POST", `/api/admin/tenants/${t.id}/users`, data);
+      openModal({
+        title: "Administrador creado",
+        body: res.password
+          ? `<div class="creds"><dl>
+               <dt>Email</dt><dd>${esc(data.email)}</dd>
+               <dt>Contraseña</dt><dd>${esc(res.password)}</dd>
+             </dl></div>
+             <div class="warnbox">Anotala ahora: es la única vez que se muestra.</div>`
+          : res.invitation_sent
+            ? `<div class="creds"><dl>
+                 <dt>Invitación</dt><dd>enviada</dd>
+                 <dt>Email</dt><dd>${esc(data.email)}</dd>
+               </dl></div>`
+            : `<div class="warnbox">El usuario se creó, pero no se pudo enviar la
+                 invitación a ${esc(data.email)}. Reenviala desde la ficha.</div>`,
+      });
+      route();
+    },
+  });
+}
+
+/* The everyday answer to "no me llegó" and to a forgotten password: a fresh
+   link, which voids any earlier one. Preferred over choosing a password for
+   somebody, because we never learn the credential. */
+function resendInvitation(t, u) {
+  confirmDialog({
+    title: "Reenviar invitación",
+    message: `Le mandamos a <b>${esc(u.email)}</b> un enlace nuevo para definir su contraseña.
+      Cualquier enlace anterior deja de servir.`,
+    confirmLabel: "Enviar",
+    onConfirm: async () => {
+      const res = await api("POST", `/api/admin/tenants/${t.id}/users/${u.id}/invite`);
+      if (res.sent) toast(`Invitación enviada a ${u.email}`, "ok");
+      else toast("No se pudo enviar — revisá la configuración de correo", "err");
+    },
+  });
+}
+
+function openResetPassword(t, u) {
+  const form = el(`
+    <form class="form">
+      <p style="margin:0 0 14px">Nueva contraseña para <b>${esc(u.email)}</b> en ${esc(t.name)}.</p>
+      <div class="warnbox" style="margin:0 0 14px">Preferí <b>reenviar la invitación</b>: así el dueño elige su
+        contraseña y nosotros nunca la conocemos. Usá esto sólo si su email no funciona.</div>
+      <div class="form-row">
+        <label class="fld">Contraseña <span class="req">*</span></label>
+        <input name="new_password" required minlength="8" value="${randomPassword()}">
+      </div>
+    </form>`);
+  openModal({
+    title: "Restablecer contraseña", body: form, confirmLabel: "Restablecer", danger: true,
+    onConfirm: async () => {
+      const pwd = new FormData(form).get("new_password");
+      await api("POST", `/api/admin/tenants/${t.id}/users/${u.id}/password`, { new_password: pwd });
+      openModal({
+        title: "Contraseña restablecida",
+        body: `<div class="creds"><dl><dt>Email</dt><dd>${esc(u.email)}</dd>
+          <dt>Contraseña</dt><dd>${esc(pwd)}</dd></dl></div>
+          <div class="warnbox">Anotala ahora: es la única vez que se muestra.</div>`,
+      });
+    },
+  });
+}
+
+/* ----------------------------- auditoría -------------------------------- */
+const ACTION_ES = {
+  "tenant.create": "Alta de óptica",
+  "tenant.update": "Datos editados",
+  "tenant.suspend": "Suspendida",
+  "tenant.reactivate": "Reactivada",
+  "tenant.user_create": "Alta de usuario",
+  "tenant.password_reset": "Contraseña restablecida",
+  "tenant.impersonate": "Ingreso de soporte",
+  "tenant.invite_sent": "Invitación enviada",
+};
+const ACTION_BADGE = {
+  "tenant.create": "green",
+  "tenant.update": "gray",
+  "tenant.suspend": "red",
+  "tenant.reactivate": "green",
+  "tenant.user_create": "violet",
+  "tenant.password_reset": "amber",
+  "tenant.impersonate": "amber",
+  "tenant.invite_sent": "violet",
+};
+
+async function viewAudit(view) {
+  const [rows, tenants] = await Promise.all([
+    api("GET", "/api/admin/audit?limit=200"),
+    state.tenants.length ? Promise.resolve(state.tenants) : api("GET", "/api/admin/tenants"),
+  ]);
+  state.tenants = tenants;
+  const byId = Object.fromEntries(tenants.map(t => [t.id, t.name]));
+  view.innerHTML = `
+    <div class="page-head">
+      <div><h2>Auditoría</h2>
+        <div class="sub">Todo lo que hicimos sobre una óptica — sobre todo, cada ingreso de soporte.</div></div>
+    </div>
+    ${rows.length ? `<div class="tbl-wrap card"><table>
+      <thead><tr><th>Cuándo</th><th>Acción</th><th>Óptica</th><th class="col-p2">Detalle</th></tr></thead>
+      <tbody>${rows.map(a => `<tr>
+        <td>${fmtDateTime(a.created_at)}</td>
+        <td>${badge(ACTION_ES[a.action] || a.action, ACTION_BADGE[a.action] || "gray")}</td>
+        <td>${esc(byId[a.company_id] || (a.company_id ? "#" + a.company_id : "—"))}</td>
+        <td class="col-p2 trunc" title="${esc(a.detail || "")}">${esc(a.detail || "—")}</td>
+      </tr>`).join("")}</tbody></table></div>`
+      : `<div class="card empty">Todavía no hay actividad registrada.</div>`}`;
+}
+
+/* ----------------------------- boot ------------------------------------- */
+(async function boot() {
+  state.token = localStorage.getItem(TOKEN_KEY);
+  if (!state.token) return renderLogin();
+  try {
+    state.user = await api("GET", "/api/admin/me");
+    renderApp();
+  } catch {
+    renderLogin();
+  }
+})();
+</script>
+</body>
+</html>

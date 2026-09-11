@@ -12,10 +12,11 @@ from sqlalchemy.orm import Session, contains_eager
 
 from app.core import search
 from app.models.enums import StockMovementType
-from app.models.product import Product
+from app.models.product import Color, Product
 from app.models.stock import StockLevel, StockMovement
 from app.schemas.stock import StockMovementCreate, StockTransferCreate
 from app.services import audit
+from app.services import products as products_service
 
 
 class StockError(Exception):
@@ -71,7 +72,8 @@ def list_levels(
     if brand_id is not None:
         stmt = stmt.where(Product.brand_id == brand_id)
     if color_id is not None:
-        stmt = stmt.where(Product.color_id == color_id)
+        # A product comes in several colours, so this reads "has that colour".
+        stmt = stmt.where(Product.colors.any(Color.id == color_id))
     if low_only:
         # The SQL twin of StockLevel.effective_min_stock: branch override first,
         # product default second. Reading StockLevel.min_stock alone would miss
@@ -119,6 +121,15 @@ def _post(
     counterpart_branch_id: int | None,
     allow_negative: bool,
 ) -> StockMovement:
+    # Every movement in the system funnels through here, so this is the one
+    # place that has to know a style holds no stock of its own.
+    product = db.get(Product, product_id)
+    if product is not None:
+        try:
+            products_service.assert_sellable(db, product)
+        except products_service.ProductError as exc:
+            raise StockError(str(exc)) from exc
+
     level = _get_or_create_level(
         db, company_id=company_id, product_id=product_id, branch_id=branch_id
     )

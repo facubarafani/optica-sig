@@ -77,3 +77,31 @@ def test_list_products_filter_by_type(client, auth_headers, product_type_id):
     ).json()
     assert len(listed) >= 1
     assert all(p["product_type_id"] == product_type_id for p in listed)
+
+
+def test_oversized_strings_are_rejected_not_truncated(client, auth_headers,
+                                                      product_type_id):
+    """The columns are String(40)/(500)/(8); the schema has to say so.
+
+    Without a max_length the value reaches Postgres and raises DataError, which
+    main.py does not map — an unhandled 500 instead of a 422 naming the field.
+    SQLite truncates silently, so this test only guards the contract, not the
+    behaviour of the database underneath it.
+    """
+    for field, value in [
+        ("code", "X" * 41),
+        ("description", "d" * 501),
+        ("price_category_code", "TOOLONGCODE"),
+    ]:
+        payload = {"code": "LEN-1", "product_type_id": product_type_id, field: value}
+        resp = client.post("/api/products", json=payload, headers=auth_headers)
+        assert resp.status_code == 422, f"{field}: {resp.text}"
+        assert resp.json()["detail"][0]["loc"][-1] == field
+
+    # An empty code is not a code either.
+    resp = client.post(
+        "/api/products",
+        json={"code": "", "product_type_id": product_type_id},
+        headers=auth_headers,
+    )
+    assert resp.status_code == 422, resp.text

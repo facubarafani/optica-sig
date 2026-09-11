@@ -97,3 +97,35 @@ class ExternalWorkStatus(str, enum.Enum):
     READY = "ready"               # listo para entregar
     DELIVERED = "delivered"       # entregado
     PAID = "paid"                 # pagado
+
+
+class PlatformAction(str, enum.Enum):
+    """What a platform (provider) user did, for the platform audit trail.
+
+    Stored as a plain ``String(40)`` rather than a Postgres enum — like
+    :class:`Currency` — because the list grows every time the admin console
+    learns a new action, and a growing Postgres enum means a migration per
+    value for no gain. The controlled list still lives here, so no caller
+    invents a free-text action.
+    """
+
+    TENANT_CREATE = "tenant.create"
+    TENANT_UPDATE = "tenant.update"
+    TENANT_SUSPEND = "tenant.suspend"
+    TENANT_REACTIVATE = "tenant.reactivate"
+    TENANT_USER_CREATE = "tenant.user_create"
+    TENANT_PASSWORD_RESET = "tenant.password_reset"
+    TENANT_IMPERSONATE = "tenant.impersonate"
+    TENANT_INVITE_SENT = "tenant.invite_sent"
+
+
+class TokenPurpose(str, enum.Enum):
+    """What a one-time link a user received is allowed to do.
+
+    Stored as ``String(20)`` (see :class:`Currency` for the precedent): the
+    list is short but grows with each new email flow, and a Postgres enum
+    would mean a migration per value.
+    """
+
+    INVITATION = "invitation"          # set your first password
+    PASSWORD_RESET = "password_reset"  # forgot it, set a new one

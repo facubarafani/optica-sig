@@ -1,16 +1,26 @@
 """User & role management plus authentication."""
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.security import hash_password, verify_password
 from app.models.auth import Permission, Role, User
+from app.models.company import Company
 from app.schemas.auth import RoleCreate, RoleUpdate, UserCreate, UserUpdate
 
 
 class AuthError(Exception):
     """Raised on auth/RBAC rule violations."""
+
+
+class SuspendedCompanyError(AuthError):
+    """Credentials were right, but the shop they belong to is suspended.
+
+    Kept distinct from "wrong password" on purpose: telling a paying customer
+    their password is wrong when we are the ones who cut them off wastes their
+    afternoon and generates a support call.
+    """
 
 
 # --- lookups --------------------------------------------------------------
@@ -29,6 +39,38 @@ def authenticate(
     if not verify_password(password, user.hashed_password):
         return None
     return user
+
+
+def find_logins(
+    db: Session, email: str, password: str, company_id: int | None = None
+) -> list[tuple[User, Company]]:
+    """Resolve credentials without being told which company they belong to.
+
+    ``users`` is unique on (company_id, email), so one address can legitimately
+    exist at two shops — an owner with two companies, an accountant working for
+    several. This returns every account the password actually opens, and the
+    router decides: one means log straight in, several mean ask which.
+
+    Suspended companies are included; the caller reports them differently from
+    a bad password (see :class:`SuspendedCompanyError`). Password verification
+    runs per candidate, which is fine because the candidate list is one or two
+    rows in every realistic case.
+    """
+    email = email.strip().lower()
+    stmt = (
+        select(User, Company)
+        .join(Company, Company.id == User.company_id)
+        .where(func.lower(User.email) == email, User.is_active.is_(True))
+        .order_by(Company.name, Company.id)
+    )
+    if company_id is not None:
+        stmt = stmt.where(User.company_id == company_id)
+    rows = db.execute(stmt).all()
+    return [
+        (user, company)
+        for user, company in rows
+        if verify_password(password, user.hashed_password)
+    ]
 
 
 def _load_roles(db: Session, company_id: int, role_ids: list[int]) -> list[Role]:

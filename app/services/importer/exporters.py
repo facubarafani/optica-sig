@@ -48,7 +48,6 @@ def _products(db: Session, company_id: int, opts: dict) -> list[dict]:
     brands = _name_map(db, Brand, company_id)
     models = _name_map(db, ProductModel, company_id)
     suppliers = _name_map(db, Supplier, company_id)
-    colors = _name_map(db, Color, company_id)
     lists_ = _name_map(db, PriceList, company_id)
 
     stmt = select(Product).where(Product.company_id == company_id)
@@ -57,21 +56,31 @@ def _products(db: Session, company_id: int, opts: dict) -> list[dict]:
     for field, key in (
         ("product_type_id", "product_type_id"), ("brand_id", "brand_id"),
         ("model_id", "model_id"), ("supplier_id", "supplier_id"),
-        ("color_id", "color_id"),
     ):
         if opts.get(key):
             stmt = stmt.where(getattr(Product, field) == opts[key])
+    # Same meaning as the Products screen's colour filter: has that colour.
+    if opts.get("color_id"):
+        stmt = stmt.where(Product.colors.any(Color.id == opts["color_id"]))
 
+    # The style each variant belongs to, by code — the importer resolves it back.
+    codes = {
+        r[0]: r[1] for r in db.execute(
+            select(Product.id, Product.code).where(Product.company_id == company_id)
+        ).all()
+    }
     rows = []
     for p in db.execute(stmt.order_by(Product.code)).scalars():
         rows.append({
             "code": p.code,
+            "parent": codes.get(p.parent_id),
             "description": p.description,
             "product_type": types.get(p.product_type_id),
             "brand": brands.get(p.brand_id),
             "model": models.get(p.model_id),
             "supplier": suppliers.get(p.supplier_id),
-            "color": colors.get(p.color_id),
+            # Comma-separated, which is exactly what the importer splits on.
+            "color": ", ".join(c.name for c in p.colors),
             "current_cost": p.current_cost,
             "min_stock": p.min_stock,
             # The enum *value*, which is what the import spec accepts.

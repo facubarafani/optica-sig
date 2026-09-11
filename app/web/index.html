@@ -27,6 +27,21 @@
   .login-card h1{font-size:19px}
   .login-card p.sub{color:var(--muted);margin:2px 0 20px;font-size:13px}
   .hint{margin-top:16px;font-size:12px;color:var(--muted);text-align:center}
+  /* Same email at more than one shop: pick which one to open. */
+  .pick-co{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+  .pick-co button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+    background:var(--panel);border:1px solid var(--border);border-radius:9px;padding:11px 13px;
+    font:inherit;font-weight:600;cursor:pointer}
+  .pick-co button:hover{background:var(--primary-50);border-color:#c7ddfb;color:var(--primary-600)}
+  /* Support session banner. Loud on purpose: nobody should mistake our
+     session inside a customer's data for the customer's own. */
+  .impbar{background:#7c2d12;color:#fff;display:flex;align-items:center;gap:10px;
+    padding:8px 20px;font-size:12.5px;font-weight:600}
+  .impbar .ic{width:15px;height:15px}
+  .impbar .grow{flex:1}
+  .impbar button{background:rgba(255,255,255,.16);border:0;color:#fff;font:inherit;
+    padding:4px 10px;border-radius:6px;cursor:pointer}
+  .impbar button:hover{background:rgba(255,255,255,.28)}
   /* ---------- app shell ---------- */
   .app{display:grid;grid-template-columns:var(--sidebar) 1fr;min-height:100%}
   .sidebar{background:#0f172a;color:#cbd5e1;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
@@ -193,9 +208,13 @@
   form.form.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px}
   form.form.grid2 .form-row{margin-bottom:0}
   form.form.grid2 .form-row.full{grid-column:1/-1}
-  /* label + a "+" on the same line, for widgets that cannot host the button
-     inline the way .with-add does (checklists). */
+  /* label + an action button on one line. Selects host their own "create"
+     entry (see quickCreateTail); a checklist has no list to host it, so the
+     button lives up here beside the label. */
   .fld-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:5px}
+  /* On a full-width row, space-between strands the button ~500px from the
+     label and it reads as decoration. Checklists keep it next to the label. */
+  .fld-head.inline{justify-content:flex-start}
   .fld-head label.fld{margin-bottom:0}
   .fld-head .add{flex:0 0 auto;font-weight:700;line-height:1;padding:3px 9px}
   .checklist{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;max-height:240px;overflow:auto;border:1px solid var(--border);border-radius:8px;padding:10px}
@@ -218,20 +237,46 @@
     cursor:pointer;white-space:nowrap;flex:0 0 auto}
   .pricehint{font-size:12px;color:var(--muted);margin-top:5px}
   .pricehint b{color:var(--ok);font-size:14px}
+  /* two controls sharing one row (the sale form's discount type + amount) */
   .with-add{display:flex;gap:6px;align-items:stretch}
   .with-add select{flex:1;min-width:0}
-  .with-add .add{flex:0 0 auto;font-weight:700;line-height:1}
   /* colour swatches. A native <select> cannot paint its own options the same
      way across browsers, so the chip beside it mirrors the current choice. */
   .swatch{width:15px;height:15px;border-radius:4px;border:1px solid rgba(15,23,42,.18);
     flex:0 0 auto;display:inline-block;vertical-align:-2px;background:#fff}
   .swatch.none{background:repeating-linear-gradient(45deg,#fff,#fff 3px,#e2e8f0 3px,#e2e8f0 6px)}
   .swatch-cell{display:inline-flex;align-items:center;gap:7px}
-  .with-add .swatch{width:20px;height:auto;align-self:stretch;border-radius:6px}
-  .colorpick{display:flex;gap:8px;align-items:center}
-  .colorpick input[type=color]{flex:0 0 46px;height:36px;padding:2px;cursor:pointer}
-  .colorpick .hex{font-family:var(--mono,ui-monospace,monospace);font-size:12.5px;color:var(--muted)}
-  .colorpick .clear{flex:0 0 auto}
+  /* several colours in one cell: the chips overlap slightly so a long list
+     stays narrow, and the names go in the tooltip. */
+  .swatch-row{display:inline-flex;align-items:center;gap:6px}
+  .swatch-row .chips{display:inline-flex}
+  .swatch-row .chips .swatch + .swatch{margin-left:-5px}
+  .swatch-row .more{color:var(--muted);font-size:12px}
+  .colorpick{display:flex;gap:8px;align-items:center;margin-top:8px}
+  .colorpick .hexin{flex:0 0 122px;font-family:var(--mono,ui-monospace,monospace);text-transform:lowercase}
+  .colorpick .hexin.bad{border-color:var(--danger);box-shadow:0 0 0 3px var(--danger-50)}
+  .colorpick .clear{flex:0 0 auto;margin-left:auto}
+  /* "otro": a native colour dialog behind a normal-looking button, since the
+     raw <input type=color> renders differently in every browser. */
+  .colorpick .native{position:relative;overflow:hidden;flex:0 0 auto}
+  .colorpick .native input[type=color]{position:absolute;inset:0;opacity:0;
+    width:100%;height:100%;padding:0;border:0;cursor:pointer}
+  /* preset palette: one row per family, chips only — the name is the tooltip,
+     so adding a shade never reflows the form. */
+  .palette{display:flex;flex-direction:column;gap:5px}
+  .palette .fam{display:flex;gap:5px;flex-wrap:wrap}
+  .palette .pal{width:22px;height:22px;border-radius:6px;padding:0;cursor:pointer;
+    border:1px solid rgba(15,23,42,.18);flex:0 0 auto;transition:transform .1s}
+  .palette .pal:hover{transform:scale(1.14)}
+  .palette .pal.on{outline:2px solid var(--primary);outline-offset:2px}
+  /* the codes a variant generation is about to create */
+  .codeprev{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:10px}
+  .codeprev code{background:var(--primary-50);color:var(--primary-600);
+    border-radius:6px;padding:3px 8px;font-size:12.5px}
+  .codeprev .fhelp{width:100%;margin:0}
+  .cprev{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12.5px;
+    color:var(--muted)}
+  .cprev b{color:var(--text);font-weight:600}
   /* toast */
   #toasts{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:10px;z-index:80}
   .toast{background:#0f172a;color:#fff;padding:11px 15px;border-radius:9px;box-shadow:var(--shadow-lg);font-size:13px;max-width:360px;animation:slide .16s ease}
@@ -258,6 +303,7 @@
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
 <symbol id="i-dashboard" viewBox="0 0 24 24"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></symbol>
 <symbol id="i-package" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></symbol>
+<symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 22a10 10 0 1 1 10-10c0 1.66-1.34 3-3 3h-1.5a2.5 2.5 0 0 0-1.77 4.27A2 2 0 0 1 14 22z"/><circle cx="7.5" cy="10.5" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="7.5" r="1.2" fill="currentColor" stroke="none"/><circle cx="16.5" cy="10.5" r="1.2" fill="currentColor" stroke="none"/></symbol>
 <symbol id="i-tags" viewBox="0 0 24 24"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></symbol>
 <symbol id="i-banknote" viewBox="0 0 24 24"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01"/><path d="M18 12h.01"/></symbol>
 <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></symbol>
@@ -319,6 +365,39 @@ const ENUM_ES = {
 const PAYMENT_METHOD_OPTIONS = Object.entries(ENUM_ES.payment_method)
   .map(([value, label]) => ({ value, label }));
 const SALE_STATUS_BADGE = { quote:"gray", confirmed:"blue", pending:"amber", delivered:"green", cancelled:"red" };
+
+/* Shades an optics shop actually stocks, grouped the way someone looks for
+   them. Clicking one fills the tone *and*, if the name is still blank, the
+   name — so "Havana" is one click away instead of a hex hunt. Nothing here is
+   a catalogue entry: it is a starting point for the colour you are creating.
+   The name is the tooltip, so a group can grow without a layout change. */
+const COLOR_PRESETS = [
+  { group: "Neutros", shades: [
+    ["Negro", "#1a1a1a"], ["Grafito", "#3b3f45"], ["Gris", "#8a8f98"],
+    ["Gris claro", "#c3c8cf"], ["Blanco", "#f5f5f5"], ["Hueso", "#ece5d8"],
+    ["Beige", "#d8c8ae"], ["Nude", "#e0bda4"],
+  ]},
+  { group: "Careys y marrones", shades: [
+    ["Havana", "#8b5a2b"], ["Carey", "#7a4a1e"], ["Marrón", "#6b4423"],
+    ["Tabaco", "#5a3a22"], ["Caramelo", "#a9702f"], ["Terracota", "#b2593a"],
+    ["Borravino", "#7b1f2b"], ["Chocolate", "#4a2f22"],
+  ]},
+  { group: "Metales", shades: [
+    ["Dorado", "#c9a227"], ["Oro rosa", "#d9a3a0"], ["Bronce", "#a97142"],
+    ["Cobre", "#b45f30"], ["Plateado", "#b7bcc4"], ["Gunmetal", "#5b6169"],
+    ["Peltre", "#8c93a0"], ["Níquel", "#d5d9de"],
+  ]},
+  { group: "Colores", shades: [
+    ["Rojo", "#c02b2b"], ["Naranja", "#e07b39"], ["Amarillo", "#e3c34a"],
+    ["Verde", "#2f7a4d"], ["Verde militar", "#4a5d3a"], ["Azul", "#1f4e9c"],
+    ["Celeste", "#5fa8e8"], ["Violeta", "#6b3fa0"],
+  ]},
+  { group: "Claros y translúcidos", shades: [
+    ["Transparente", "#e8ecf1"], ["Cristal", "#dfe8ea"], ["Humo", "#b9bdc2"],
+    ["Ámbar", "#d9a441"], ["Rosa", "#e08fa8"], ["Coral", "#e8836f"],
+    ["Menta", "#a8d5c2"], ["Lila", "#c3b3de"],
+  ]},
+];
 
 /* ----------------------------- tiny helpers ----------------------------- */
 const $  = (s, r = document) => r.querySelector(s);
@@ -398,6 +477,16 @@ function searchBox(id, value, placeholder, width = "260px") {
   </span>`;
 }
 
+/* Normalise a swatch to "#rrggbb", or null when it is not a colour at all.
+   The twin of _norm_hex() in app/schemas/product.py: the form must accept
+   exactly what the API accepts, so a valid entry never round-trips to a 422. */
+function normHex(v) {
+  const raw = String(v ?? "").trim().replace(/^#/, "");
+  if (!/^(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(raw)) return null;
+  const d = raw.toLowerCase();
+  return "#" + (d.length === 3 ? [...d].map(c => c + c).join("") : d);
+}
+
 /* A colour chip followed by its name. `hex` may be null — a colour without a
    tone still shows, with a hatched chip instead of a filled one. */
 function swatchCell(hex, label) {
@@ -406,6 +495,21 @@ function swatchCell(hex, label) {
     ? `<span class="swatch" style="background:${esc(hex)}"></span>`
     : `<span class="swatch none"></span>`;
   return `<span class="swatch-cell">${chip}${esc(label ?? "")}</span>`;
+}
+
+/* Several colours in one cell: up to `max` chips, the first name, and "+N".
+   The full list is the tooltip, so nothing is lost to the truncation. */
+function swatchList(colors, max = 4) {
+  if (!colors || !colors.length) return "—";
+  const chips = colors.slice(0, max).map(c =>
+    /^#[0-9a-f]{6}$/i.test(c.hex_code || "")
+      ? `<span class="swatch" style="background:${esc(c.hex_code)}"></span>`
+      : `<span class="swatch none"></span>`).join("");
+  const names = colors.map(c => c.name).join(", ");
+  const label = colors.length === 1
+    ? esc(colors[0].name)
+    : `${esc(colors[0].name)} <span class="more">+${colors.length - 1}</span>`;
+  return `<span class="swatch-row" title="${esc(names)}"><span class="chips">${chips}</span>${label}</span>`;
 }
 
 function toast(msg, type = "") {
@@ -548,9 +652,13 @@ function renderLogin(prefill = true) {
           <input name="password" type="password" autocomplete="current-password" required value="${prefill ? "admin1234" : ""}">
         </div>
         <button class="btn primary" type="submit" style="width:100%;justify-content:center;margin-top:6px">Ingresar</button>
-        <div class="hint">El usuario demo está precargado. Requiere la API y la base con datos.</div>
+        <div class="hint"><a href="#" id="forgotLink">Olvidé mi contraseña</a></div>
       </form>
     </div>`;
+  $("#forgotLink").addEventListener("click", (e) => {
+    e.preventDefault();
+    renderForgot($("[name=email]").value.trim());
+  });
   $("#loginForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const btn = $("#loginForm button"); btn.disabled = true; btn.textContent = "Ingresando…";
@@ -560,6 +668,12 @@ function renderLogin(prefill = true) {
       const res = await fetch("/api/auth/login", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ email, password }) });
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(errMsg(data, res.status));
+      // The same address can exist at more than one company; the API answers
+      // with the list instead of a token and we post again with the choice.
+      if (!data.access_token && Array.isArray(data.companies)) {
+        renderCompanyPicker(email, password, data.companies);
+        return;
+      }
       state.token = data.access_token;
       localStorage.setItem(TOKEN_KEY, state.token);
       await loadSession();
@@ -569,6 +683,173 @@ function renderLogin(prefill = true) {
       btn.disabled = false; btn.textContent = "Ingresar";
     }
   });
+}
+
+/* "Olvidé mi contraseña". The response is the same whether or not the address
+   exists, so this screen says so plainly rather than pretending to confirm. */
+function renderForgot(prefill = "") {
+  root.innerHTML = `
+    <div class="login-wrap">
+      <form class="login-card" id="forgotForm">
+        <div class="brand"><div class="logo">S</div><div><h1>SGI Óptica</h1></div></div>
+        <p class="sub">Te mandamos un enlace para definir una contraseña nueva.</p>
+        <div class="form-row">
+          <label class="fld">Email</label>
+          <input name="email" type="email" autocomplete="username" required value="${esc(prefill)}">
+        </div>
+        <button class="btn primary" type="submit" style="width:100%;justify-content:center;margin-top:16px">Enviar enlace</button>
+        <div class="hint"><a href="#" id="backLogin">Volver</a></div>
+      </form>
+    </div>`;
+  $("#backLogin").addEventListener("click", (e) => { e.preventDefault(); renderLogin(false); });
+  $("#forgotForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = $("#forgotForm button"); btn.disabled = true; btn.textContent = "Enviando…";
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: $("[name=email]", $("#forgotForm")).value.trim() }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(errMsg(data, res.status));
+      renderNotice(
+        "Revisá tu correo",
+        "Si esa dirección tiene una cuenta, te llega un enlace para definir tu contraseña. " +
+        "Vence en una hora y se usa una sola vez.");
+    } catch (err) {
+      toast(err.message || "No se pudo enviar", "err");
+      btn.disabled = false; btn.textContent = "Enviar enlace";
+    }
+  });
+}
+
+function renderNotice(title, message) {
+  root.innerHTML = `
+    <div class="login-wrap">
+      <div class="login-card">
+        <div class="brand"><div class="logo">S</div><div><h1>${esc(title)}</h1></div></div>
+        <p class="sub" style="margin-bottom:0">${esc(message)}</p>
+        <div class="hint" style="margin-top:22px"><a href="#" id="backLogin">Ir al inicio de sesión</a></div>
+      </div>
+    </div>`;
+  $("#backLogin").addEventListener("click", (e) => {
+    e.preventDefault();
+    location.hash = "";
+    renderLogin(false);
+  });
+}
+
+/* Setting a password from an emailed link — both the invitation ("definí tu
+   contraseña") and the reset ("elegí una nueva"). The token arrives in the URL
+   fragment, which browsers never send to the server, so it stays out of access
+   logs and the Referer header. */
+async function renderSetPassword(token) {
+  root.innerHTML = `<div class="login-wrap"><div class="login-card">
+    <p class="sub" style="margin:0">Verificando el enlace…</p></div></div>`;
+  let info;
+  try {
+    info = await (await fetch(`/api/auth/password-token/${encodeURIComponent(token)}`))
+      .json().then(d => { if (d.detail) throw new Error(d.detail); return d; });
+  } catch (err) {
+    location.hash = "";
+    return renderNotice("Enlace no válido", err.message || "El enlace no sirve. Pedí uno nuevo.");
+  }
+  const isInvite = info.purpose === "invitation";
+  root.innerHTML = `
+    <div class="login-wrap">
+      <form class="login-card" id="pwdForm">
+        <div class="brand"><div class="logo">S</div><div><h1>${isInvite ? "Bienvenido/a" : "Nueva contraseña"}</h1></div></div>
+        <p class="sub">${isInvite
+          ? `Definí tu contraseña para entrar a <b>${esc(info.company_name)}</b>.`
+          : `Elegí una contraseña nueva para <b>${esc(info.company_name)}</b>.`}</p>
+        <div class="form-row">
+          <label class="fld">Email</label>
+          <input value="${esc(info.email)}" disabled>
+        </div>
+        <div class="form-row" style="margin-top:14px">
+          <label class="fld">Contraseña <span class="req">*</span></label>
+          <input name="p1" type="password" autocomplete="new-password" required minlength="8">
+          <div class="fhelp">Mínimo 8 caracteres.</div>
+        </div>
+        <div class="form-row" style="margin-top:14px">
+          <label class="fld">Repetir contraseña <span class="req">*</span></label>
+          <input name="p2" type="password" autocomplete="new-password" required minlength="8">
+        </div>
+        <button class="btn primary" type="submit" style="width:100%;justify-content:center;margin-top:18px">Guardar y entrar</button>
+      </form>
+    </div>`;
+  $("#pwdForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = $("#pwdForm");
+    const p1 = $("[name=p1]", form).value, p2 = $("[name=p2]", form).value;
+    if (p1 !== p2) return toast("Las contraseñas no coinciden", "err");
+    const btn = $("button", form); btn.disabled = true; btn.textContent = "Guardando…";
+    try {
+      const res = await fetch("/api/auth/set-password", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, new_password: p1 }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(errMsg(data, res.status));
+      // The endpoint hands back a session, so they land in the console instead
+      // of at a login form they would fill in with what they just chose.
+      state.token = data.access_token;
+      localStorage.setItem(TOKEN_KEY, state.token);
+      location.hash = "#/dashboard";
+      await loadSession();
+      renderApp();
+      toast("Listo, tu contraseña quedó definida", "ok");
+    } catch (err) {
+      toast(err.message || "No se pudo guardar", "err");
+      btn.disabled = false; btn.textContent = "Guardar y entrar";
+    }
+  });
+}
+
+/* Second step of login, shown only when the credentials open more than one
+   company — an owner with two shops, an accountant working for several. */
+function renderCompanyPicker(email, password, companies) {
+  root.innerHTML = `
+    <div class="login-wrap">
+      <div class="login-card">
+        <div class="brand"><div class="logo">S</div><div><h1>SGI Óptica</h1></div></div>
+        <p class="sub">Tu usuario existe en más de una óptica. ¿A cuál entrás?</p>
+        <div class="pick-co">
+          ${companies.map(c => `<button type="button" data-id="${c.id}">
+            <svg class="ic lg"><use href="#i-store"/></svg>${esc(c.name)}</button>`).join("")}
+        </div>
+        <div class="hint"><a href="#" id="backLogin">Usar otro usuario</a></div>
+      </div>
+    </div>`;
+  $("#backLogin").addEventListener("click", (e) => { e.preventDefault(); renderLogin(false); });
+  $$(".pick-co button").forEach(b => b.addEventListener("click", async () => {
+    $$(".pick-co button").forEach(x => x.disabled = true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, company_id: Number(b.dataset.id) }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(errMsg(data, res.status));
+      state.token = data.access_token;
+      localStorage.setItem(TOKEN_KEY, state.token);
+      await loadSession();
+      renderApp();
+    } catch (err) {
+      toast(err.message || "Error al iniciar sesión", "err");
+      $$(".pick-co button").forEach(x => x.disabled = false);
+    }
+  }));
+}
+
+/* Read the (unverified) payload of our own JWT. Only used to decide whether to
+   paint the support banner — the server is what actually enforces anything. */
+function tokenClaims() {
+  try {
+    const part = (state.token || "").split(".")[1];
+    if (!part) return {};
+    return JSON.parse(atob(part.replace(/-/g, "+").replace(/_/g, "/")));
+  } catch { return {}; }
 }
 
 /* ----------------------------- app shell ------------------------------- */
@@ -592,6 +873,7 @@ function renderApp() {
   const initials = (u.full_name || u.email || "?").split(" ").map(s => s[0]).slice(0,2).join("").toUpperCase();
   const navHtml = NAV.filter(n => !n.perm || can(n.perm))
     .map(n => `<a href="#/${n.route}" data-route="${n.route}"><svg class="ic lg"><use href="#${n.icon}"/></svg>${n.label}</a>`).join("");
+  const imp = tokenClaims().impersonated_by;
   root.innerHTML = `
     <div class="app">
       <aside class="sidebar" id="sidebar">
@@ -600,6 +882,12 @@ function renderApp() {
         <div class="foot">v0.1 · datos maestros</div>
       </aside>
       <div class="main">
+        ${imp ? `<div class="impbar">
+          <svg class="ic"><use href="#i-alert"/></svg>
+          <span class="grow">Sesión de soporte — estás viendo ${esc(state.company?.name || "esta óptica")}
+            como ${esc(state.user.email)}, iniciada por ${esc(imp)}. Queda registrada en auditoría.</span>
+          <button type="button" id="endImp">Salir</button>
+        </div>` : ""}
         <div class="topbar">
           <div style="display:flex;align-items:center;gap:10px">
             <button class="menu-btn" id="menuBtn"><svg class="ic lg"><use href="#i-menu"/></svg></button>
@@ -615,6 +903,8 @@ function renderApp() {
       </div>
     </div>`;
   $("#logoutBtn").addEventListener("click", logout);
+  const endImp = $("#endImp");
+  if (endImp) endImp.addEventListener("click", () => { logout(); window.close(); });
   $("#menuBtn").addEventListener("click", () => $("#sidebar").classList.toggle("open"));
   $$("#sidebar .nav a").forEach(a => a.addEventListener("click", () => $("#sidebar").classList.remove("open")));
   window.addEventListener("hashchange", route);
@@ -702,11 +992,22 @@ async function buildForm(fields, values = {}, grid = false) {
       row.innerHTML = `<label class="switch"><input type="checkbox" name="${f.key}" ${v ? "checked" : ""}> ${esc(f.label)}</label>`;
     } else if (f.type === "multiselect") {
       const sel = new Set((v || []).map(String));
-      const box = (o, checked) => `<label><input type="checkbox" name="${f.key}" value="${esc(o.value)}" ${checked ? "checked" : ""}> ${esc(o.label)}</label>`;
+      // `swatch` paints o.meta (a hex) beside each name — the checklist twin of
+      // the chip a swatch-backed select shows.
+      const chip = (o) => !f.swatch ? ""
+        : (/^#[0-9a-f]{6}$/i.test(o.meta || "")
+            ? `<span class="swatch" style="background:${esc(o.meta)}"></span>`
+            : `<span class="swatch none"></span>`);
+      const box = (o, checked) => `<label><input type="checkbox" name="${f.key}" value="${esc(o.value)}" ${checked ? "checked" : ""}>${chip(o)} ${esc(o.label)}</label>`;
       const boxes = (f._opts || []).map(o => box(o, sel.has(String(o.value)))).join("");
       const quick = f.quickCreate && canQuickCreate(f.quickCreate);
+      // Spelled out ("Nuevo color"), not a bare "+": beside a checklist there
+      // is no field for a lone glyph to attach itself to, so it has to say
+      // what it makes. The wording comes from the entity's own CONFIG.
+      const addLabel = quick ? (CONFIG[f.quickCreate].newTitle || "Crear") : "";
       const head = quick
-        ? `<div class="fld-head"><label class="fld">${esc(f.label)}${reqMark}</label><button type="button" class="btn sm add" title="Crear">+</button></div>`
+        ? `<div class="fld-head inline"><label class="fld">${esc(f.label)}${reqMark}</label>
+           <button type="button" class="btn sm add"><svg class="ic"><use href="#i-plus"/></svg>${esc(addLabel)}</button></div>`
         : `<label class="fld">${esc(f.label)}${reqMark}</label>`;
       row.innerHTML = `${head}<div class="checklist">${boxes || '<span class="fhelp">ninguno</span>'}</div>`;
       if (quick) {
@@ -715,62 +1016,108 @@ async function buildForm(fields, values = {}, grid = false) {
           const placeholder = list.querySelector(".fhelp");
           if (placeholder) placeholder.remove();
           // Created from here means "I want this one", so it arrives ticked.
-          const added = el(box({ value: created.id, label: created.name }, true));
+          const metaFn = f.optionsFrom && f.optionsFrom.metaFn;
+          const added = el(box({
+            value: created.id, label: created.name,
+            meta: metaFn ? metaFn(created) : undefined,
+          }, true));
           list.appendChild(added);
           added.scrollIntoView({ block: "nearest" });
         }));
       }
     } else if (f.type === "select") {
-      const allowEmpty = f.required ? "" : `<option value="">— ninguno —</option>`;
+      // A required select normally has no empty option — you must pick. But an
+      // empty list has nothing to pick, and leaving the option out makes the
+      // browser default to quickCreate's sentinel (the first non-disabled
+      // option), which posts as null. Say so instead.
+      const hasOpts = (f._opts || []).length > 0;
+      const allowEmpty = f.required
+        ? (hasOpts ? "" : `<option value="">— sin opciones: creá una primero —</option>`)
+        : `<option value="">— ninguno —</option>`;
       const opts = (f._opts || []).map(o => `<option value="${esc(o.value)}" ${String(v) === String(o.value) ? "selected" : ""}>${esc(o.label)}</option>`).join("");
-      const sel = `<select name="${f.key}">${allowEmpty}${opts}</select>`;
       const quick = f.quickCreate && canQuickCreate(f.quickCreate);
-      const addBtn = quick ? `<button type="button" class="btn sm add" title="Crear">+</button>` : "";
-      const chip = f.swatch ? `<span class="swatch none"></span>` : "";
-      row.innerHTML = `<label class="fld">${esc(f.label)}${reqMark}</label>` + ((addBtn || chip)
-        ? `<div class="with-add">${chip}${sel}${addBtn}</div>`
-        : sel);
+      row.innerHTML = `<label class="fld">${esc(f.label)}${reqMark}</label>
+        <select name="${f.key}">${allowEmpty}${opts}${quick ? quickCreateTail(f.quickCreate) : ""}</select>`;
       const selectEl = row.querySelector("select");
-      if (f.swatch) {
-        // value → colour, kept on the element so a quick-created colour can be
-        // added to it and painted without rebuilding the form.
-        selectEl._meta = new Map((f._opts || []).map(o => [String(o.value), o.meta]));
-        const chipEl = row.querySelector(".swatch");
-        const paint = () => {
-          const hex = selectEl._meta.get(selectEl.value);
-          chipEl.classList.toggle("none", !hex);
-          chipEl.style.background = hex || "";
-        };
-        selectEl.addEventListener("change", paint);
-        paint();
-      }
       if (quick) {
-        row.querySelector("button.add").addEventListener("click", () => quickCreate(f.quickCreate, (created) => {
-          selectEl.appendChild(el(`<option value="${esc(created.id)}">${esc(created.name)}</option>`));
-          // Keep a swatch-backed select in sync with what was just created.
-          const metaFn = f.optionsFrom && f.optionsFrom.metaFn;
-          if (selectEl._meta && metaFn) selectEl._meta.set(String(created.id), metaFn(created));
-          selectEl.value = String(created.id);
-          selectEl.dispatchEvent(new Event("change", { bubbles: true }));
-        }));
+        selectEl._quick = f.quickCreate;      // survives setSelectOptions
+        selectEl._prev = selectEl.value;
+        selectEl.addEventListener("change", (e) => {
+          if (selectEl.value !== QUICK_NEW) { selectEl._prev = selectEl.value; return; }
+          // An action, not a value. Put the picker back before any other
+          // listener (dependent selects, price preview) can read the sentinel.
+          selectEl.value = selectEl._prev || "";
+          e.stopImmediatePropagation();
+          e.stopPropagation();
+          quickCreate(f.quickCreate, (created) => {
+            // Ahead of the separator, so the list keeps ending with the action.
+            selectEl.insertBefore(
+              el(`<option value="${esc(created.id)}">${esc(created.name)}</option>`),
+              selectEl.querySelector("option[disabled]"));
+            selectEl.value = String(created.id);
+            selectEl._prev = selectEl.value;
+            selectEl.dispatchEvent(new Event("change", { bubbles: true }));
+          });
+        });
       }
     } else if (f.type === "color") {
-      // <input type="color"> always holds a colour, but "sin tono" is a real
-      // state (the swatch is optional), so emptiness is tracked beside it.
-      const cur = v || "";
+      // A tone is optional ("sin tono" is a real state), so the field cannot
+      // just be an <input type="color"> — that always holds a colour. The hex
+      // text input is the source of truth and carries the name; emptiness is
+      // tracked on it, and the palette / native dialog only write into it.
+      const cur = normHex(v) || "";
+      const palette = COLOR_PRESETS.map(g =>
+        `<div class="fam">${g.shades.map(([name, hex]) =>
+          `<button type="button" class="pal" data-hex="${hex}" data-name="${esc(name)}" style="background:${hex}" title="${esc(name)} · ${hex}"></button>`
+        ).join("")}</div>`).join("");
       row.innerHTML = `<label class="fld">${esc(f.label)}${reqMark}</label>
+        <div class="palette">${palette}</div>
         <div class="colorpick">
-          <input type="color" name="${f.key}" value="${esc(cur || "#1a1a1a")}">
-          <span class="hex"></span>
+          <input type="text" class="hexin" name="${f.key}" value="${esc(cur)}"
+                 placeholder="#rrggbb" maxlength="7" spellcheck="false">
+          <span class="btn sm native"><svg class="ic"><use href="#i-palette"/></svg>Otro
+            <input type="color" value="${esc(cur || "#1a1a1a")}" tabindex="-1"></span>
           <button type="button" class="btn sm clear">Sin tono</button>
-        </div>`;
-      const input = row.querySelector('input[type="color"]');
-      const hexEl = row.querySelector(".hex");
+        </div>
+        <div class="cprev"></div>`;
+      const input = row.querySelector(".hexin");
+      const native = row.querySelector('input[type="color"]');
+      const prev = row.querySelector(".cprev");
       input._empty = !cur;
-      const sync = () => { hexEl.textContent = input._empty ? "sin tono" : input.value; };
-      input.addEventListener("input", () => { input._empty = false; sync(); });
-      row.querySelector("button.clear").addEventListener("click", () => { input._empty = true; sync(); });
-      sync();
+
+      // The preview names the colour being created, so you see the row exactly
+      // as the lists will draw it. `nameField` says which field holds the name.
+      const nameInput = () => f.nameField
+        ? form.querySelector(`[name="${f.nameField}"]`) : null;
+
+      const paint = () => {
+        const hex = input._empty ? null : normHex(input.value);
+        input.classList.toggle("bad", !input._empty && !hex);
+        $$(".pal", row).forEach(b =>
+          b.classList.toggle("on", !!hex && b.dataset.hex === hex));
+        if (hex) native.value = hex;
+        const label = (nameInput()?.value || "").trim();
+        prev.innerHTML = !input._empty && !hex
+          ? `<span style="color:var(--danger)">Tono inválido — usá #rrggbb.</span>`
+          : `Vista previa: ${swatchCell(hex, label || "sin nombre")}`;
+      };
+      const setHex = (hex) => { input._empty = false; input.value = hex; paint(); };
+
+      $$(".pal", row).forEach(b => b.addEventListener("click", () => {
+        setHex(b.dataset.hex);
+        // A blank name is almost certainly the preset's own name; a typed one
+        // is the user's and must survive being shown a different shade.
+        const ni = nameInput();
+        if (ni && !ni.value.trim()) { ni.value = b.dataset.name; paint(); }
+      }));
+      input.addEventListener("input", () => { input._empty = !input.value.trim(); paint(); });
+      native.addEventListener("input", () => setHex(native.value));
+      row.querySelector("button.clear").addEventListener("click", () => {
+        input._empty = true; input.value = ""; paint();
+      });
+      // The preview follows the name as it is typed.
+      f._repaint = paint;
+      paint();
     } else if (f.type === "radio") {
       const opts = (f._opts || []).map(o =>
         `<label><input type="radio" name="${f.key}" value="${esc(o.value)}" ${String(v ?? f.default) === String(o.value) ? "checked" : ""}> ${esc(o.label)}</label>`).join("");
@@ -802,6 +1149,11 @@ async function buildForm(fields, values = {}, grid = false) {
   };
   if (conditional.length) form.addEventListener("change", applyVisibility);
 
+  // A colour preview names the colour, so it repaints while the name is typed.
+  const repainters = fields.filter(f => f._repaint);
+  if (repainters.length)
+    form.addEventListener("input", () => repainters.forEach(f => f._repaint()));
+
   form.read = ({ all = false } = {}) => {
     const out = {};
     for (const f of fields) {
@@ -809,7 +1161,9 @@ async function buildForm(fields, values = {}, grid = false) {
       if (f.type === "checkbox") { out[f.key] = form.querySelector(`[name="${f.key}"]`).checked; continue; }
       if (f.type === "multiselect") { out[f.key] = $$(`[name="${f.key}"]:checked`, form).map(i => Number(i.value)); continue; }
       if (f.type === "radio") { const c = form.querySelector(`[name="${f.key}"]:checked`); out[f.key] = c ? c.value : null; continue; }
-      if (f.type === "color") { const c = form.querySelector(`[name="${f.key}"]`); out[f.key] = c._empty ? null : c.value; continue; }
+      // Raw text when it cannot be normalised, so validate() can flag it
+      // rather than the value silently vanishing.
+      if (f.type === "color") { const c = form.querySelector(`[name="${f.key}"]`); out[f.key] = c._empty ? null : (normHex(c.value) || c.value); continue; }
       const elx = form.querySelector(`[name="${f.key}"]`);
       let raw = elx ? elx.value : "";
       if (raw === "" || raw == null) {
@@ -819,7 +1173,13 @@ async function buildForm(fields, values = {}, grid = false) {
         if (f.type === "decimal" || f.type === "int") continue;
         out[f.key] = null; continue;   // texto / FK opcionales → null explícito
       }
-      if (f.type === "int" || f.valueType === "int") out[f.key] = parseInt(raw, 10);
+      if (f.type === "int" || f.valueType === "int") {
+        // parseInt("__new__") is NaN, and JSON.stringify writes NaN as null —
+        // which the server rejects with a 422 on a field the form believed was
+        // filled in. Both the sentinel and NaN mean "nothing chosen".
+        const n = raw === QUICK_NEW ? NaN : parseInt(raw, 10);
+        out[f.key] = Number.isNaN(n) ? null : n;
+      }
       else if (f.type === "decimal") out[f.key] = raw;            // string → Decimal de Pydantic
       else out[f.key] = raw;
     }
@@ -831,11 +1191,26 @@ async function buildForm(fields, values = {}, grid = false) {
 
 function validate(fields, payload) {
   for (const f of fields) {
-    if (!f.required || f._hidden) continue;
+    if (f._hidden) continue;
     const v = payload[f.key];
-    if (v == null || v === "" || (Array.isArray(v) && v.length === 0)) return `Falta completar "${f.label}".`;
+    if (f.type === "color" && v != null && !normHex(v))
+      return `"${f.label}": el tono debe ser #rrggbb (por ejemplo #1a1a1a).`;
+    if (!f.required) continue;
+    if (v == null || v === "" || Number.isNaN(v) || (Array.isArray(v) && v.length === 0)) return `Falta completar "${f.label}".`;
   }
   return null;
+}
+
+/* The "create one" entry that lives at the foot of a picker's own list.
+   A button beside the field is only found by someone already looking for it;
+   this is found by everyone, because scrolling the list for the entry that
+   isn't there is exactly the moment you need it. Last, not first: a select
+   with nothing chosen shows its first option, and that must never be an
+   action. */
+const QUICK_NEW = "__new__";
+function quickCreateTail(key) {
+  return `<option disabled>──────────</option>`
+       + `<option value="${QUICK_NEW}">＋ ${esc(CONFIG[key].newTitle)}…</option>`;
 }
 
 /* Replace a select's options in place, keeping the current value when it is
@@ -844,7 +1219,9 @@ function setSelectOptions(selectEl, opts, { required = false } = {}) {
   const current = selectEl.value;
   const allowEmpty = required ? "" : `<option value="">— ninguno —</option>`;
   selectEl.innerHTML = allowEmpty + opts
-    .map(o => `<option value="${esc(o.value)}">${esc(o.label)}</option>`).join("");
+    .map(o => `<option value="${esc(o.value)}">${esc(o.label)}</option>`).join("")
+    // Rebuilding the list must not quietly drop the way to add to it.
+    + (selectEl._quick ? quickCreateTail(selectEl._quick) : "");
   if (current && opts.some(o => String(o.value) === current)) selectEl.value = current;
 }
 
@@ -883,7 +1260,14 @@ async function formModal({ title, fields, values = {}, confirmLabel = "Guardar",
     const payload = form.read();
     const err = validate(fields, payload);
     if (err) return toast(err, "err");
-    await onSubmit(payload);
+    // Without this catch the rejection is unhandled: no toast, and the modal
+    // just sits there as though the click did nothing. Stay open on failure so
+    // the typed values survive and the message says what to change.
+    try {
+      await onSubmit(payload);
+    } catch (e) {
+      return toast(e.message || "No se pudo guardar.", "err");
+    }
     close();
   }});
 }
@@ -1039,13 +1423,16 @@ const CONFIG = {
     columns: [
       { key:"id", label:"ID" },
       { key:"name", label:"Nombre", render:(v, r) => swatchCell(r.hex_code, v) },
+      { key:"code", label:"Código", render:(v) => v ? `<code>${esc(v)}</code>` : "—" },
       { key:"hex_code", label:"Tono", priority:2,
         render:(v) => v ? `<code>${esc(v)}</code>` : `<span class="fhelp">sin tono</span>` },
       { key:"is_active", label:"Estado", type:"bool" },
     ],
     fields: [
       { key:"name", label:"Nombre", required:true, placeholder:"Negro, Havana, Carey…" },
-      { key:"hex_code", label:"Tono", type:"color",
+      { key:"code", label:"Código", placeholder:"se genera solo",
+        help:"Es lo que se le agrega al código del producto: ARM-001 + HAV = ARM-001-HAV. Vacío, se deriva del nombre." },
+      { key:"hex_code", label:"Tono", type:"color", nameField:"name",
         help:"Sólo para mostrar: es el cuadradito que acompaña al color en las listas." },
     ],
   },
@@ -1365,11 +1752,12 @@ async function dashboardView(view) {
    ======================================================================= */
 async function productsView(view) {
   const writable = can("products:write");
-  const [typeMap, brandMap, modelMap, supMap, colorRows, codeRows, priceLists, settings] = await Promise.all([
+  const [typeMap, brandMap, modelMap, supMap, colorMap, codeRows, priceLists, settings] = await Promise.all([
     idMap("/api/product-types"), idMap("/api/brands"), idMap("/api/product-models"),
     can("suppliers:read") ? idMap("/api/suppliers") : Promise.resolve({}),
-    // Read whole rather than via idMap: the grid needs each colour's tone too.
-    api("GET", "/api/colors").catch(() => []),
+    // Names only: the filter needs them, and the grid paints each row's own
+    // `colors`, which the API already sends expanded.
+    idMap("/api/colors"),
     can("pricing:read") ? api("GET", "/api/price-category-codes").catch(() => []) : Promise.resolve([]),
     can("pricing:read") ? api("GET", "/api/price-lists").catch(() => []) : Promise.resolve([]),
     can("company:read") ? api("GET", "/api/company/settings").catch(() => ({})) : Promise.resolve({}),
@@ -1378,8 +1766,6 @@ async function productsView(view) {
   // currency as well as their name.
   const listMap = Object.fromEntries(priceLists.map(l => [l.id, l.name]));
   const listCurrency = Object.fromEntries(priceLists.map(l => [l.id, l.currency]));
-  const colorMap = Object.fromEntries(colorRows.map(c => [c.id, c.name]));
-  const colorHex = Object.fromEntries(colorRows.map(c => [c.id, c.hex_code]));
   const defaultPriceListId = settings.default_price_list_id || "";
   /* Products are tagged by code, so the picker offers every code some list can
      price — the code then resolves inside whichever list applies. */
@@ -1389,6 +1775,9 @@ async function productsView(view) {
   }));
   const filters = { product_type_id:"", brand_id:"", model_id:"", supplier_id:"", color_id:"" };
   let showInactive = false;
+  // A family reads as one line: the grid lists styles and plain articles, and
+  // drills into a style's colours on demand. null = the top level.
+  let family = null;                     // { id, code } when inside a family
 
   const baseFields = () => [
     { key:"code", label:"Código", required:true },
@@ -1396,9 +1785,18 @@ async function productsView(view) {
     { key:"supplier_id", label:"Proveedor", type:"select", valueType:"int", optionsFrom:{ endpoint:"/api/suppliers" } },
     { key:"brand_id", label:"Marca", type:"select", valueType:"int", optionsFrom:{ endpoint:"/api/brands" }, quickCreate:"brands" },
     { key:"model_id", label:"Modelo", type:"select", valueType:"int", optionsFrom:{ endpoint:"/api/product-models" }, quickCreate:"product_models" },
-    { key:"color_id", label:"Color", type:"select", valueType:"int", swatch:true,
-      optionsFrom:{ endpoint:"/api/colors", metaFn: c => c.hex_code }, quickCreate:"colors" },
+    { key:"color_ids", label:"Colores", type:"multiselect", full:true, swatch:true,
+      optionsFrom:{ endpoint:"/api/colors", metaFn: c => c.hex_code }, quickCreate:"colors",
+      help:"Dejalo vacío si el producto no viene en colores (unos lentes de "
+         + "contacto, por ejemplo). Con uno queda un producto suelto; con dos o "
+         + "más se crea uno por color, cada uno con su código y su stock. "
+         + "Desmarcar no borra nada: el producto de ese color sigue existiendo." },
     { key:"min_stock", label:"Stock mínimo", type:"decimal", step:"0.01" },
+    { key:"parent_id", label:"Producto base", type:"select", valueType:"int",
+      optionsFrom:{ endpoint:"/api/products?only_base=true",
+                    labelFn: p => p.description ? `${p.code} · ${p.description}` : p.code },
+      help:"Para un producto que ya existe y es el mismo modelo en otro color. "
+         + "Lo normal es generarlas con ⋯ → Generar variantes." },
     // --- precio de venta ---
     { key:"pricing_mode", label:"Precio de venta", type:"radio", full:true, default:"price_list",
       options:[ { value:"price_list", label:"Por lista de precios" }, { value:"manual", label:"Manual" } ] },
@@ -1416,7 +1814,14 @@ async function productsView(view) {
 
   /* Modelo depends on the chosen type, Marca on the chosen supplier. Both are
      repopulated live as those selects change. */
-  async function wireDependentSelects(form) {
+  async function wireDependentSelects(form, row) {
+    // "Producto base" lists every style; the one being edited is not a
+    // candidate for itself, and neither is a product that has variants.
+    const parentSel = form.querySelector('[name="parent_id"]');
+    if (parentSel && row) {
+      const self = parentSel.querySelector(`option[value="${row.id}"]`);
+      if (self) self.remove();
+    }
     const typeSel  = form.querySelector('[name="product_type_id"]');
     const modelSel = form.querySelector('[name="model_id"]');
     const supSel   = form.querySelector('[name="supplier_id"]');
@@ -1494,20 +1899,31 @@ async function productsView(view) {
     const qs = new URLSearchParams();
     for (const [k,v] of Object.entries(filters)) if (v) qs.set(k, v);
     if (showInactive) qs.set("include_inactive", "true");
-    const list = await api("GET", "/api/products" + (qs.toString() ? "?" + qs : ""));
+    if (family) qs.set("parent_id", family.id);
+    else qs.set("only_base", "true");
+    const list = await api("GET", "/api/products?" + qs);
     paint(list);
   }
+
+  function enterFamily(row) { family = { id: row.id, code: row.code }; load(); }
+  function leaveFamily() { family = null; load(); }
 
   function openForm(mode, row) {
     let fields = baseFields();
     if (mode === "create") fields = fields.concat([{ key:"current_cost", label:"Costo inicial", type:"decimal", step:"0.01", help:"Después de crear, cambiá el costo desde el menú ⋯ de la fila (queda auditado)." }]);
     else fields = fields.concat([{ key:"is_active", label:"Activo", type:"checkbox" }]);
     formModal({ title: (mode==="edit"?"Editar producto":"Nuevo producto"), fields, values: row || {}, grid:true,
-      onReady: wireDependentSelects,
+      onReady: (form) => wireDependentSelects(form, row),
       onSubmit: async (payload) => {
-        if (mode === "edit") await api("PUT", "/api/products/" + row.id, payload);
-        else await api("POST", "/api/products", payload);
-        clearOptions(); toast("Guardado", "ok"); await load();
+        const before = mode === "edit" ? (row.variant_count || 0) : 0;
+        const saved = mode === "edit"
+          ? await api("PUT", "/api/products/" + row.id, payload)
+          : await api("POST", "/api/products", payload);
+        const made = (saved.variant_count || 0) - before;
+        clearOptions();
+        toast(made > 0 ? `Guardado · ${made} producto(s) por color` : "Guardado", "ok");
+        // Land on what was just created rather than leaving it to be found.
+        if (made > 0) enterFamily(saved); else await load();
       } });
   }
 
@@ -1538,12 +1954,55 @@ async function productsView(view) {
     openModal({ title:`Stock — ${row.code}${row.description ? " · " + row.description : ""}`, body });
   }
 
+  /* Turn a product into a style: one article per colour, each with its own
+     code and its own stock. The codes are previewed before anything is
+     created, because a product code is a thing the shop reads out loud. */
+  async function variantsModal(row) {
+    const colors = await api("GET", "/api/colors").catch(() => []);
+    const byId = Object.fromEntries(colors.map(c => [String(c.id), c]));
+    await formModal({
+      title: `Variante a medida — ${row.code}`, confirmLabel: "Crear",
+      fields: [
+        { key:"color_ids", label:"Colores", type:"multiselect", full:true,
+          swatch:true, required:true,
+          optionsFrom:{ endpoint:"/api/colors", metaFn: c => c.hex_code },
+          quickCreate:"colors",
+          help:"Marcá varios para un producto bicolor; se crea una sola variante con todos." },
+      ],
+      onReady: (form) => {
+        const prev = el(`<div class="codeprev"></div>`);
+        form.appendChild(prev);
+        const paint = () => {
+          const picked = form.read().color_ids || [];
+          const tags = picked.map(id => (byId[String(id)] || {}).code || "?");
+          prev.innerHTML = tags.length
+            ? `<span class="fhelp">Se va a crear un producto:</span>`
+              + `<code>${esc(row.code)}-${esc(tags.join("-"))}</code>`
+            : `<span class="fhelp">Elegí los colores que lleva.</span>`;
+        };
+        form.addEventListener("change", paint);
+        paint();
+      },
+      onSubmit: async (payload) => {
+        const made = await api("POST", `/api/products/${row.id}/variants`,
+                               { variants: [{ color_ids: payload.color_ids }] });
+        toast(`${made.length} variante(s) creada(s)`, "ok");
+        clearOptions();
+        enterFamily(row);           // land on what was just made
+      },
+    });
+  }
+
   /* Only the two everyday actions are labelled; the rest live in the "⋯" menu.
      Five buttons per row cost ~390px — a quarter of the grid — and pushed it
      into a horizontal scroll. */
   function actions(r) {
     let h = "";
-    if (can("stock:read"))
+    // A style holds no stock of its own, so that button would lie. It gets the
+    // way into its colours instead.
+    if (r.variant_count)
+      h += `<button class="btn sm" data-act="family" data-id="${r.id}"><svg class="ic"><use href="#i-tags"/></svg>${r.variant_count} colores</button>`;
+    else if (can("stock:read"))
       h += `<button class="btn sm" data-act="stock" data-id="${r.id}"><svg class="ic"><use href="#i-box"/></svg>Stock</button>`;
     if (writable)
       h += `<button class="btn sm" data-act="edit" data-id="${r.id}"><svg class="ic"><use href="#i-pencil"/></svg>Editar</button>`;
@@ -1553,6 +2012,16 @@ async function productsView(view) {
 
   function rowMenu(btn, row) {
     openRowMenu(btn, [
+      // Only offered where it means something: a variant cannot have variants,
+      // and a style that already has them is entered, not re-generated.
+      // The colour checklist covers one-colour-per-article; this stays for
+      // what it cannot say — a bicolour article, or a code of your own.
+      writable && !row.parent_id
+        && { icon:"i-tags", label:"Agregar variante a medida",
+             onClick:() => variantsModal(row) },
+      row.variant_count && { icon:"i-tags", label:`Ver sus ${row.variant_count} colores`,
+                             onClick:() => enterFamily(row) },
+      (writable || row.variant_count) && { sep:true },
       { icon:"i-clock", label:"Historial de costos", onClick:() => historyModal(row) },
       writable && { icon:"i-dollar", label:"Cambiar costo", onClick:() => costModal(row) },
       writable && { sep:true },
@@ -1572,8 +2041,14 @@ async function productsView(view) {
   }
 
   function paint(list) {
+    const head = family
+      ? `<button class="btn sm ghost" id="backAll"><svg class="ic"><use href="#i-arrow-left"/></svg>Productos</button>
+         <h2>Colores de ${esc(family.code)}</h2>
+         <div class="sub">${list.length} variante(s) · cada una con su código y su stock</div>`
+      : `<h2>Productos</h2>
+         <div class="sub">${list.length} producto(s) · las variantes de color se ven dentro de cada uno</div>`;
     view.innerHTML = `
-      <div class="page-head"><div><h2>Productos</h2><div class="sub">${list.length} producto(s)</div></div>
+      <div class="page-head"><div>${head}</div>
         <div class="toolbar" style="margin:0">
           <button class="btn" id="expBtn"><svg class="ic"><use href="#i-download"/></svg>Exportar<svg class="ic"><use href="#i-chevron-down"/></svg></button>
           ${writable ? `<button class="btn" id="impProd"><svg class="ic"><use href="#i-upload"/></svg>Importar productos</button>
@@ -1595,12 +2070,16 @@ async function productsView(view) {
         { key:"product_type_id", label:"Tipo", render:(v)=>esc(typeMap[v]||"—") },
         { key:"brand_id", label:"Marca", render:(v)=>esc(brandMap[v]||"—") },
         { key:"model_id", label:"Modelo", priority:2, render:(v)=>esc(modelMap[v]||"—") },
-        { key:"color_id", label:"Color", priority:2,
-          render:(v)=> v && colorMap[v] ? swatchCell(colorHex[v], colorMap[v]) : "—" },
+        { key:"colors", label:"Colores", priority:2, render:(v)=> swatchList(v) },
+        { key:"variant_count", label:"Variantes", priority:2, render:(v, r) => v
+            ? badge(`${v} colores`, "blue")
+            : (r.parent_code ? `<span class="fhelp">de ${esc(r.parent_code)}</span>` : "—") },
         { key:"price_category_code", label:"Cat.", priority:3, render:(v)=>v?badge(v,"gray"):"—" },
         { key:"resolved_sale_price", label:"Precio", align:"right", render:(v, r) => v != null
             ? `<span title="${esc(r.price_source === "manual" ? "Precio manual" : ("Lista: " + (listMap[r.price_list_id] || "por defecto")))}">${fmtMoney(v, r.price_currency)}</span>`
-            : `<span class="badge gray" title="${esc(r.price_reason || "")}">sin precio</span>` },
+            : r.variant_count
+              ? `<span class="fhelp" title="Se vende por color">por color</span>`
+              : `<span class="badge gray" title="${esc(r.price_reason || "")}">sin precio</span>` },
         { key:"current_cost", label:"Costo", type:"money", align:"right", priority:2 },
         { key:"min_stock", label:"Mín", type:"num", align:"right", priority:3 },
         { key:"is_active", label:"Estado", type:"bool", priority:3 },
@@ -1617,10 +2096,13 @@ async function productsView(view) {
     if (icost) icost.addEventListener("click", () => openImportWizard("costs", load));
     $("#inact", view).addEventListener("change", e => { showInactive = e.target.checked; load(); });
     $$("[data-filter]", view).forEach(s => s.addEventListener("change", () => { filters[s.dataset.filter] = s.value; load(); }));
+    const back = $("#backAll", view);
+    if (back) back.addEventListener("click", leaveFamily);
     $$("[data-act]", view).forEach(b => b.addEventListener("click", async () => {
       const row = list.find(x => String(x.id) === b.dataset.id), act = b.dataset.act;
       if (act === "edit") openForm("edit", row);
       else if (act === "stock") stockModal(row);
+      else if (act === "family") enterFamily(row);
       else if (act === "more") rowMenu(b, row);
     }));
   }
@@ -1669,15 +2151,14 @@ function saleBody(draft) {
   };
 }
 
-/* Product picker: search, then pick a colour.
-   Results are grouped by marca+modelo, so the colours of the same frame sit
-   together and the choice is "which colour", not "which of these codes". */
+/* Product picker: search, then pick the variant.
+   Results are grouped by marca+modelo, so the variants of the same frame sit
+   together and the choice is "which of these", not "which of these codes".
+   Each row shows the colours it comes in — they ride along on the product. */
 async function pickProduct(branchId, onPick) {
-  const [brandMap, modelMap, colorRows] = await Promise.all([
+  const [brandMap, modelMap] = await Promise.all([
     idMap("/api/brands"), idMap("/api/product-models"),
-    api("GET", "/api/colors").catch(() => []),
   ]);
-  const colorMap = Object.fromEntries(colorRows.map(c => [c.id, c]));
   const stock = {};
   if (branchId) {
     for (const lvl of await api("GET", `/api/stock/levels?branch_id=${branchId}`).catch(() => []))
@@ -1706,14 +2187,13 @@ async function pickProduct(branchId, onPick) {
       const [b, m] = key.split("|");
       const title = [brandMap[b], modelMap[m]].filter(Boolean).join(" · ") || "Sin marca";
       const rowsHtml = items.map(p => {
-        const color = p.color_id ? colorMap[p.color_id] : null;
         const qty = stock[p.id];
         const out = branchId && (qty == null || Number(qty) <= 0);
         const stockLabel = !branchId ? ""
           : out ? `<span class="badge red">sin stock</span>`
                 : `<span class="badge gray">${fmtNum(qty)} en stock</span>`;
         return `<button type="button" class="pick-row" data-id="${p.id}">
-          ${color ? swatchCell(color.hex_code, color.name) : `<span class="fhelp">sin color</span>`}
+          ${(p.colors || []).length ? swatchList(p.colors, 3) : `<span class="fhelp">sin color</span>`}
           <span class="grow"><span class="code">${esc(p.code)}</span> ${esc(p.description || "")}</span>
           ${stockLabel}
           <span class="price">${p.resolved_sale_price != null
@@ -1724,16 +2204,18 @@ async function pickProduct(branchId, onPick) {
     }).join("");
     $$(".pick-row", results).forEach(b => b.addEventListener("click", () => {
       const product = rows.find(p => String(p.id) === b.dataset.id);
-      // Carry the colour's name along; the sale line shows it under the code.
-      const color = product.color_id ? colorMap[product.color_id] : null;
-      onPick({ ...product, color_name: color ? color.name : "" });
+      // Carry the colour names along; the sale line shows them under the code.
+      onPick({ ...product,
+               color_name: (product.colors || []).map(c => c.name).join(", ") });
       close();
     }));
   };
 
   const load = async (q) => {
     results.innerHTML = `<div class="loading">Buscando…</div>`;
-    paint(await api("GET", `/api/products${q ? "?q=" + encodeURIComponent(q) : ""}`)
+    // sellable_only: a customer buys a colour, not a family, so styles are out.
+    paint(await api("GET", "/api/products?sellable_only=true"
+                          + (q ? "&q=" + encodeURIComponent(q) : ""))
       .catch(() => []));
   };
   const input = $("input[type=search]", body);
@@ -2879,6 +3361,12 @@ async function companyView(view) {
 
 /* ------------------------------- boot ---------------------------------- */
 (async function boot() {
+  // A password link is checked before anything else: someone arriving from
+  // their email must reach the form even if a stale session is in this
+  // browser, and even if that session belongs to somebody else.
+  const link = location.hash.match(/^#\/password\/(.+)$/);
+  if (link) return renderSetPassword(decodeURIComponent(link[1]));
+
   state.token = localStorage.getItem(TOKEN_KEY);
   if (state.token) {
     try { await loadSession(); renderApp(); }
