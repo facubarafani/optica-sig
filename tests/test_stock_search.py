@@ -52,7 +52,7 @@ def catalogue(client, auth_headers, product_type_id, branch_id):
         ids[code] = client.post(
             "/api/products",
             json={"code": code, "description": desc, "product_type_id": ptype,
-                  "color_id": color, "min_stock": min_stock},
+                  "color_ids": [color] if color else [], "min_stock": min_stock},
             headers=auth_headers,
         ).json()["id"]
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 from app.schemas.common import ORMBase, SoftDeleteRead
 
@@ -14,6 +14,28 @@ class Token(BaseModel):
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+    # Only sent on the second round trip, when the first one found the same
+    # address at more than one shop and the user picked which.
+    company_id: int | None = None
+
+
+class CompanyChoice(BaseModel):
+    id: int
+    name: str
+
+
+class LoginResponse(BaseModel):
+    """Either a token, or the list of shops the caller must choose between.
+
+    One response model rather than two endpoints: the client posts the same
+    form twice, the second time with ``company_id``. Nothing else about the
+    login flow changes for the overwhelming majority of users, who exist at
+    exactly one company and never see the picker.
+    """
+
+    access_token: str | None = None
+    token_type: str = "bearer"
+    companies: list[CompanyChoice] | None = None
 
 
 # --- permissions ----------------------------------------------------------
@@ -69,3 +91,27 @@ class UserRead(SoftDeleteRead):
     is_superuser: bool
     branch_id: int | None = None
     roles: list[RoleRead] = []
+
+
+# --- invitations / password reset ----------------------------------------
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class SetPasswordRequest(BaseModel):
+    token: str
+    new_password: str = Field(min_length=8, max_length=128)
+
+
+class TokenCheck(BaseModel):
+    """What the "set your password" screen needs to greet the visitor.
+
+    Only ever returned to someone already holding a valid token, so naming the
+    account is not a disclosure — and showing which óptica they are setting a
+    password for is what stops a two-shop owner picking the wrong link.
+    """
+
+    purpose: str
+    email: EmailStr
+    full_name: str
+    company_name: str

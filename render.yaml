@@ -28,3 +28,37 @@ services:
         value: "480"
       - key: DEFAULT_COMPANY_ID
         value: "1"
+      - key: ENVIRONMENT
+        value: "production"   # makes the seed refuse default provider passwords
+      # --- Provider (platform) account for /admin -------------------------
+      # This login can enter ANY tenant's data, so it never gets a password
+      # from the repo. Render generates one; read it in the dashboard under
+      # Environment, then change it with:
+      #     python -m scripts.platform_admin password <email>
+      - key: PLATFORM_ADMIN_EMAIL
+        sync: false           # your real email, entered at deploy time
+      - key: PLATFORM_ADMIN_PASSWORD
+        generateValue: true   # Render generates it; visible in the dashboard
+      # --- Email ---------------------------------------------------------
+      # Must match the public URL, or invitation links point at localhost.
+      # Point this at the custom domain once it resolves — invitation links are
+      # built from it, and a link to onrender.com looks like phishing to a shop
+      # owner who was told the system lives at miopticadigital.com.ar.
+      - key: PUBLIC_BASE_URL
+        value: "https://app.miopticadigital.com.ar"
+      # `console` only prints — invitations would never reach anyone. Switch to
+      # "resend" once the domain is verified in the Resend dashboard.
+      - key: EMAIL_BACKEND
+        value: "console"
+      - key: EMAIL_FROM
+        value: "Mi Óptica Digital <no-reply@miopticadigital.com.ar>"
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false           # starts with "re_"
+      - key: BREVO_API_KEY
+        sync: false

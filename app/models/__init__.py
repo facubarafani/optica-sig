@@ -21,15 +21,26 @@ from app.models.enums import (
     ExternalWorkStatus,
     ExternalWorkType,
     PaymentMethod,
+    PlatformAction,
+    TokenPurpose,
     SaleStatus,
     StockMovementType,
     SupplierType,
     TreatmentType,
 )
+from app.models.platform import PlatformAuditLog, PlatformUser
 from app.models.pricing import CostHistory, PriceCategory, PriceList
-from app.models.product import Brand, Color, Product, ProductModel, ProductType
+from app.models.product import (
+    Brand,
+    Color,
+    Product,
+    ProductModel,
+    ProductType,
+    product_colors,
+)
 from app.models.sales import PaymentAccount, Sale, SaleItem, SalePayment
 from app.models.stock import StockLevel, StockMovement
+from app.models.token import UserToken
 from app.models.supplier import Supplier, supplier_brands
 
 __all__ = [
@@ -48,6 +59,8 @@ __all__ = [
     "Prescription",
     "TreatmentHistory",
     "ImportBatch",
+    "PlatformAuditLog",
+    "PlatformUser",
     "CostHistory",
     "PriceCategory",
     "PriceList",
@@ -57,8 +70,10 @@ __all__ = [
     "ProductModel",
     "ProductType",
     "StockLevel",
+    "UserToken",
     "StockMovement",
     "Supplier",
+    "product_colors",
     "supplier_brands",
     "PaymentAccount",
     "Sale",
@@ -73,4 +88,6 @@ __all__ = [
     "SaleStatus",
     "ExternalWorkType",
     "ExternalWorkStatus",
+    "PlatformAction",
+    "TokenPurpose",
 ]

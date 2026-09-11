@@ -36,6 +36,13 @@ class Field:
     kind: str = "text"             # text | decimal | ref | enum
     required: bool = False
     ref: str | None = None         # key into REFS when kind == "ref"
+    # A ref that takes several values in one cell, comma-separated. The parsed
+    # value is then a list of names (and, after commit resolves them, of ids).
+    multi: bool = False
+    # A ref the *applier* resolves, not the generic pass. Needed when a row can
+    # point at something the same file creates further up (a variant naming its
+    # style), which no up-front index can know about.
+    deferred: bool = False
     choices: list[str] | None = None
     example: str = ""
     help: str | None = None
@@ -77,9 +84,15 @@ PRODUCTS = ImportSpec(
         Field("model", "Modelo", kind="ref", ref="model", example="Clipper"),
         Field("supplier", "Proveedor", kind="ref", ref="supplier",
               example="Distribuidora Óptica SA"),
-        Field("color", "Color", kind="ref", ref="color", example="Negro",
-              help="Se busca en el catálogo de colores; si no existe, se crea "
-                   "(sin tono, se le puede asignar después)."),
+        Field("color", "Colores", kind="ref", ref="color", multi=True,
+              example="Negro, Havana",
+              help="Uno o varios, separados por coma. Cada uno se busca en el "
+                   "catálogo de colores; si no existe, se crea (sin tono, se "
+                   "le puede asignar después)."),
+        Field("parent", "Producto base", kind="ref", ref="product", deferred=True,
+              example="ARM-001",
+              help="Código del producto del que este es una variante de color. "
+                   "Vacío = producto suelto o base."),
         Field("current_cost", "Costo", kind="decimal", example="20000,00"),
         Field("min_stock", "Stock mínimo", kind="decimal", example="2"),
         Field("pricing_mode", "Modo de precio", kind="enum",

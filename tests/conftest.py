@@ -6,6 +6,15 @@ import os
 # Configure environment BEFORE importing the app (settings is cached on import).
 os.environ.setdefault("DATABASE_URL", "sqlite+pysqlite:///:memory:")
 os.environ.setdefault("SECRET_KEY", "test-secret-key-0123456789abcdef0123456789")
+# Capture mail instead of sending it. Set before app import, because settings
+# is cached at import time.
+#
+# Forced, not setdefault: a developer with EMAIL_BACKEND=smtp exported — or who
+# simply sourced .env — would otherwise have the test suite mail real people at
+# whatever addresses the fixtures happen to use. The test suite must never be
+# able to send, whatever the ambient environment says.
+os.environ["EMAIL_BACKEND"] = "memory"
+os.environ["PUBLIC_BASE_URL"] = "https://test.sgi"
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
@@ -16,11 +25,14 @@ from sqlalchemy.pool import StaticPool  # noqa: E402
 import app.models  # noqa: E402,F401  (populate metadata)
 from app.core.config import settings  # noqa: E402
 from app.core.database import Base, get_db  # noqa: E402
+from app.core import ratelimit  # noqa: E402
 from app.core.security import hash_password  # noqa: E402
+from app.services import email as email_service  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models.auth import Permission, User  # noqa: E402
 from app.models.company import Company, CompanySettings  # noqa: E402
-from scripts.seed import PERMISSIONS  # noqa: E402
+from app.models.platform import PlatformUser  # noqa: E402
+from app.services.provisioning import PERMISSIONS  # noqa: E402
 
 # A single shared in-memory connection across the whole test session.
 engine = create_engine(
@@ -46,6 +58,19 @@ app.dependency_overrides[get_db] = _override_get_db
 
 
 @pytest.fixture(autouse=True)
+def _fresh_state():
+    """Both of these are process-global, so they leak between tests otherwise."""
+    email_service.outbox.clear()
+    ratelimit.reset()
+    yield
+
+
+@pytest.fixture
+def outbox():
+    return email_service.outbox
+
+
+@pytest.fixture(autouse=True)
 def _fresh_db():
     """Recreate the schema and a minimal seed (company + admin) per test."""
     Base.metadata.create_all(engine)
@@ -63,6 +88,15 @@ def _fresh_db():
             full_name="Admin",
             hashed_password=hash_password("admin1234"),
             is_superuser=True,
+        )
+    )
+    # The provider account lives in its own table, so /admin has something to
+    # authenticate and the isolation tests have a real cross-tenant identity.
+    db.add(
+        PlatformUser(
+            email="owner@test.com",
+            full_name="Platform Owner",
+            hashed_password=hash_password("owner1234"),
         )
     )
     db.commit()
@@ -90,6 +124,16 @@ def auth_headers(client):
     resp = client.post(
         "/api/auth/login",
         json={"email": "admin@test.com", "password": "admin1234"},
+    )
+    assert resp.status_code == 200, resp.text
+    return {"Authorization": f"Bearer {resp.json()['access_token']}"}
+
+
+@pytest.fixture
+def platform_headers(client):
+    resp = client.post(
+        "/api/admin/login",
+        json={"email": "owner@test.com", "password": "owner1234"},
     )
     assert resp.status_code == 200, resp.text
     return {"Authorization": f"Bearer {resp.json()['access_token']}"}

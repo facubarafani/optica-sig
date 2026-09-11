@@ -13,6 +13,7 @@ vía `number_sequence`.
 |---|--------|--------|-----------------------|
 | 1 | Configuración / Empresa | ✅ | `company`, `company_settings` |
 | 2 | Usuarios y permisos (RBAC) | ✅ | `user`, `role`, `permission`, `user_roles`, `role_permissions` |
+| 2b | Plataforma (proveedor) | ✅ | `platform_user`, `platform_audit_log` |
 | 3 | Sucursales | ✅ | `branch` |
 | 4 | Proveedores / terceros | ✅ | `supplier` (mercadería/laboratorio/taller) |
 | 5 | Productos y stock | ✅ | `product_type`, `brand`, `product_model`, `product`, `supplier_brands`, `stock_level`, `stock_movement` |
@@ -41,15 +42,22 @@ erDiagram
     COMPANY ||--o{ SUPPLIER : "trabaja con"
     COMPANY ||--o{ PRODUCT_TYPE : "clasifica"
     COMPANY ||--o{ BRAND : "registra"
+    COMPANY ||--o{ COLOR : "paleta"
     COMPANY ||--o{ PRODUCT : "cataloga"
     COMPANY ||--o{ PRICE_LIST : "publica"
     COMPANY ||--o{ CUSTOMER : "atiende"
     COMPANY ||--o{ CHANGE_HISTORY : "audita"
     COMPANY ||--o{ NUMBER_SEQUENCE : "numera"
+    COMPANY ||--o{ PLATFORM_AUDIT_LOG : "es objeto de"
 
     USER }o--o{ ROLE : "user_roles"
     ROLE }o--o{ PERMISSION : "role_permissions"
     USER }o--|| BRANCH : "asignado a"
+
+    %% El proveedor (nosotros) vive fuera de COMPANY a propósito: PLATFORM_USER
+    %% no lleva company_id, y es la única identidad que cruza empresas. Los dos
+    %% tipos de token se rechazan mutuamente (app/core/deps.py).
+    PLATFORM_USER ||--o{ PLATFORM_AUDIT_LOG : "registra"
 
     PRODUCT }o--|| PRODUCT_TYPE : "es de tipo"
     PRODUCT }o--o| BRAND : "de marca"
@@ -58,6 +66,8 @@ erDiagram
     PRODUCT }o--o| PRICE_LIST : "lista propia (pisa la default)"
     PRODUCT_MODEL }o--o| PRODUCT_TYPE : "acotado a tipo (opcional)"
     SUPPLIER }o--o{ BRAND : "supplier_brands"
+    PRODUCT }o--o{ COLOR : "product_colors"
+    PRODUCT ||--o{ PRODUCT : "variantes de color (parent_id)"
     PRODUCT ||--o{ COST_HISTORY : "historial costo"
     PRODUCT ||--o{ STOCK_LEVEL : "stock por sucursal"
     PRODUCT ||--o{ STOCK_MOVEMENT : "movimientos"
@@ -89,6 +99,25 @@ erDiagram
         int default_price_list_id FK
         bool low_stock_alerts_enabled
     }
+    PLATFORM_USER {
+        int id PK
+        string email UK
+        string full_name
+        string hashed_password
+        datetime last_login_at
+        bool is_active
+    }
+
+    PLATFORM_AUDIT_LOG {
+        int id PK
+        int platform_user_id FK
+        string action
+        int company_id FK "nullable"
+        int target_user_id
+        string detail
+        datetime created_at
+    }
+
     USER {
         int id PK
         int company_id FK
@@ -136,12 +165,20 @@ erDiagram
         int company_id FK
         string name UK
     }
+    COLOR {
+        int id PK
+        int company_id FK
+        string name UK
+        string code UK "tag corto: NEG, HAV"
+        string hex_code "swatch, opcional"
+        bool is_active
+    }
     PRODUCT {
         int id PK
         int company_id FK
         string code UK
         string description
-        string color
+        int parent_id FK "NULL = base o suelto; si no, variante de color"
         int product_type_id FK
         int brand_id FK
         int model_id FK
@@ -164,6 +201,10 @@ erDiagram
     SUPPLIER_BRANDS {
         int supplier_id PK
         int brand_id PK
+    }
+    PRODUCT_COLORS {
+        int product_id PK
+        int color_id PK
     }
     IMPORT_BATCH {
         int id PK

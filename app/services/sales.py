@@ -34,6 +34,7 @@ from app.schemas.sales import (
 )
 from app.schemas.stock import StockMovementCreate
 from app.services import numbering, pricing
+from app.services import products as products_service
 from app.services import stock as stock_service
 
 CENTS = Decimal("0.01")
@@ -99,6 +100,13 @@ def _load_products(
         raise SaleError(
             f"Producto inexistente: {', '.join(f'#{i}' for i in sorted(missing))}."
         )
+    # Every line of every sale is loaded here, so this is where a style gets
+    # turned away — a customer buys a colour, not a family.
+    for product in products.values():
+        try:
+            products_service.assert_sellable(db, product)
+        except products_service.ProductError as exc:
+            raise SaleError(str(exc)) from exc
     return products
 
 

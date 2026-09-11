@@ -1,13 +1,27 @@
 """Product catalogue: product types, brands, models and products."""
 from __future__ import annotations
 
+from sqlalchemy import Column, ForeignKey, Numeric, String, Table, UniqueConstraint
 from sqlalchemy import Enum as SAEnum
-from sqlalchemy import ForeignKey, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 from app.models.base import CompanyMixin, IDMixin, SoftDeleteMixin, TimestampMixin
 from app.models.enums import PricingMode
+
+# --- association table ----------------------------------------------------
+# Which colours a product comes in. The same frame is usually stocked in
+# several, so the link is N-N rather than a column on the product. A link
+# either exists or it doesn't, hence no soft delete; and no company_id, since
+# both sides are already company-scoped (same rationale as ``supplier_brands``).
+product_colors = Table(
+    "product_colors",
+    Base.metadata,
+    Column("product_id", ForeignKey("products.id", ondelete="CASCADE"),
+           primary_key=True),
+    Column("color_id", ForeignKey("colors.id", ondelete="CASCADE"),
+           primary_key=True),
+)
 
 
 class ProductType(IDMixin, CompanyMixin, TimestampMixin, SoftDeleteMixin, Base):
@@ -34,15 +48,25 @@ class Color(IDMixin, CompanyMixin, TimestampMixin, SoftDeleteMixin, Base):
 
     Master data rather than free text on the product: it keeps one canonical
     spelling, makes "todos los armazones negros" a real filter, and gives the
-    console a swatch to draw. ``hex_code`` is that swatch — presentation only,
-    nothing resolves against it, so it may be NULL for a colour nobody has
-    picked a shade for yet.
+    console a swatch to draw. A product may carry several of them, since the
+    same frame is usually stocked in more than one (``product_colors``).
+
+    ``hex_code`` is that swatch — presentation only, nothing resolves against
+    it, so it may be NULL for a colour nobody has picked a shade for yet.
     """
 
     __tablename__ = "colors"
-    __table_args__ = (UniqueConstraint("company_id", "name", name="uq_color_name"),)
+    __table_args__ = (
+        UniqueConstraint("company_id", "name", name="uq_color_name"),
+        UniqueConstraint("company_id", "code", name="uq_color_code"),
+    )
 
     name: Mapped[str] = mapped_column(String(80), nullable=False)
+    # Short tag ("NEG", "HAV") that suffixes a variant's product code:
+    # ARM-001 + HAV -> ARM-001-HAV. Derived from the name by
+    # services.products.derive_color_code when not given, but editable — a shop
+    # with its own supplier coding must be able to impose it.
+    code: Mapped[str | None] = mapped_column(String(8))
     # "#rrggbb", lower-cased by the schema validator.
     hex_code: Mapped[str | None] = mapped_column(String(7))
 
@@ -66,17 +90,36 @@ class ProductModel(IDMixin, CompanyMixin, TimestampMixin, SoftDeleteMixin, Base)
 
 
 class Product(IDMixin, CompanyMixin, TimestampMixin, SoftDeleteMixin, Base):
+    """A sellable article — and, when it has variants, the style they share.
+
+    The same frame is stocked in several colours, and each colour is its own
+    article: its own code, its own stock, its own line on a sale. So a variant
+    is a ``products`` row like any other, pointed at its style by ``parent_id``,
+    rather than a separate table — everything that references a product
+    (stock_levels, stock_movements, sale_items, cost_history) keeps working
+    without knowing the family exists.
+
+    A row with variants is the style, not an article: it must not be sold or
+    stocked, or the same shirt's stock ends up split between "ARM-001" and
+    "ARM-001-NEG" with neither number true. ``services.products.assert_sellable``
+    is the single place that enforces it.
+    """
+
     __tablename__ = "products"
     __table_args__ = (UniqueConstraint("company_id", "code", name="uq_product_code"),)
 
     code: Mapped[str] = mapped_column(String(40), nullable=False)
     description: Mapped[str | None] = mapped_column(String(500))
 
+    # NULL = a style, or a plain article with no variants. RESTRICT rather than
+    # SET NULL: silently promoting orphaned variants to styles would be worse
+    # than refusing the delete.
+    parent_id: Mapped[int | None] = mapped_column(
+        ForeignKey("products.id", ondelete="RESTRICT"), index=True
+    )
+
     product_type_id: Mapped[int] = mapped_column(
         ForeignKey("product_types.id", ondelete="RESTRICT"), nullable=False
-    )
-    color_id: Mapped[int | None] = mapped_column(
-        ForeignKey("colors.id", ondelete="SET NULL")
     )
     brand_id: Mapped[int | None] = mapped_column(
         ForeignKey("brands.id", ondelete="SET NULL")
@@ -120,4 +163,20 @@ class Product(IDMixin, CompanyMixin, TimestampMixin, SoftDeleteMixin, Base):
     product_type: Mapped["ProductType"] = relationship(lazy="joined")
     brand: Mapped["Brand | None"] = relationship(lazy="joined")
     model: Mapped["ProductModel | None"] = relationship(lazy="joined")
-    color: Mapped["Color | None"] = relationship(lazy="joined")
+    # selectin, not joined: a collection joined onto a list query multiplies the
+    # rows. This costs one extra query for the whole page instead.
+    colors: Mapped[list["Color"]] = relationship(
+        secondary=product_colors, lazy="selectin", order_by="Color.name"
+    )
+
+    parent: Mapped["Product | None"] = relationship(
+        "Product", remote_side="Product.id", back_populates="variants"
+    )
+    variants: Mapped[list["Product"]] = relationship(
+        back_populates="parent", order_by="Product.code"
+    )
+
+    @property
+    def color_ids(self) -> list[int]:
+        """Flat id list — what the API reads and writes (see ProductRead)."""
+        return [c.id for c in self.colors]

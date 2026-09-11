@@ -21,6 +21,8 @@ python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 bcrypt==4.0.1
 
+# --- Email (HTTP provider backends; also used by the test client) ---
+httpx==0.28.1
+
 # --- Testing ---
 pytest==8.3.4
-httpx==0.28.1

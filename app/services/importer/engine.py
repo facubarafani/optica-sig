@@ -23,6 +23,7 @@ from app.models.pricing import PriceCategory
 from app.models.product import Product
 from app.schemas.stock import StockMovementCreate
 from app.services import pricing as pricing_service
+from app.services import products as products_service
 from app.services import stock as stock_service
 from app.services.importer.readers import parse_decimal
 from app.services.importer.specs import REFS, Field, ImportSpec
@@ -34,6 +35,27 @@ def _norm(text: str) -> str:
     """Fold case, accents and surrounding space so "MARCA" == " Marca "."""
     s = unicodedata.normalize("NFKD", str(text or "").strip().lower())
     return "".join(c for c in s if not unicodedata.combining(c))
+
+
+def _split_multi(text: str) -> list[str]:
+    """Split a multi-value cell ("Negro, Havana") into distinct names.
+
+    Comma-separated because that is what a person types and what the exporter
+    writes; repeats are folded so "Negro, negro" is one colour, not two.
+    """
+    out: list[str] = []
+    seen: set[str] = set()
+    for part in str(text or "").split(","):
+        name = part.strip()
+        if name and _norm(name) not in seen:
+            seen.add(_norm(name))
+            out.append(name)
+    return out
+
+
+def _ref_names(field: Field, value) -> list[str]:
+    """The names one ref cell points at — one, or several when ``multi``."""
+    return list(value) if field.multi else [value]
 
 
 def _category_code(text: str) -> str:
@@ -155,6 +177,13 @@ def _parse_row(
             except ValueError as exc:
                 errors.append(RowError(row_no, f.key, f"{f.label}: {exc}"))
                 failed = True
+        elif f.kind == "ref" and f.multi:
+            names = _split_multi(text)
+            if names:
+                out[f.key] = names
+            elif f.required:
+                errors.append(RowError(row_no, f.key, f'Falta "{f.label}".'))
+                failed = True
         elif f.kind == "enum":
             if text not in (f.choices or []):
                 errors.append(RowError(
@@ -246,13 +275,24 @@ def analyze(
     )
     preview = Preview(total=len(rows), errors=errors)
 
+    # Codes this file itself will create — a deferred ref may point at one.
+    own_codes = {_norm(v["code"]) for _, v in parsed if v.get("code")}
+
     missing: dict[tuple[str, str], MissingRef] = {}
     for row_no, values in parsed:
         for f in spec.fields:
             if f.kind != "ref" or f.key not in values:
                 continue
-            name = values[f.key]
-            if resolver.resolve(f.ref, name) is None:
+            if f.deferred:
+                name = values[f.key]
+                if resolver.resolve(f.ref, name) is None and _norm(name) not in own_codes:
+                    errors.append(RowError(
+                        row_no, f.key,
+                        f'{f.label} "{name}" no existe ni está en el archivo.'))
+                continue
+            for name in _ref_names(f, values[f.key]):
+                if resolver.resolve(f.ref, name) is not None:
+                    continue
                 if f.creatable:
                     missing.setdefault(
                         (f.ref, _norm(name)),
@@ -333,18 +373,20 @@ def commit(
     # Resolve (and optionally create) every referenced entity up front.
     for row_no, values in parsed:
         for f in spec.fields:
-            if f.kind != "ref" or f.key not in values:
+            if f.kind != "ref" or f.deferred or f.key not in values:
                 continue
-            name = values[f.key]
-            found = resolver.resolve(f.ref, name)
-            if found is None:
-                if f.creatable and create_missing:
-                    found = resolver.create(f.ref, name)
-                else:
-                    raise ImportError_(
-                        f'Fila {row_no}: {f.label} "{name}" no existe.'
-                    )
-            values[f.key] = found
+            ids = []
+            for name in _ref_names(f, values[f.key]):
+                found = resolver.resolve(f.ref, name)
+                if found is None:
+                    if f.creatable and create_missing:
+                        found = resolver.create(f.ref, name)
+                    else:
+                        raise ImportError_(
+                            f'Fila {row_no}: {f.label} "{name}" no existe.'
+                        )
+                ids.append(found)
+            values[f.key] = ids if f.multi else ids[0]
 
     applier = {
         "products": _apply_products,
@@ -367,6 +409,9 @@ def _apply_products(db, parsed, *, company_id, user_id) -> dict:
             select(Product).where(Product.company_id == company_id)
         ).scalars()
     }
+    # Captured up front: sync_variants needs to know which colour a splitting
+    # article's stock belongs to, and by then the new set is already on the row.
+    previous_colors = {p.id: list(p.color_ids) for p in by_code.values()}
     created = updated = 0
     for row_no, v in parsed:
         product = by_code.get(_norm(v["code"]))
@@ -378,7 +423,7 @@ def _apply_products(db, parsed, *, company_id, user_id) -> dict:
             by_code[_norm(v["code"])] = product
 
         for src, dst in (
-            ("description", "description"), ("color", "color_id"),
+            ("description", "description"),
             ("product_type", "product_type_id"), ("brand", "brand_id"),
             ("model", "model_id"), ("supplier", "supplier_id"),
             ("min_stock", "min_stock"), ("sale_price", "sale_price"),
@@ -386,6 +431,10 @@ def _apply_products(db, parsed, *, company_id, user_id) -> dict:
         ):
             if src in v:
                 setattr(product, dst, v[src])
+        if "color" in v:
+            # The whole set, so re-importing an edited export is a replacement
+            # rather than an ever-growing list.
+            products_service.set_colors(db, product, v["color"], company_id=company_id)
         if "price_category" in v:
             product.price_category_code = _category_code(v["price_category"])
         if "pricing_mode" in v:
@@ -409,6 +458,38 @@ def _apply_products(db, parsed, *, company_id, user_id) -> dict:
             pricing_service.validate_pricing(db, product, company_id=company_id)
         except pricing_service.PricingError as exc:
             raise ImportError_(f"Fila {row_no}: {exc}")
+
+    # Styles are wired last, so a file can list "ARM-001" and the variants that
+    # point at it in any order — by now every row of the batch has an id.
+    db.flush()
+    for row_no, v in parsed:
+        if "parent" not in v:
+            continue
+        product = by_code[_norm(v["code"])]
+        parent = by_code.get(_norm(v["parent"]))
+        if parent is None:
+            raise ImportError_(
+                f'Fila {row_no}: el producto base "{v["parent"]}" no existe.')
+        if parent.id == product.id:
+            raise ImportError_(
+                f"Fila {row_no}: un producto no puede ser su propio base.")
+        if parent.parent_id is not None:
+            raise ImportError_(
+                f'Fila {row_no}: "{parent.code}" ya es una variante; '
+                "las variantes no se anidan.")
+        product.parent_id = parent.id
+
+    # Same rule as the API (CLAUDE.md rule 9): a row offered in several colours
+    # is a style, and its articles are made here rather than by hand later. A
+    # row that names a "Producto base" is itself a variant — several colours on
+    # it means bicolour, not a family — so sync_variants leaves it alone.
+    db.flush()
+    for _row_no, v in parsed:
+        product = by_code[_norm(v["code"])]
+        products_service.sync_variants(
+            db, product, company_id=company_id, user_id=user_id,
+            previous_color_ids=previous_colors.get(product.id, []),
+        )
     return {"created": created, "updated": updated}
 
 

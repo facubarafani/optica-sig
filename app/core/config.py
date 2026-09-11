@@ -24,9 +24,40 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 480
 
-    # Single-tenant MVP: active company id. Multi-tenant ready (every row has
-    # company_id); this is the resolution shortcut until real tenancy lands.
+    # The demo tenant the seed pins itself to. Login no longer reads this —
+    # a session's company comes from the authenticated user (app/core/deps.py)
+    # — it only tells `python -m scripts.seed` which company to build.
     default_company_id: int = 1
+
+    # Provider (platform) bootstrap account, created by the seed. These are the
+    # credentials for /admin, not for a shop. Override both anywhere that is
+    # not a local demo.
+    platform_admin_email: str = "owner@sgi.com"
+    platform_admin_password: str = "owner1234"
+
+    # --- Email -----------------------------------------------------------
+    # Where the app lives, as a user's browser sees it. Invitation and reset
+    # links are built from this, so getting it wrong sends people to localhost.
+    public_base_url: str = "http://localhost:8000"
+
+    # console | memory (tests) | smtp (any provider) | resend | brevo
+    email_backend: str = "console"
+    email_from: str = "Mi Óptica Digital <no-reply@miopticadigital.com.ar>"
+
+    # SMTP. Port 587 + STARTTLS: port 25 is blocked outbound on most PaaS.
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_starttls: bool = True
+
+    resend_api_key: str = ""
+    brevo_api_key: str = ""
+
+    # An invitation is handed out deliberately and may sit unopened over a
+    # weekend; a reset is requested by someone waiting at their screen.
+    invitation_ttl_hours: int = 168  # 7 days
+    password_reset_ttl_hours: int = 1
 
 
 @lru_cache
