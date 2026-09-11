@@ -42,9 +42,23 @@ def health() -> dict[str, str]:
 # --- Admin web console (self-contained single-page app) ------------------
 # Served same-origin so the browser can call /api/* without CORS. The SPA uses
 # hash-based routing, so a single route serves every screen.
+# Which console the bare domain opens depends on the host it was asked for:
+# admin.<domain> is the provider's front door, anything else is a shop's. Both
+# pages stay reachable on both hosts deliberately: impersonation writes the
+# tenant token into localStorage and opens /app, which only works because that
+# is the same origin (see admin.html). Serving them on separate origins would
+# need the handoff rewritten, so the split here is cosmetic, not a boundary.
+ADMIN_HOST_LABEL = "admin"
+
+
+def _is_admin_host(request: Request) -> bool:
+    host = (request.headers.get("host") or "").split(":")[0].lower()
+    return host.split(".")[0] == ADMIN_HOST_LABEL
+
+
 @app.get("/", include_in_schema=False)
-def root() -> RedirectResponse:
-    return RedirectResponse(url="/app")
+def root(request: Request) -> RedirectResponse:
+    return RedirectResponse(url="/admin" if _is_admin_host(request) else "/app")
 
 
 @app.get("/app", include_in_schema=False)

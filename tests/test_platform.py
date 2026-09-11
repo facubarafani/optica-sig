@@ -448,3 +448,30 @@ def test_a_disabled_provider_token_stops_working(client, platform_headers, db):
     assert client.get("/api/admin/tenants", headers=platform_headers).status_code == 200
     svc.set_platform_active(db, svc.get_platform_user(db, "owner@test.com"), False)
     assert client.get("/api/admin/tenants", headers=platform_headers).status_code == 401
+
+
+# --- front doors -----------------------------------------------------------
+def test_the_bare_domain_opens_the_console_that_matches_the_host(client):
+    """admin.<domain> is the provider's front door; anything else is a shop's.
+
+    Without this the provider subdomain would redirect to /app and land the
+    provider on a shop's console. Both pages stay reachable on both hosts on
+    purpose: impersonation hands the tenant token over through same-origin
+    localStorage, so splitting them across origins would break that.
+    """
+    for host, expected in [
+        ("admin.miopticadigital.com.ar", "/admin"),
+        ("ADMIN.MIOPTICADIGITAL.COM.AR", "/admin"),
+        ("app.miopticadigital.com.ar", "/app"),
+        ("sgi-optica.onrender.com", "/app"),
+        # A label that merely starts with "admin" is a shop, not the provider.
+        ("administracion.miopticadigital.com.ar", "/app"),
+    ]:
+        resp = client.get("/", headers={"host": host}, follow_redirects=False)
+        assert resp.headers["location"] == expected, host
+
+    # And the provider page is still served on whatever host asked for it.
+    assert client.get("/admin", headers={"host": "admin.miopticadigital.com.ar"}
+                      ).status_code == 200
+    assert client.get("/app", headers={"host": "admin.miopticadigital.com.ar"}
+                      ).status_code == 200
