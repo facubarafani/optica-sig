@@ -107,7 +107,7 @@ not built yet.
 
 ## Web console (`app/web/index.html`)
 
-Single self-contained file — no build step, no external requests. Two
+Single self-contained file — no build step, no external requests. A few
 conventions worth knowing before editing it:
 
 - **Icons** come from an embedded Lucide sprite at the top of `<body>`. Use
@@ -121,6 +121,22 @@ conventions worth knowing before editing it:
   leave the identifying columns unmarked.
 - Row actions: keep at most two labelled buttons and put the rest in the `⋯`
   menu via `openRowMenu(anchor, items)`.
+- **No em dashes in anything a user reads.** `—` (U+2014) must never reach the
+  screen: not in option labels, buttons, headings, toasts, placeholders or
+  empty states, and not in the strings that arrive from the backend either —
+  an HTTPException `detail`, a `ProductError` message and an email subject all
+  end up rendered in a toast or an inbox. Use a colon, a comma, brackets or a
+  full stop. `— ninguno —` becomes `(ninguno)`, and an empty table cell is a
+  plain hyphen `-` (`fmtNum`, `fmtDate` and the column `render`s all return
+  it). This is about *product* text only: prose in this file, docstrings, code
+  comments and `docs/` are unaffected, and so is the `⋯` row-menu glyph, which
+  is not a dash.
+
+  The console and the provider page still carry roughly eighty em dashes that
+  predate this rule, most of them the empty-cell glyph. They are grandfathered
+  deliberately: converting them is a cosmetic pass over every table, worth
+  doing on its own rather than smuggled into an unrelated change. The rule
+  binds new and edited strings.
 
 ## Provider console (`app/web/admin.html`)
 

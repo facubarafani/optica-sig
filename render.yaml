@@ -15,6 +15,18 @@ services:
     plan: free
     dockerfilePath: ./Dockerfile
     healthCheckPath: /health
+    # Both consoles are one service on one origin: app.<domain> opens a shop's
+    # console, admin.<domain> the provider's, and main.py picks by Host. They
+    # deliberately share an origin because impersonation hands the tenant token
+    # over through localStorage (see app/web/admin.html).
+    #
+    # NOTE: the live service was configured by hand and has drifted from this
+    # file (region, health check), so Render does not re-read it. Adding a
+    # domain here does NOT attach it — do that in the dashboard under Settings
+    # -> Custom Domains. This list records intent for a fresh Blueprint deploy.
+    domains:
+      - app.miopticadigital.com.ar
+      - admin.miopticadigital.com.ar
     envVars:
       - key: DATABASE_URL       # paste your Neon connection string at deploy time
         sync: false             #   (scheme must be postgresql+psycopg2://, keep ?sslmode=require)
