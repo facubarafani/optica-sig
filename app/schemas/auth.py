@@ -22,6 +22,9 @@ class LoginRequest(BaseModel):
 class CompanyChoice(BaseModel):
     id: int
     name: str
+    # La dirección desambigua dos sucursales de la misma cadena, que con
+    # el nombre solo se confunden al elegir.
+    address: str | None = None
 
 
 class LoginResponse(BaseModel):

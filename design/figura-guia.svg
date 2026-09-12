@@ -1,0 +1,27 @@
+<svg viewBox="0 0 150 330" role="img" aria-label="Persona señalando una pantalla">
+  <path d="M57 44c-5 2-8 10-9 22-2 20-2 44 0 60 1 8 4 13 8 12 4-1 5-7 4-15-2-16-3-36-2-50 1-12 2-22 4-27z" fill="#171514"/>
+  <path d="M66 160 L64 228 L63 286" fill="none" stroke="#E4E9F2" stroke-width="23" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M84 160 L86 228 L87 286" fill="none" stroke="#E4E9F2" stroke-width="23" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M51 288h25v9c0 3-2 6-6 6H57c-4 0-6-3-6-6z" fill="#171514"/>
+  <path d="M76 288h25v9c0 3-2 6-6 6H82c-4 0-6-3-6-6z" fill="#171514"/>
+  <path d="M75 104 L75 142" fill="none" stroke="#3B82F6" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M66 152 L84 152" fill="none" stroke="#E4E9F2" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- brazo que señala -->
+  <path d="M94 104 L116 80 L124 52" fill="none" stroke="#3B82F6" stroke-width="19" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Mano señalando: puño más índice. Un óvalo suelto no señala nada, y estos
+       dibujos existen justamente para apuntar a algo de la pantalla. -->
+  <g transform="rotate(14 126 44)">
+    <ellipse cx="126" cy="44" rx="8.5" ry="8" fill="#E8B48C"/>
+    <rect x="122" y="22" width="8" height="20" rx="4" fill="#E8B48C"/>
+  </g>
+  <!-- brazo que sostiene la tablet: el antebrazo cruza por delante -->
+  <path d="M56 104 L46 126" fill="none" stroke="#2563EB" stroke-width="19" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="44" y="110" width="56" height="42" rx="4" fill="#FFFFFF"/>
+  <rect x="44" y="110" width="56" height="7" rx="3.5" fill="#CFD7E6"/>
+  <circle cx="72" cy="133" r="9.5" fill="none" stroke="#22D3EE" stroke-width="3"/>
+  <path d="M46 124 L56 136" fill="none" stroke="#2563EB" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/>
+  <ellipse cx="59" cy="138" rx="8" ry="7" fill="#E8B48C"/>
+  <path d="M75 68 L75 80" fill="none" stroke="#D8A177" stroke-width="15" stroke-linecap="butt" stroke-linejoin="round"/>
+  <ellipse cx="75" cy="50" rx="17" ry="19" fill="#E8B48C"/>
+  <path d="M58 48c-1-16 7-26 18-26s19 9 18 25c-1 8-3 12-5 12 1-9-1-15-4-17-4-3-11-3-18-1-5 2-8 4-9 7z" fill="#171514"/>
+</svg>

@@ -61,7 +61,10 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)) -> LoginResponse
 
     if len(active) > 1:
         return LoginResponse(
-            companies=[CompanyChoice(id=c.id, name=c.name) for _, c in active]
+            companies=[
+                CompanyChoice(id=c.id, name=c.name, address=c.address)
+                for _, c in active
+            ]
         )
 
     user, _ = active[0]

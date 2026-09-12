@@ -12,6 +12,9 @@ export {
 } from "./primitives";
 export type { ButtonProps, ButtonVariant, BadgeTone, FieldProps, InputProps, SelectProps } from "./primitives";
 
+export { Avatar, AvatarGroup } from "./Avatar";
+export type { AvatarProps } from "./Avatar";
+
 export { Table, Swatch, SwatchList } from "./Table";
 export type { Column, TableProps } from "./Table";
 

@@ -1,9 +1,55 @@
 {
   "artboards": [
-    { "file": "Logo.dc.html",   "x": 0,    "y": 0, "w": 1560, "h": 880, "title": "La línea, cuatro salidas" },
-    { "file": "Main.dc.html",   "x": 1680, "y": 0, "w": 1440, "h": 900, "title": "Ingreso" },
-    { "file": "Elegir.dc.html", "x": 3240, "y": 0, "w": 1440, "h": 900, "title": "Elegir óptica" },
-    { "file": "Olvide.dc.html", "x": 4800, "y": 0, "w": 1440, "h": 900, "title": "Olvidé mi contraseña" }
+    {
+      "file": "Figuras.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 760,
+      "title": "Figuras · muestra y set propuesto"
+    },
+    {
+      "file": "Avatares.dc.html",
+      "x": 1400,
+      "y": 0,
+      "w": 1180,
+      "h": 900,
+      "title": "Avatares de perfil (aparte)"
+    },
+    {
+      "file": "Main.dc.html",
+      "x": 2700,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Ingreso"
+    },
+    {
+      "file": "Elegir.dc.html",
+      "x": 4260,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Elegir óptica"
+    },
+    {
+      "file": "Olvide.dc.html",
+      "x": 5820,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Olvidé mi contraseña"
+    },
+    {
+      "file": "Logo.dc.html",
+      "x": 7380,
+      "y": 0,
+      "w": 1320,
+      "h": 900,
+      "title": "Marca"
+    }
   ],
-  "launch": { "view": "focused", "file": "Logo.dc.html" }
+  "launch": {
+    "view": "canvas"
+  }
 }

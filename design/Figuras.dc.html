@@ -1,0 +1,227 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><script src="./support.js"></script></head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    :root{--ink:#0f172a;--border:#e3e8ef;--muted:#6b7280;--text:#1f2937;--primary:#2563eb;
+      --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+    *{box-sizing:border-box}
+    body{margin:0;background:#f4f6f9;color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.45}
+    a{color:var(--primary);text-decoration:none} a:hover{color:#1d4ed8}
+    .wrap{padding:28px 32px;display:flex;flex-direction:column;gap:16px}
+    h1{margin:0;font-size:19px;font-weight:650}
+    h1 small{display:block;font-size:13px;color:var(--muted);font-weight:400;margin-top:3px}
+    .cols{display:grid;grid-template-columns:1.25fr 1fr;gap:16px;align-items:start}
+    .sec{background:#fff;border:1px solid var(--border);border-radius:10px;padding:18px 20px}
+    .sec h2{margin:0 0 12px;font-size:12px;font-weight:700;letter-spacing:.05em;
+      text-transform:uppercase;color:var(--muted)}
+    .row{display:flex;gap:20px;align-items:flex-end;flex-wrap:wrap}
+    .fondo{border-radius:10px;padding:16px;display:flex;align-items:flex-end}
+    .cell{display:flex;flex-direction:column;align-items:center;gap:7px}
+    .cell span{font-size:10.5px;color:var(--muted)}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    td{padding:8px 6px;border-bottom:1px solid #f1f5f9;vertical-align:top}
+    tr:last-child td{border-bottom:0}
+    td:first-child{width:130px;white-space:nowrap}
+    .ok{font-size:10px;font-weight:700;color:#16a34a;background:#f0fdf4;
+      border-radius:999px;padding:1px 7px;vertical-align:1px}
+    ul{margin:0;padding-left:17px;font-size:12.5px;color:#4b5563;line-height:1.7}
+    li b{color:var(--text)}
+  </style>
+</helmet>
+<div class="wrap">
+  <h1>Figuras para tutoriales y estados vacíos
+    <small>Vector plano, cuerpo entero. Una muestra terminada para decidir el estilo antes de dibujar el resto.</small></h1>
+
+  <div class="cols">
+    <div class="sec">
+      <h2>La misma figura, sobre los tres fondos del sistema</h2>
+      <div class="row">
+        <div class="fondo" style="background:#fff;border:1px solid var(--border)"><svg width="150" height="330" viewBox="0 0 150 330" role="img" aria-label="Persona señalando una pantalla">
+  <path d="M57 44c-5 2-8 10-9 22-2 20-2 44 0 60 1 8 4 13 8 12 4-1 5-7 4-15-2-16-3-36-2-50 1-12 2-22 4-27z" fill="#171514"/>
+  <path d="M66 160 L64 228 L63 286" fill="none" stroke="#E4E9F2" stroke-width="23" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M84 160 L86 228 L87 286" fill="none" stroke="#E4E9F2" stroke-width="23" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M51 288h25v9c0 3-2 6-6 6H57c-4 0-6-3-6-6z" fill="#171514"/>
+  <path d="M76 288h25v9c0 3-2 6-6 6H82c-4 0-6-3-6-6z" fill="#171514"/>
+  <path d="M75 104 L75 142" fill="none" stroke="#3B82F6" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M66 152 L84 152" fill="none" stroke="#E4E9F2" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- brazo que señala -->
+  <path d="M94 104 L116 80 L124 52" fill="none" stroke="#3B82F6" stroke-width="19" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Mano señalando: puño más índice. Un óvalo suelto no señala nada, y estos
+       dibujos existen justamente para apuntar a algo de la pantalla. -->
+  <g transform="rotate(14 126 44)">
+    <ellipse cx="126" cy="44" rx="8.5" ry="8" fill="#E8B48C"/>
+    <rect x="122" y="22" width="8" height="20" rx="4" fill="#E8B48C"/>
+  </g>
+  <!-- brazo que sostiene la tablet: el antebrazo cruza por delante -->
+  <path d="M56 104 L46 126" fill="none" stroke="#2563EB" stroke-width="19" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="44" y="110" width="56" height="42" rx="4" fill="#FFFFFF"/>
+  <rect x="44" y="110" width="56" height="7" rx="3.5" fill="#CFD7E6"/>
+  <circle cx="72" cy="133" r="9.5" fill="none" stroke="#22D3EE" stroke-width="3"/>
+  <path d="M46 124 L56 136" fill="none" stroke="#2563EB" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/>
+  <ellipse cx="59" cy="138" rx="8" ry="7" fill="#E8B48C"/>
+  <path d="M75 68 L75 80" fill="none" stroke="#D8A177" stroke-width="15" stroke-linecap="butt" stroke-linejoin="round"/>
+  <ellipse cx="75" cy="50" rx="17" ry="19" fill="#E8B48C"/>
+  <path d="M58 48c-1-16 7-26 18-26s19 9 18 25c-1 8-3 12-5 12 1-9-1-15-4-17-4-3-11-3-18-1-5 2-8 4-9 7z" fill="#171514"/>
+</svg></div>
+        <div class="fondo" style="background:#eef4ff"><svg width="150" height="330" viewBox="0 0 150 330" role="img" aria-label="Persona señalando una pantalla">
+  <path d="M57 44c-5 2-8 10-9 22-2 20-2 44 0 60 1 8 4 13 8 12 4-1 5-7 4-15-2-16-3-36-2-50 1-12 2-22 4-27z" fill="#171514"/>
+  <path d="M66 160 L64 228 L63 286" fill="none" stroke="#E4E9F2" stroke-width="23" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M84 160 L86 228 L87 286" fill="none" stroke="#E4E9F2" stroke-width="23" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M51 288h25v9c0 3-2 6-6 6H57c-4 0-6-3-6-6z" fill="#171514"/>
+  <path d="M76 288h25v9c0 3-2 6-6 6H82c-4 0-6-3-6-6z" fill="#171514"/>
+  <path d="M75 104 L75 142" fill="none" stroke="#3B82F6" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M66 152 L84 152" fill="none" stroke="#E4E9F2" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- brazo que señala -->
+  <path d="M94 104 L116 80 L124 52" fill="none" stroke="#3B82F6" stroke-width="19" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Mano señalando: puño más índice. Un óvalo suelto no señala nada, y estos
+       dibujos existen justamente para apuntar a algo de la pantalla. -->
+  <g transform="rotate(14 126 44)">
+    <ellipse cx="126" cy="44" rx="8.5" ry="8" fill="#E8B48C"/>
+    <rect x="122" y="22" width="8" height="20" rx="4" fill="#E8B48C"/>
+  </g>
+  <!-- brazo que sostiene la tablet: el antebrazo cruza por delante -->
+  <path d="M56 104 L46 126" fill="none" stroke="#2563EB" stroke-width="19" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="44" y="110" width="56" height="42" rx="4" fill="#FFFFFF"/>
+  <rect x="44" y="110" width="56" height="7" rx="3.5" fill="#CFD7E6"/>
+  <circle cx="72" cy="133" r="9.5" fill="none" stroke="#22D3EE" stroke-width="3"/>
+  <path d="M46 124 L56 136" fill="none" stroke="#2563EB" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/>
+  <ellipse cx="59" cy="138" rx="8" ry="7" fill="#E8B48C"/>
+  <path d="M75 68 L75 80" fill="none" stroke="#D8A177" stroke-width="15" stroke-linecap="butt" stroke-linejoin="round"/>
+  <ellipse cx="75" cy="50" rx="17" ry="19" fill="#E8B48C"/>
+  <path d="M58 48c-1-16 7-26 18-26s19 9 18 25c-1 8-3 12-5 12 1-9-1-15-4-17-4-3-11-3-18-1-5 2-8 4-9 7z" fill="#171514"/>
+</svg></div>
+        <div class="fondo" style="background:var(--ink)"><svg width="150" height="330" viewBox="0 0 150 330" role="img" aria-label="Persona señalando una pantalla">
+  <path d="M57 44c-5 2-8 10-9 22-2 20-2 44 0 60 1 8 4 13 8 12 4-1 5-7 4-15-2-16-3-36-2-50 1-12 2-22 4-27z" fill="#171514"/>
+  <path d="M66 160 L64 228 L63 286" fill="none" stroke="#E4E9F2" stroke-width="23" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M84 160 L86 228 L87 286" fill="none" stroke="#E4E9F2" stroke-width="23" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M51 288h25v9c0 3-2 6-6 6H57c-4 0-6-3-6-6z" fill="#171514"/>
+  <path d="M76 288h25v9c0 3-2 6-6 6H82c-4 0-6-3-6-6z" fill="#171514"/>
+  <path d="M75 104 L75 142" fill="none" stroke="#3B82F6" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M66 152 L84 152" fill="none" stroke="#E4E9F2" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- brazo que señala -->
+  <path d="M94 104 L116 80 L124 52" fill="none" stroke="#3B82F6" stroke-width="19" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Mano señalando: puño más índice. Un óvalo suelto no señala nada, y estos
+       dibujos existen justamente para apuntar a algo de la pantalla. -->
+  <g transform="rotate(14 126 44)">
+    <ellipse cx="126" cy="44" rx="8.5" ry="8" fill="#E8B48C"/>
+    <rect x="122" y="22" width="8" height="20" rx="4" fill="#E8B48C"/>
+  </g>
+  <!-- brazo que sostiene la tablet: el antebrazo cruza por delante -->
+  <path d="M56 104 L46 126" fill="none" stroke="#2563EB" stroke-width="19" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="44" y="110" width="56" height="42" rx="4" fill="#FFFFFF"/>
+  <rect x="44" y="110" width="56" height="7" rx="3.5" fill="#CFD7E6"/>
+  <circle cx="72" cy="133" r="9.5" fill="none" stroke="#22D3EE" stroke-width="3"/>
+  <path d="M46 124 L56 136" fill="none" stroke="#2563EB" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/>
+  <ellipse cx="59" cy="138" rx="8" ry="7" fill="#E8B48C"/>
+  <path d="M75 68 L75 80" fill="none" stroke="#D8A177" stroke-width="15" stroke-linecap="butt" stroke-linejoin="round"/>
+  <ellipse cx="75" cy="50" rx="17" ry="19" fill="#E8B48C"/>
+  <path d="M58 48c-1-16 7-26 18-26s19 9 18 25c-1 8-3 12-5 12 1-9-1-15-4-17-4-3-11-3-18-1-5 2-8 4-9 7z" fill="#171514"/>
+</svg></div>
+      </div>
+      <div class="row" style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+        <div class="cell"><svg width="110" height="242" viewBox="0 0 150 330" role="img" aria-label="Persona señalando una pantalla">
+  <path d="M57 44c-5 2-8 10-9 22-2 20-2 44 0 60 1 8 4 13 8 12 4-1 5-7 4-15-2-16-3-36-2-50 1-12 2-22 4-27z" fill="#171514"/>
+  <path d="M66 160 L64 228 L63 286" fill="none" stroke="#E4E9F2" stroke-width="23" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M84 160 L86 228 L87 286" fill="none" stroke="#E4E9F2" stroke-width="23" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M51 288h25v9c0 3-2 6-6 6H57c-4 0-6-3-6-6z" fill="#171514"/>
+  <path d="M76 288h25v9c0 3-2 6-6 6H82c-4 0-6-3-6-6z" fill="#171514"/>
+  <path d="M75 104 L75 142" fill="none" stroke="#3B82F6" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M66 152 L84 152" fill="none" stroke="#E4E9F2" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- brazo que señala -->
+  <path d="M94 104 L116 80 L124 52" fill="none" stroke="#3B82F6" stroke-width="19" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Mano señalando: puño más índice. Un óvalo suelto no señala nada, y estos
+       dibujos existen justamente para apuntar a algo de la pantalla. -->
+  <g transform="rotate(14 126 44)">
+    <ellipse cx="126" cy="44" rx="8.5" ry="8" fill="#E8B48C"/>
+    <rect x="122" y="22" width="8" height="20" rx="4" fill="#E8B48C"/>
+  </g>
+  <!-- brazo que sostiene la tablet: el antebrazo cruza por delante -->
+  <path d="M56 104 L46 126" fill="none" stroke="#2563EB" stroke-width="19" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="44" y="110" width="56" height="42" rx="4" fill="#FFFFFF"/>
+  <rect x="44" y="110" width="56" height="7" rx="3.5" fill="#CFD7E6"/>
+  <circle cx="72" cy="133" r="9.5" fill="none" stroke="#22D3EE" stroke-width="3"/>
+  <path d="M46 124 L56 136" fill="none" stroke="#2563EB" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/>
+  <ellipse cx="59" cy="138" rx="8" ry="7" fill="#E8B48C"/>
+  <path d="M75 68 L75 80" fill="none" stroke="#D8A177" stroke-width="15" stroke-linecap="butt" stroke-linejoin="round"/>
+  <ellipse cx="75" cy="50" rx="17" ry="19" fill="#E8B48C"/>
+  <path d="M58 48c-1-16 7-26 18-26s19 9 18 25c-1 8-3 12-5 12 1-9-1-15-4-17-4-3-11-3-18-1-5 2-8 4-9 7z" fill="#171514"/>
+</svg><span>110 px</span></div>
+        <div class="cell"><svg width="80" height="176" viewBox="0 0 150 330" role="img" aria-label="Persona señalando una pantalla">
+  <path d="M57 44c-5 2-8 10-9 22-2 20-2 44 0 60 1 8 4 13 8 12 4-1 5-7 4-15-2-16-3-36-2-50 1-12 2-22 4-27z" fill="#171514"/>
+  <path d="M66 160 L64 228 L63 286" fill="none" stroke="#E4E9F2" stroke-width="23" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M84 160 L86 228 L87 286" fill="none" stroke="#E4E9F2" stroke-width="23" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M51 288h25v9c0 3-2 6-6 6H57c-4 0-6-3-6-6z" fill="#171514"/>
+  <path d="M76 288h25v9c0 3-2 6-6 6H82c-4 0-6-3-6-6z" fill="#171514"/>
+  <path d="M75 104 L75 142" fill="none" stroke="#3B82F6" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M66 152 L84 152" fill="none" stroke="#E4E9F2" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- brazo que señala -->
+  <path d="M94 104 L116 80 L124 52" fill="none" stroke="#3B82F6" stroke-width="19" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Mano señalando: puño más índice. Un óvalo suelto no señala nada, y estos
+       dibujos existen justamente para apuntar a algo de la pantalla. -->
+  <g transform="rotate(14 126 44)">
+    <ellipse cx="126" cy="44" rx="8.5" ry="8" fill="#E8B48C"/>
+    <rect x="122" y="22" width="8" height="20" rx="4" fill="#E8B48C"/>
+  </g>
+  <!-- brazo que sostiene la tablet: el antebrazo cruza por delante -->
+  <path d="M56 104 L46 126" fill="none" stroke="#2563EB" stroke-width="19" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="44" y="110" width="56" height="42" rx="4" fill="#FFFFFF"/>
+  <rect x="44" y="110" width="56" height="7" rx="3.5" fill="#CFD7E6"/>
+  <circle cx="72" cy="133" r="9.5" fill="none" stroke="#22D3EE" stroke-width="3"/>
+  <path d="M46 124 L56 136" fill="none" stroke="#2563EB" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/>
+  <ellipse cx="59" cy="138" rx="8" ry="7" fill="#E8B48C"/>
+  <path d="M75 68 L75 80" fill="none" stroke="#D8A177" stroke-width="15" stroke-linecap="butt" stroke-linejoin="round"/>
+  <ellipse cx="75" cy="50" rx="17" ry="19" fill="#E8B48C"/>
+  <path d="M58 48c-1-16 7-26 18-26s19 9 18 25c-1 8-3 12-5 12 1-9-1-15-4-17-4-3-11-3-18-1-5 2-8 4-9 7z" fill="#171514"/>
+</svg><span>80 px</span></div>
+        <div class="cell"><svg width="56" height="123" viewBox="0 0 150 330" role="img" aria-label="Persona señalando una pantalla">
+  <path d="M57 44c-5 2-8 10-9 22-2 20-2 44 0 60 1 8 4 13 8 12 4-1 5-7 4-15-2-16-3-36-2-50 1-12 2-22 4-27z" fill="#171514"/>
+  <path d="M66 160 L64 228 L63 286" fill="none" stroke="#E4E9F2" stroke-width="23" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M84 160 L86 228 L87 286" fill="none" stroke="#E4E9F2" stroke-width="23" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M51 288h25v9c0 3-2 6-6 6H57c-4 0-6-3-6-6z" fill="#171514"/>
+  <path d="M76 288h25v9c0 3-2 6-6 6H82c-4 0-6-3-6-6z" fill="#171514"/>
+  <path d="M75 104 L75 142" fill="none" stroke="#3B82F6" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M66 152 L84 152" fill="none" stroke="#E4E9F2" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- brazo que señala -->
+  <path d="M94 104 L116 80 L124 52" fill="none" stroke="#3B82F6" stroke-width="19" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Mano señalando: puño más índice. Un óvalo suelto no señala nada, y estos
+       dibujos existen justamente para apuntar a algo de la pantalla. -->
+  <g transform="rotate(14 126 44)">
+    <ellipse cx="126" cy="44" rx="8.5" ry="8" fill="#E8B48C"/>
+    <rect x="122" y="22" width="8" height="20" rx="4" fill="#E8B48C"/>
+  </g>
+  <!-- brazo que sostiene la tablet: el antebrazo cruza por delante -->
+  <path d="M56 104 L46 126" fill="none" stroke="#2563EB" stroke-width="19" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="44" y="110" width="56" height="42" rx="4" fill="#FFFFFF"/>
+  <rect x="44" y="110" width="56" height="7" rx="3.5" fill="#CFD7E6"/>
+  <circle cx="72" cy="133" r="9.5" fill="none" stroke="#22D3EE" stroke-width="3"/>
+  <path d="M46 124 L56 136" fill="none" stroke="#2563EB" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/>
+  <ellipse cx="59" cy="138" rx="8" ry="7" fill="#E8B48C"/>
+  <path d="M75 68 L75 80" fill="none" stroke="#D8A177" stroke-width="15" stroke-linecap="butt" stroke-linejoin="round"/>
+  <ellipse cx="75" cy="50" rx="17" ry="19" fill="#E8B48C"/>
+  <path d="M58 48c-1-16 7-26 18-26s19 9 18 25c-1 8-3 12-5 12 1-9-1-15-4-17-4-3-11-3-18-1-5 2-8 4-9 7z" fill="#171514"/>
+</svg><span>56 px</span></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="sec" style="margin-bottom:16px">
+        <h2>Reglas de construcción</h2>
+        <ul>
+          <li><b>Los miembros son líneas gruesas con punta redonda</b>, no polígonos. Dibujados a mano, los codos quedan con huecos.</li>
+          <li><b>El pantalón nunca va blanco.</b> Sobre una tarjeta blanca desaparece y quedan los zapatos flotando. Va un neutro claro.</li>
+          <li><b>La ropa usa los colores de marca</b>, de cian a violeta. El rojo y el verde quedan afuera: adentro del sistema significan deuda y cobrado.</li>
+          <li><b>Sin cara.</b> Ni ojos ni boca: a este tamaño no aportan y obligan a decidir rasgos en cada figura nueva.</li>
+          <li><b>Fondo transparente</b>, para que la figura se apoye sobre cualquier superficie.</li>
+        </ul>
+      </div>
+      <div class="sec">
+        <h2>El set que propongo</h2>
+        <table><tbody><tr><td><b>La guía</b> <span class=ok>hecha</span></td><td>Señala algo de la pantalla. Es la del tutorial paso a paso.</td></tr><tr><td><b>El mostrador</b></td><td>Entrega un armazón por encima del mostrador. Para onboarding de Ventas.</td></tr><tr><td><b>El inventario</b></td><td>Sostiene una bandeja de armazones y mira una lista. Para Stock y para importar.</td></tr><tr><td><b>La receta</b></td><td>Con una tablet y una receta en la mano, graduación a la vista. Para Clientes.</td></tr><tr><td><b>Buscando</b></td><td>Se agacha sobre un cajón vacío. Para estados vacíos y resultados sin coincidencias.</td></tr><tr><td><b>Listo</b></td><td>Brazos cruzados, apoyada, tranquila. Para pantallas de éxito y de fin de proceso.</td></tr></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body></html>
