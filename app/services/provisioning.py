@@ -41,25 +41,29 @@ class ProvisioningError(Exception):
 
 # The permission catalogue is global (``permissions`` has no company_id), so
 # it is created once and every tenant's roles point at the same rows.
+# The code is an identifier and stays English (see CLAUDE.md, rule 1): it is
+# what ``can("products:write")`` checks. The text beside it is not an
+# identifier, it is the line a shop owner reads when handing out permissions,
+# so it goes in Spanish like every other user-facing string.
 PERMISSIONS: list[tuple[str, str]] = [
-    ("company:read", "View company & settings"),
-    ("company:write", "Edit company & settings"),
-    ("users:read", "View users, roles, permissions"),
-    ("users:write", "Manage users & roles"),
-    ("branches:read", "View branches"),
-    ("branches:write", "Manage branches"),
-    ("suppliers:read", "View suppliers"),
-    ("suppliers:write", "Manage suppliers"),
-    ("products:read", "View products & catalog"),
-    ("products:write", "Manage products & costs"),
-    ("pricing:read", "View prices & lists"),
-    ("pricing:write", "Manage prices & lists"),
-    ("stock:read", "View stock levels & movements"),
-    ("stock:write", "Create stock movements"),
-    ("customers:read", "View customers"),
-    ("customers:write", "Manage customers"),
-    ("sales:read", "View sales & pending accounts"),
-    ("sales:write", "Register sales & payments"),
+    ("company:read", "Ver la empresa y su configuración"),
+    ("company:write", "Editar la empresa y su configuración"),
+    ("users:read", "Ver usuarios, roles y permisos"),
+    ("users:write", "Administrar usuarios y roles"),
+    ("branches:read", "Ver sucursales"),
+    ("branches:write", "Administrar sucursales"),
+    ("suppliers:read", "Ver proveedores"),
+    ("suppliers:write", "Administrar proveedores"),
+    ("products:read", "Ver productos y catálogo"),
+    ("products:write", "Administrar productos y costos"),
+    ("pricing:read", "Ver precios y listas"),
+    ("pricing:write", "Administrar precios y listas"),
+    ("stock:read", "Ver stock y movimientos"),
+    ("stock:write", "Registrar movimientos de stock"),
+    ("customers:read", "Ver clientes"),
+    ("customers:write", "Administrar clientes"),
+    ("sales:read", "Ver ventas y cuentas pendientes"),
+    ("sales:write", "Registrar ventas y pagos"),
 ]
 
 SALESPERSON_PERMS = {
@@ -68,8 +72,12 @@ SALESPERSON_PERMS = {
     "sales:read", "sales:write",
 }
 
-ADMIN_ROLE = "Administrator"
-SALESPERSON_ROLE = "Salesperson"
+# El nombre del rol es un dato que la óptica ve y edita, no un identificador:
+# va en castellano. Nada en el código compara contra él (los permisos se
+# chequean por código), así que renombrarlo es seguro; lo único que hace falta
+# es que las instalaciones que ya existen se renombren, de eso se ocupa 0015.
+ADMIN_ROLE = "Administrador"
+SALESPERSON_ROLE = "Vendedor"
 
 # A starter palette so the colour dropdown is not empty on day one. These are
 # the shades an optics shop actually stocks; the shop edits the list freely.
@@ -135,6 +143,10 @@ def ensure_permissions(db: Session) -> dict[str, Permission]:
     perms: dict[str, Permission] = {}
     for code, name in PERMISSIONS:
         perm, _ = _get_or_create(db, Permission, defaults={"name": name}, code=code)
+        # ``defaults`` sólo corre al crear. Sin esto, cambiar el texto de un
+        # permiso no llegaba nunca a una base que ya lo tenía: la fila se
+        # quedaba con el texto del día que se creó.
+        perm.name = name
         perms[code] = perm
     return perms
 
@@ -148,12 +160,12 @@ def ensure_default_roles(db: Session, company_id: int) -> tuple[Role, Role]:
     """
     perms = ensure_permissions(db)
     admin_role, _ = _get_or_create(
-        db, Role, defaults={"description": "Full access"},
+        db, Role, defaults={"description": "Acceso total"},
         company_id=company_id, name=ADMIN_ROLE,
     )
     admin_role.permissions = list(perms.values())
     sales_role, _ = _get_or_create(
-        db, Role, defaults={"description": "Sales floor staff"},
+        db, Role, defaults={"description": "Atención en el mostrador"},
         company_id=company_id, name=SALESPERSON_ROLE,
     )
     sales_role.permissions = [perms[c] for c in SALESPERSON_PERMS]

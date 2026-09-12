@@ -87,7 +87,7 @@ def test_create_tenant_provisions_a_working_shop(client, platform_headers, db):
     ).scalar_one()
     assert admin.is_superuser
     assert admin.email == TENANT["admin_email"]
-    assert {r.name for r in admin.roles} == {"Administrator"}
+    assert {r.name for r in admin.roles} == {"Administrador"}
     # The Administrator role carries the whole catalogue, not a subset.
     assert "sales:write" in admin.permission_codes or "*" in admin.permission_codes
 

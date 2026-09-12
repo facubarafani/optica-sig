@@ -66,7 +66,7 @@ def run() -> None:
                 email="demo@sgi.com",
                 currency="ARS",
                 admin_email="admin@sgi.com",
-                admin_full_name="Administrator",
+                admin_full_name="Administrador",
                 admin_password="admin1234",
                 company_id=cid,
                 commit=False,
