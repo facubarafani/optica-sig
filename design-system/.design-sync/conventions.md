@@ -34,12 +34,14 @@ si no está en esta lista, no existe en el sistema.
 
 | Para | Tokens |
 |---|---|
-| Superficies | `--bg` `--panel` `--border` `--ink` |
+| Superficies | `--bg` `--panel` `--border` `--ink` `--hover` `--press` |
+| Texto sobre el casco | `--on-ink` `--on-ink-muted` `--on-ink-faint` `--on-ink-dim` `--on-ink-line` |
 | Texto | `--text` `--muted` |
-| Acción | `--primary` `--primary-600` `--primary-50` |
-| Estado | `--danger` `--danger-50` `--ok` `--ok-50` `--warn` `--warn-50` |
+| Acción (el botón principal) | `--action` `--action-600` `--action-bloom` `--action-bloom-press` `--action-bloom-border` `--action-ring` |
+| Acción del sistema (enlaces, foco, chapas) | `--primary` `--primary-600` `--primary-700` `--primary-200` `--primary-50` |
+| Estado | `--danger` `--danger-200` `--danger-50` `--ok` `--ok-50` `--warn` `--warn-50` |
 | Marca | `--brand-cyan` `--brand-sky` `--brand-blue` `--brand-indigo` `--brand-violet` |
-| Forma | `--radius` `--radius-sm` `--radius-lg` `--shadow` `--shadow-lg` |
+| Forma | `--radius` `--radius-sm` `--radius-control` `--radius-pill` `--radius-lg` `--shadow` `--shadow-lg` |
 | Marco | `--sidebar` `--topbar` |
 | Tipografía | `--sans` `--mono` `--brand-font` |
 
@@ -53,6 +55,10 @@ ancho fijo), `mo-mono` (códigos), `mo-trunc` (texto largo cortado), `mo-p2` y
 1. **El rojo y el verde significan algo.** `--danger` es deuda y stock agotado,
    `--ok` es cobrado y en stock. No los uses para decorar ni para marcar. Por eso
    la marca va de cian a violeta y no los toca.
+   Adentro de la aplicación el espectro pinta lo que avanza: el botón principal
+   (`--action` en reposo, el tramo al tocarlo) y lo ya recorrido en el mapa de
+   pasos de un asistente. Nada más, y nunca un estado. Funciona porque el
+   espectro se corta antes del rojo y del verde.
 2. **Una sola acción principal por pantalla.** `variant="primary"` una vez; el
    resto en el estilo por defecto. Si todo es azul, nada resalta.
 3. **Los números van a la derecha y en cifras de ancho fijo.** Plata y cantidades

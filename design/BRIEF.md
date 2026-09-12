@@ -138,11 +138,12 @@ scrolling sideways.
 **Numbers are tabular.** Money and quantity columns align right, in a font with
 tabular figures, digit under digit.
 
-**Reserve colour for judgment.** Accent colours should mean something specific:
-a balance owed, stock at zero, an overdue promise. If the primary action button
-is the same colour as the "stock agotado" tag, the colour has stopped carrying
-information. Keep the main action neutral so the alert colours stay loud. You
-choose the palette; that discipline is what matters.
+**Reserve colour for judgment.** Red and green mean something specific and
+nothing else: a balance owed, stock at zero, cash collected. Never spend them on
+decoration. The main action does carry the brand spectrum (indigo at rest, blue
+to violet when touched) and that is exactly why the spectrum stops before red
+and green: the alert colours stay the only loud thing on a screen full of data.
+That boundary is the discipline, not a ban on colour.
 
 **Language:** all interface text in Argentine Spanish. One hard rule: **never use
 an em dash (—) in any user-facing string** — not in labels, buttons, headings,

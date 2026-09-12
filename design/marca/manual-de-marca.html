@@ -29,6 +29,9 @@
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
   .cap{font-size:12.5px;color:#6b7280;margin-top:9px}
   .sws{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin:8px 0 22px}
+  /* La página de color lleva cuatro filas de muestras desde que el botón
+     principal entró al manual: en compacto entran las cuatro. */
+  .sws.sm{margin:6px 0 14px} .sws.sm .chip{height:36px}
   .sws.b5{grid-template-columns:repeat(5,1fr)}
   .sw .chip{height:54px;border-radius:8px;border:1px solid rgba(15,23,42,.10)}
   .sw .nm{font-size:13px;font-weight:600;margin-top:8px}
@@ -40,8 +43,8 @@
     text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #e3e8ef}
   td{padding:11px 10px;border-bottom:1px solid #f1f5f9;vertical-align:top}
   tr:last-child td{border-bottom:0}
-  .dos{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:6px}
-  .do,.dont{border:1px solid #e3e8ef;border-radius:9px;padding:12px 15px;font-size:13px;line-height:1.45}
+  .dos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+  .do,.dont{border:1px solid #e3e8ef;border-radius:9px;padding:9px 13px;font-size:13px;line-height:1.45}
   .do{background:#f0fdf4;border-color:#bbf7d0}
   .dont{background:#fef2f2;border-color:#fecaca}
   .do b,.dont b{display:block;margin-bottom:5px;font-size:12px;letter-spacing:.06em;text-transform:uppercase}
@@ -126,19 +129,24 @@
 <div class="page">
   <div class="kicker">03 · Color</div>
   <h1>La marca se queda con un tramo</h1>
-  <p class="lead" style="margin-top:14px">El espectro de la marca va de cian a violeta y no pasa de ahí.
+  <p class="lead" style="margin-top:8px">El espectro de la marca va de cian a violeta y no pasa de ahí.
   El rojo y el verde quedan afuera a propósito.</p>
-  <div class="spec-bar" style="margin:16px 0 8px"></div>
-  <div class="sws b5"><div class="sw"><div class="chip" style="background:#22D3EE"></div><div class="nm">Cian</div><div class="hx">#22D3EE</div></div><div class="sw"><div class="chip" style="background:#38BDF8"></div><div class="nm">Celeste</div><div class="hx">#38BDF8</div></div><div class="sw"><div class="chip" style="background:#3B82F6"></div><div class="nm">Azul</div><div class="hx">#3B82F6</div></div><div class="sw"><div class="chip" style="background:#4F46E5"></div><div class="nm">Índigo</div><div class="hx">#4F46E5</div></div><div class="sw"><div class="chip" style="background:#7C3AED"></div><div class="nm">Violeta</div><div class="hx">#7C3AED</div></div></div>
+  <div class="spec-bar" style="height:30px;margin:10px 0 4px"></div>
+  <div class="sws b5 sm"><div class="sw"><div class="chip" style="background:#22D3EE"></div><div class="nm">Cian</div><div class="hx">#22D3EE</div></div><div class="sw"><div class="chip" style="background:#38BDF8"></div><div class="nm">Celeste</div><div class="hx">#38BDF8</div></div><div class="sw"><div class="chip" style="background:#3B82F6"></div><div class="nm">Azul</div><div class="hx">#3B82F6</div></div><div class="sw"><div class="chip" style="background:#4F46E5"></div><div class="nm">Índigo</div><div class="hx">#4F46E5</div></div><div class="sw"><div class="chip" style="background:#7C3AED"></div><div class="nm">Violeta</div><div class="hx">#7C3AED</div></div></div>
+  <h2>Lo que avanza sale de acá</h2>
+  <p class="mini" style="margin-bottom:6px">El espectro no es sólo del logo: pinta lo que avanza. El botón
+  principal (índigo en reposo, el tramo al tocarlo) y lo ya recorrido en un asistente.</p>
+  <div class="sws sm" style="grid-template-columns:repeat(3,1fr)"><div class="sw"><div class="chip" style="background:#4F46E5"></div><div class="nm">Reposo</div><div class="hx">#4F46E5</div><div class=tk>--action</div></div><div class="sw"><div class="chip" style="background:linear-gradient(100deg,#3B82F6,#7C3AED)"></div><div class="nm">Destello</div><div class="hx">#3B82F6 a #7C3AED</div><div class=tk>--action-bloom</div></div><div class="sw"><div class="chip" style="background:#4338CA"></div><div class="nm">Borde</div><div class="hx">#4338CA</div><div class=tk>--action-600</div></div></div>
   <h2>Colores del sistema</h2>
-  <p class="mini" style="margin-bottom:6px">Los que ya usa la aplicación. La marca no los reemplaza.</p>
-  <div class="sws" style="grid-template-columns:repeat(4,1fr)"><div class="sw"><div class="chip" style="background:#2563eb"></div><div class="nm">Primario</div><div class="hx">#2563EB</div><div class=tk>--primary</div></div><div class="sw"><div class="chip" style="background:#1d4ed8"></div><div class="nm">Primario oscuro</div><div class="hx">#1D4ED8</div><div class=tk>--primary-600</div></div><div class="sw"><div class="chip" style="background:#0f172a"></div><div class="nm">Casco</div><div class="hx">#0F172A</div><div class=tk>barra lateral</div></div><div class="sw"><div class="chip" style="background:#1f2937"></div><div class="nm">Texto</div><div class="hx">#1F2937</div><div class=tk>--text</div></div></div>
+  <p class="mini" style="margin-bottom:6px">Los que usa la aplicación para todo lo demás. El primario ya no es
+  del botón: es de los enlaces, del foco de un campo y de las chapas.</p>
+  <div class="sws sm" style="grid-template-columns:repeat(4,1fr)"><div class="sw"><div class="chip" style="background:#2563eb"></div><div class="nm">Primario</div><div class="hx">#2563EB</div><div class=tk>--primary</div></div><div class="sw"><div class="chip" style="background:#1d4ed8"></div><div class="nm">Primario oscuro</div><div class="hx">#1D4ED8</div><div class=tk>--primary-600</div></div><div class="sw"><div class="chip" style="background:#0f172a"></div><div class="nm">Casco</div><div class="hx">#0F172A</div><div class=tk>barra lateral</div></div><div class="sw"><div class="chip" style="background:#1f2937"></div><div class="nm">Texto</div><div class="hx">#1F2937</div><div class=tk>--text</div></div></div>
   <div class="rule" style="margin:6px 0 22px"></div>
   <h2>Rojo y verde no son de la marca</h2>
   <p>Adentro del sistema el rojo dice deuda o stock agotado y el verde dice cobrado o en stock.
-  Son información, no decoración. Por eso la marca no los usa: si el logo tuviera rojo,
-  el rojo de una deuda dejaría de resaltar.</p>
-  <div class="sws" style="grid-template-columns:repeat(3,1fr);margin-bottom:0"><div class="sw"><div class="chip" style="background:#dc2626"></div><div class="nm">Deuda, stock agotado</div><div class="hx">#DC2626</div><div class=tk>--danger</div></div><div class="sw"><div class="chip" style="background:#16a34a"></div><div class="nm">Cobrado, en stock</div><div class="hx">#16A34A</div><div class=tk>--ok</div></div><div class="sw"><div class="chip" style="background:#d97706"></div><div class="nm">Atención</div><div class="hx">#D97706</div><div class=tk>--warn</div></div></div>
+  Son información, no decoración. Por eso el espectro se corta antes de llegar a ellos: como la marca
+  también pinta adentro de la aplicación, si el tramo llegara al rojo, una deuda dejaría de resaltar.</p>
+  <div class="sws sm" style="grid-template-columns:repeat(3,1fr);margin-bottom:0"><div class="sw"><div class="chip" style="background:#dc2626"></div><div class="nm">Deuda, stock agotado</div><div class="hx">#DC2626</div><div class=tk>--danger</div></div><div class="sw"><div class="chip" style="background:#16a34a"></div><div class="nm">Cobrado, en stock</div><div class="hx">#16A34A</div><div class=tk>--ok</div></div><div class="sw"><div class="chip" style="background:#d97706"></div><div class="nm">Atención</div><div class="hx">#D97706</div><div class=tk>--warn</div></div></div>
   <div class="foot"><span>Mi Óptica Digital</span><span>03 · Color</span></div>
 </div>
 
@@ -184,6 +192,8 @@
     <div class="dont"><b>No</b>Sobre fotos o fondos con textura, sin una caja limpia detrás.</div>
     <div class="do"><b>Sí</b>Una sola tinta cuando la impresión no admite degradado.</div>
     <div class="dont"><b>No</b>Cambiarle los colores al espectro ni completarlo con rojo o verde.</div>
+    <div class="do"><b>Sí</b>El espectro en lo que avanza: el botón principal y el mapa de pasos.</div>
+    <div class="dont"><b>No</b>El espectro en un estado, una chapa o un ícono de alerta. Eso es información.</div>
     <div class="do"><b>Sí</b>Poppins para el nombre, siempre.</div>
     <div class="dont"><b>No</b>Reescribir el nombre con otra tipografía ni deformar el lockup.</div>
     <div class="do"><b>Sí</b>Mantener la proporción original al escalar.</div>
