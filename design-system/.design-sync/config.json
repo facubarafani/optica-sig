@@ -1,0 +1,29 @@
+{
+  "pkg": "@mi-optica/ui",
+  "globalName": "MiOpticaUI",
+  "shape": "package",
+  "buildCmd": "npm run build",
+  "srcDir": "src",
+  "tsconfig": "tsconfig.json",
+  "cssEntry": "dist/index.css",
+  "extraFonts": [
+    "brand-fonts/poppins.css"
+  ],
+  "overrides": {
+    "AppShell": {
+      "cardMode": "single",
+      "primaryStory": "Marco"
+    },
+    "Table": {
+      "cardMode": "column"
+    },
+    "Field": {
+      "cardMode": "column"
+    },
+    "Input": {
+      "cardMode": "column"
+    }
+  },
+  "readmeHeader": ".design-sync/conventions.md",
+  "projectId": "bcd0f325-08e9-4edc-bba7-ab513ff837c9"
+}
