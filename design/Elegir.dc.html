@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><script src="./support.js"></script></head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap">
+  <style>
+    :root{
+      --bg:#f4f6f9; --panel:#ffffff; --border:#e3e8ef; --text:#1f2937; --muted:#6b7280;
+      --primary:#2563eb; --primary-600:#1d4ed8; --primary-50:#eff6ff; --ink:#0f172a;
+      --shadow-lg:0 12px 32px rgba(16,24,40,.18);
+      --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%}
+    body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.45}
+    a{color:var(--primary);text-decoration:none} a:hover{color:var(--primary-600)}
+    h1,h2{margin:0;font-weight:650}
+    .split{display:grid;grid-template-columns:560px 1fr;height:900px;overflow:hidden}
+    .side{background:var(--ink);color:#cbd5e1;padding:56px 52px;display:flex;
+      flex-direction:column;justify-content:space-between}
+    /* lockup: la cuna se abre hacia la derecha, como se abre la luz al avanzar */
+    .h{display:inline-flex;align-items:center;gap:2px;font-family:'Poppins',var(--sans)}
+    .tx{display:flex;flex-direction:column;align-items:stretch}
+    .l1{font-size:46px;font-weight:600;letter-spacing:-.012em;line-height:1;white-space:nowrap;color:#fff}
+    .l2{font-size:7.8px;font-weight:400;letter-spacing:.34em;line-height:1;text-indent:.34em;color:#7c8aa5}
+    .side .what{color:#94a3b8;font-size:15px;margin-top:34px;max-width:340px;line-height:1.55}
+    .side .help{font-size:12.5px;color:#64748b;line-height:1.6}
+    .side .help b{color:#94a3b8;font-weight:600;display:block;margin-bottom:2px}
+    .formside{display:grid;place-items:center;padding:24px}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;
+      box-shadow:var(--shadow-lg);width:380px;max-width:100%;padding:30px}
+    .card h2{font-size:19px}
+    .card .sub{color:var(--muted);margin:3px 0 22px;font-size:13px}
+    .row{margin-bottom:14px}
+    label.fld{display:block;font-size:12.5px;font-weight:600;color:#374151;margin-bottom:5px}
+    input{width:100%;font:inherit;color:var(--text);background:#fff;border:1px solid var(--border);
+      border-radius:8px;padding:9px 11px;outline:none}
+    input::placeholder{color:#9ca3af}
+    input.focused{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-50)}
+    .btn{appearance:none;border:1px solid var(--border);background:var(--panel);color:var(--text);
+      padding:9px 14px;border-radius:8px;font-weight:600;font-size:13.5px;cursor:pointer;
+      display:inline-flex;align-items:center;justify-content:center;gap:7px;width:100%}
+    .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+    .btn.primary:hover{background:var(--primary-600)}
+    .hint{margin-top:16px;font-size:12.5px;color:var(--muted);text-align:center}
+    .ic{width:18px;height:18px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2;
+      stroke-linecap:round;stroke-linejoin:round}
+    .pick{display:flex;flex-direction:column;gap:8px}
+    .pick button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+      background:var(--panel);border:1px solid var(--border);border-radius:9px;padding:12px 13px;
+      font:inherit;font-weight:600;cursor:pointer;color:var(--text)}
+    .pick button:hover{background:var(--primary-50);border-color:#c7ddfb;color:var(--primary-600)}
+    .pick button small{display:block;font-weight:500;font-size:11.5px;color:var(--muted)}
+    .pick button .grow{flex:1;min-width:0}
+    .note{font-size:12.5px;color:var(--muted);background:#f8fafc;border:1px solid var(--border);
+      border-radius:8px;padding:10px 12px;line-height:1.5;margin-top:2px}
+  </style>
+</helmet>
+<div class="split">
+  <div class="side">
+    <div>
+      <div class="h"><svg style="width:80px;height:auto;flex:0 0 auto" xmlns="http://www.w3.org/2000/svg" viewBox="8 8 118 100" role="img" aria-label="Mi Optica Digital"><defs><linearGradient id="y1-h0" gradientUnits="userSpaceOnUse" x1="79.14" y1="67.51" x2="35.26" y2="80.64"><stop offset="0" stop-color="#22D3EE"/><stop offset="1" stop-color="#38BDF8"/></linearGradient><linearGradient id="y1-h1" gradientUnits="userSpaceOnUse" x1="36.55" y1="81.23" x2="17.89" y2="38.82"><stop offset="0" stop-color="#38BDF8"/><stop offset="1" stop-color="#3B82F6"/></linearGradient><linearGradient id="y1-h2" gradientUnits="userSpaceOnUse" x1="17.45" y1="40.17" x2="57.47" y2="16.83"><stop offset="0" stop-color="#3B82F6"/><stop offset="1" stop-color="#4F46E5"/></linearGradient><linearGradient id="y1-h3" gradientUnits="userSpaceOnUse" x1="56.08" y1="16.55" x2="83.87" y2="52.96"><stop offset="0" stop-color="#4F46E5"/><stop offset="1" stop-color="#7C3AED"/></linearGradient><linearGradient id="y1-hs0" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#22D3EE" stop-opacity=".95"/><stop offset="1" stop-color="#22D3EE" stop-opacity="0"/></linearGradient><linearGradient id="y1-hs1" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#38BDF8" stop-opacity=".95"/><stop offset="1" stop-color="#38BDF8" stop-opacity="0"/></linearGradient><linearGradient id="y1-hs2" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#3B82F6" stop-opacity=".95"/><stop offset="1" stop-color="#3B82F6" stop-opacity="0"/></linearGradient><linearGradient id="y1-hs3" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#4F46E5" stop-opacity=".95"/><stop offset="1" stop-color="#4F46E5" stop-opacity="0"/></linearGradient><linearGradient id="y1-hs4" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#7C3AED" stop-opacity=".95"/><stop offset="1" stop-color="#7C3AED" stop-opacity="0"/></linearGradient></defs><polygon points="88.0,62.4 152.3,65.4 150.2,71.8" fill="url(#y1-hs0)"/><polygon points="88.0,62.4 150.2,71.8 148.1,78.3" fill="url(#y1-hs1)"/><polygon points="88.0,62.4 148.1,78.3 146.0,84.8" fill="url(#y1-hs2)"/><polygon points="88.0,62.4 146.0,84.8 143.9,91.2" fill="url(#y1-hs3)"/><polygon points="88.0,62.4 143.9,91.2 141.8,97.7" fill="url(#y1-hs4)"/><path d="M 79.14 67.51 A 34.0 34.0 0 0 1 35.26 80.64" fill="none" stroke="url(#y1-h0)" stroke-width="12" stroke-linecap="butt"/><path d="M 36.55 81.23 A 34.0 34.0 0 0 1 17.89 38.82" fill="none" stroke="url(#y1-h1)" stroke-width="12" stroke-linecap="butt"/><path d="M 17.45 40.17 A 34.0 34.0 0 0 1 57.47 16.83" fill="none" stroke="url(#y1-h2)" stroke-width="12" stroke-linecap="butt"/><path d="M 56.08 16.55 A 34.0 34.0 0 0 1 83.87 52.96" fill="none" stroke="url(#y1-h3)" stroke-width="12" stroke-linecap="butt"/></svg><div class="tx"><div class="l1">Mi Óptica</div><svg style="width:116%;height:6.7px;display:block;margin:6px 0 5px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 10" preserveAspectRatio="none" role="presentation"><defs><linearGradient id="y2-wg0" gradientUnits="userSpaceOnUse" x1="0" y1="5" x2="200" y2="5"><stop offset="0" stop-color="#22D3EE" stop-opacity=".95"/><stop offset="1" stop-color="#22D3EE" stop-opacity="0"/></linearGradient><linearGradient id="y2-wg1" gradientUnits="userSpaceOnUse" x1="0" y1="5" x2="200" y2="5"><stop offset="0" stop-color="#38BDF8" stop-opacity=".95"/><stop offset="1" stop-color="#38BDF8" stop-opacity="0"/></linearGradient><linearGradient id="y2-wg2" gradientUnits="userSpaceOnUse" x1="0" y1="5" x2="200" y2="5"><stop offset="0" stop-color="#3B82F6" stop-opacity=".95"/><stop offset="1" stop-color="#3B82F6" stop-opacity="0"/></linearGradient><linearGradient id="y2-wg3" gradientUnits="userSpaceOnUse" x1="0" y1="5" x2="200" y2="5"><stop offset="0" stop-color="#4F46E5" stop-opacity=".95"/><stop offset="1" stop-color="#4F46E5" stop-opacity="0"/></linearGradient><linearGradient id="y2-wg4" gradientUnits="userSpaceOnUse" x1="0" y1="5" x2="200" y2="5"><stop offset="0" stop-color="#7C3AED" stop-opacity=".95"/><stop offset="1" stop-color="#7C3AED" stop-opacity="0"/></linearGradient></defs><polygon points="0,5 200,0.00 200,2.00" fill="url(#y2-wg0)"/><polygon points="0,5 200,2.00 200,4.00" fill="url(#y2-wg1)"/><polygon points="0,5 200,4.00 200,6.00" fill="url(#y2-wg2)"/><polygon points="0,5 200,6.00 200,8.00" fill="url(#y2-wg3)"/><polygon points="0,5 200,8.00 200,10.00" fill="url(#y2-wg4)"/></svg><div class="l2">DIGITAL</div></div></div>
+      <div class="what">Sistema de gestión para ópticas: ventas, stock, clientes y cuentas pendientes.</div>
+    </div>
+    <div class="help"><b>¿No podés entrar?</b>Escribinos a soporte@miopticadigital.com.ar</div>
+  </div>
+  <div class="formside">
+    <div class="card">
+      <h2>Elegí la óptica</h2>
+      <div class="sub">Tu usuario existe en más de una. Entrás a la que elijas.</div>
+      <div class="pick">
+        <button type="button"><svg class="ic" viewBox="0 0 24 24"><path d="m3 8 1.5-5h15L21 8"/><path d="M3 8h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z"/><path d="M5 13v8h14v-8"/></svg><span class="grow">Óptica Belgrano<small>Av. Cabildo 2340</small></span></button>
+        <button type="button"><svg class="ic" viewBox="0 0 24 24"><path d="m3 8 1.5-5h15L21 8"/><path d="M3 8h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z"/><path d="M5 13v8h14v-8"/></svg><span class="grow">Óptica Centro<small>Sarmiento 815</small></span></button>
+      </div>
+      <div class="hint"><a href="#">Usar otro usuario</a></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

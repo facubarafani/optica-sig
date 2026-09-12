@@ -1,0 +1,21 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html",       "x": 0,    "y": 0,    "w": 1440, "h": 900, "title": "A · Prisma" },
+    { "file": "Rayo.dc.html",       "x": 1560, "y": 0,    "w": 1440, "h": 900, "title": "B · Un solo rayo" },
+    { "file": "Ambar.dc.html",      "x": 0,    "y": 1080, "w": 1440, "h": 900, "title": "C · Ink y ámbar (control)" },
+    { "file": "NuevaVenta.dc.html", "x": 1560, "y": 1080, "w": 1440, "h": 900, "title": "Nueva venta · en A" }
+  ],
+  "annotations": [
+    { "id": "brief", "x": 0, "y": -240, "w": 1060,
+      "text": "Ronda 2. La misma pantalla y los mismos datos en las tres: sólo cambia el color. La estructura ya está fija (filas densas, números mono tabulares, esquina recta, línea de 1 px, sin sombra, casco oscuro sobre superficie blanca).\n\nEl concepto es el prisma: una entrada sin separar, un espectro ordenado a la salida. Cada módulo ocupa una posición fija del espectro, así el color dice dónde estás. Violeta arriba y rojo abajo, que es el orden que produce un prisma real: el violeta se desvía más.\n\nDos reglas lo sostienen. El espectro vive sólo en el casco oscuro; el rojo y el verde con significado viven sólo en la superficie blanca. Y el botón principal queda en tinta, nunca de color, para que el rojo de saldo y el de stock cero sigan siendo lo más fuerte de la pantalla." },
+    { "id": "n-a", "x": -400, "y": 0, "w": 330,
+      "text": "A · PRISMA\n\nEl espectro completo: los doce módulos llevan su banda en el menú, y la franja de arriba es la luz ya separada.\n\nA favor: el concepto se lee de un vistazo y el color es información, no adorno. La posición en el espectro identifica al módulo.\n\nEn contra: doce tonos es mucho color para una herramienta de ocho horas, y deja de funcionar si el menú crece o se reordena." },
+    { "id": "n-b", "x": 3120, "y": 0, "w": 330,
+      "text": "B · UN SOLO RAYO\n\nEl mismo sistema, pero sólo se ve la banda del módulo en el que estás. Acá es Productos, así que la pantalla entera tiene un solo tono.\n\nA favor: casi nada de color en pantalla y el espectro igual existe, se percibe al navegar en vez de todo junto.\n\nEn contra: el concepto no se ve en una sola captura. Para mostrar el producto o venderlo, no aporta nada." },
+    { "id": "n-c", "x": -400, "y": 1080, "w": 330,
+      "text": "C · INK Y ÁMBAR (control)\n\nSin metáfora óptica: un único acento cálido. Está para comparar, así se ve qué agrega el prisma y qué cuesta.\n\nA favor: el menor riesgo de los tres, y la marca respira, que era la crítica a la dirección A de la ronda 1.\n\nEn contra: podría ser cualquier ERP. Nada en la pantalla dice óptica." },
+    { "id": "n-venta", "x": 3120, "y": 1080, "w": 330,
+      "text": "NUEVA VENTA, en la paleta A\n\nLa segunda pantalla, para ver si el lenguaje aguanta algo que no es una tabla.\n\nTres reglas del backend quedan dibujadas: el número no se escribe, se asigna al confirmar; el precio muestra de dónde sale (lista y categoría, o manual) y marca el renglón que el vendedor tocó a mano; y los totales son una foto guardada, por eso el pie dice que una venta se corrige anulando y emitiendo otra, no editando.\n\nEl saldo es el único número en rojo de la pantalla." }
+  ],
+  "launch": { "view": "canvas" }
+}

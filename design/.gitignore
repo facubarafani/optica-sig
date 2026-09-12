@@ -1,0 +1,3 @@
+# Canvas publicado: ~2,5 MB cada uno porque llevan el editor adentro. Se
+# regeneran con seed-canvas.mjs a partir de los .dc.html y canvas.json.
+mi-optica-digital-*.html

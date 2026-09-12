@@ -1,0 +1,206 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap">
+<style>
+  @page { size: A4; margin: 0; }
+  *{box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:#1f2937;font-size:16px;line-height:1.55;background:#fff}
+  .page{width:794px;height:1123px;padding:60px 66px 104px;page-break-after:always;position:relative;overflow:hidden;
+    display:flex;flex-direction:column}
+  .page:last-child{page-break-after:auto}
+  .page.dark{background:#0f172a;color:#cbd5e1}
+  h1{margin:0;font-size:34px;font-weight:600;letter-spacing:-.015em;color:#0f172a;font-family:'Poppins',sans-serif}
+  h2{margin:0 0 6px;font-size:21px;font-weight:600;color:#0f172a;font-family:'Poppins',sans-serif}
+  .kicker{font-size:12px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:#2563eb;margin-bottom:12px}
+  p{margin:0 0 14px;max-width:600px}
+  .lead{font-size:17px;color:#4b5563}
+  .foot{position:absolute;left:66px;right:66px;bottom:40px;display:flex;justify-content:space-between;
+    font-size:12px;color:#9ca3af;border-top:1px solid #e3e8ef;padding-top:12px}
+  .page.dark .foot{color:#64748b;border-color:#1e293b}
+  .h{display:inline-flex;align-items:center;font-family:'Poppins',sans-serif}
+  .tx{display:flex;flex-direction:column}
+  .l1{font-weight:600;letter-spacing:-.012em;line-height:1;white-space:nowrap}
+  .l2{font-weight:400;letter-spacing:.34em;line-height:1;text-indent:.34em;white-space:nowrap}
+  .spec{background:linear-gradient(90deg,#22D3EE 0%,#3B82F6 50%,#7C3AED 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .box{border:1px solid #e3e8ef;border-radius:10px;padding:26px;display:grid;place-items:center;background:#fff}
+  .box.dk{background:#0f172a;border-color:#1e293b}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .cap{font-size:12.5px;color:#6b7280;margin-top:9px}
+  .sws{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin:8px 0 22px}
+  .sws.b5{grid-template-columns:repeat(5,1fr)}
+  .sw .chip{height:54px;border-radius:8px;border:1px solid rgba(15,23,42,.10)}
+  .sw .nm{font-size:13px;font-weight:600;margin-top:8px}
+  .sw .hx{font-size:11.5px;color:#6b7280;font-family:ui-monospace,Menlo,monospace}
+  .sw .tk{font-size:11px;color:#9ca3af;font-family:ui-monospace,Menlo,monospace}
+  .rule{height:1px;background:#e3e8ef;margin:20px 0}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{text-align:left;padding:10px 10px;background:#f8fafc;color:#64748b;font-size:11.5px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #e3e8ef}
+  td{padding:11px 10px;border-bottom:1px solid #f1f5f9;vertical-align:top}
+  tr:last-child td{border-bottom:0}
+  .dos{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:6px}
+  .do,.dont{border:1px solid #e3e8ef;border-radius:9px;padding:12px 15px;font-size:13px;line-height:1.45}
+  .do{background:#f0fdf4;border-color:#bbf7d0}
+  .dont{background:#fef2f2;border-color:#fecaca}
+  .do b,.dont b{display:block;margin-bottom:5px;font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+  .do b{color:#16a34a} .dont b{color:#dc2626}
+  .spec-bar{height:46px;border-radius:8px;background:linear-gradient(90deg,#22D3EE,#38BDF8,#3B82F6,#4F46E5,#7C3AED)}
+  .type-s{font-family:'Poppins',sans-serif;color:#0f172a;line-height:1.1}
+  .mini{font-size:12.5px;color:#6b7280}
+</style></head>
+<body>
+
+<!-- 1 - portada -->
+<div class="page dark" style="justify-content:space-between;padding:76px 66px">
+  <div style="font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#64748b">
+    Manual de marca</div>
+  <div style="display:flex;flex-direction:column;align-items:flex-start;gap:34px">
+    <div class="h" style="gap:5px"><svg style="width:108px;height:auto;flex:0 0 auto" xmlns="http://www.w3.org/2000/svg" viewBox="8 8 118 100" role="img" aria-label="Mi Optica Digital"><defs><linearGradient id="p1-h0" gradientUnits="userSpaceOnUse" x1="79.14" y1="67.51" x2="35.26" y2="80.64"><stop offset="0" stop-color="#22D3EE"/><stop offset="1" stop-color="#38BDF8"/></linearGradient><linearGradient id="p1-h1" gradientUnits="userSpaceOnUse" x1="36.55" y1="81.23" x2="17.89" y2="38.82"><stop offset="0" stop-color="#38BDF8"/><stop offset="1" stop-color="#3B82F6"/></linearGradient><linearGradient id="p1-h2" gradientUnits="userSpaceOnUse" x1="17.45" y1="40.17" x2="57.47" y2="16.83"><stop offset="0" stop-color="#3B82F6"/><stop offset="1" stop-color="#4F46E5"/></linearGradient><linearGradient id="p1-h3" gradientUnits="userSpaceOnUse" x1="56.08" y1="16.55" x2="83.87" y2="52.96"><stop offset="0" stop-color="#4F46E5"/><stop offset="1" stop-color="#7C3AED"/></linearGradient><linearGradient id="p1-hs0" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#22D3EE" stop-opacity=".95"/><stop offset="1" stop-color="#22D3EE" stop-opacity="0"/></linearGradient><linearGradient id="p1-hs1" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#38BDF8" stop-opacity=".95"/><stop offset="1" stop-color="#38BDF8" stop-opacity="0"/></linearGradient><linearGradient id="p1-hs2" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#3B82F6" stop-opacity=".95"/><stop offset="1" stop-color="#3B82F6" stop-opacity="0"/></linearGradient><linearGradient id="p1-hs3" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#4F46E5" stop-opacity=".95"/><stop offset="1" stop-color="#4F46E5" stop-opacity="0"/></linearGradient><linearGradient id="p1-hs4" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#7C3AED" stop-opacity=".95"/><stop offset="1" stop-color="#7C3AED" stop-opacity="0"/></linearGradient></defs><polygon points="88.0,62.4 152.3,65.4 150.2,71.8" fill="url(#p1-hs0)"/><polygon points="88.0,62.4 150.2,71.8 148.1,78.3" fill="url(#p1-hs1)"/><polygon points="88.0,62.4 148.1,78.3 146.0,84.8" fill="url(#p1-hs2)"/><polygon points="88.0,62.4 146.0,84.8 143.9,91.2" fill="url(#p1-hs3)"/><polygon points="88.0,62.4 143.9,91.2 141.8,97.7" fill="url(#p1-hs4)"/><path d="M 79.14 67.51 A 34.0 34.0 0 0 1 35.26 80.64" fill="none" stroke="url(#p1-h0)" stroke-width="12" stroke-linecap="butt"/><path d="M 36.55 81.23 A 34.0 34.0 0 0 1 17.89 38.82" fill="none" stroke="url(#p1-h1)" stroke-width="12" stroke-linecap="butt"/><path d="M 17.45 40.17 A 34.0 34.0 0 0 1 57.47 16.83" fill="none" stroke="url(#p1-h2)" stroke-width="12" stroke-linecap="butt"/><path d="M 56.08 16.55 A 34.0 34.0 0 0 1 83.87 52.96" fill="none" stroke="url(#p1-h3)" stroke-width="12" stroke-linecap="butt"/></svg><div class="tx"><div class="l1" style="font-size:62px;color:#ffffff">Mi Óptica</div><div style="height:13px"></div><svg viewBox="0 0 74.3 14.2" style="width:74.3px;height:14.2px;display:block" role="img" aria-label="DIGITAL"><defs><linearGradient id="dg1" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#22D3EE"/><stop offset=".5" stop-color="#3B82F6"/><stop offset="1" stop-color="#7C3AED"/></linearGradient></defs><text x="0" y="11.1" font-family="Poppins" font-size="10.54" font-weight="400" letter-spacing="3.58" fill="url(#dg1)">DIGITAL</text></svg></div></div>
+    <div style="max-width:520px;color:#94a3b8;font-size:17px;line-height:1.6">
+      Sistema de gestión para ópticas. Este documento fija cómo se usa la marca:
+      qué versión va en cada lugar, con qué colores y con qué tipografía.
+    </div>
+  </div>
+  <div style="font-size:13px;color:#64748b">Versión 1 · Septiembre 2026 · miopticadigital.com.ar</div>
+</div>
+
+<!-- 2 - el simbolo -->
+<div class="page">
+  <div class="kicker">01 · El símbolo</div>
+  <h1>Una lente que separa la luz</h1>
+  <p class="lead" style="margin-top:14px">El anillo es una lente vista de frente y la apertura de la derecha
+  es por donde sale la luz, ya separada en su espectro. Es lo que hace una óptica: tomar luz y ordenarla.</p>
+  <div class="grid2" style="margin-top:20px">
+    <div><div class="box" style="height:250px"><svg style="width:250px;height:auto" xmlns="http://www.w3.org/2000/svg" viewBox="8 8 118 100" role="img" aria-label="Mi Optica Digital"><defs><linearGradient id="p2-h0" gradientUnits="userSpaceOnUse" x1="79.14" y1="67.51" x2="35.26" y2="80.64"><stop offset="0" stop-color="#22D3EE"/><stop offset="1" stop-color="#38BDF8"/></linearGradient><linearGradient id="p2-h1" gradientUnits="userSpaceOnUse" x1="36.55" y1="81.23" x2="17.89" y2="38.82"><stop offset="0" stop-color="#38BDF8"/><stop offset="1" stop-color="#3B82F6"/></linearGradient><linearGradient id="p2-h2" gradientUnits="userSpaceOnUse" x1="17.45" y1="40.17" x2="57.47" y2="16.83"><stop offset="0" stop-color="#3B82F6"/><stop offset="1" stop-color="#4F46E5"/></linearGradient><linearGradient id="p2-h3" gradientUnits="userSpaceOnUse" x1="56.08" y1="16.55" x2="83.87" y2="52.96"><stop offset="0" stop-color="#4F46E5"/><stop offset="1" stop-color="#7C3AED"/></linearGradient><linearGradient id="p2-hs0" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#22D3EE" stop-opacity=".95"/><stop offset="1" stop-color="#22D3EE" stop-opacity="0"/></linearGradient><linearGradient id="p2-hs1" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#38BDF8" stop-opacity=".95"/><stop offset="1" stop-color="#38BDF8" stop-opacity="0"/></linearGradient><linearGradient id="p2-hs2" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#3B82F6" stop-opacity=".95"/><stop offset="1" stop-color="#3B82F6" stop-opacity="0"/></linearGradient><linearGradient id="p2-hs3" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#4F46E5" stop-opacity=".95"/><stop offset="1" stop-color="#4F46E5" stop-opacity="0"/></linearGradient><linearGradient id="p2-hs4" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#7C3AED" stop-opacity=".95"/><stop offset="1" stop-color="#7C3AED" stop-opacity="0"/></linearGradient></defs><polygon points="88.0,62.4 152.3,65.4 150.2,71.8" fill="url(#p2-hs0)"/><polygon points="88.0,62.4 150.2,71.8 148.1,78.3" fill="url(#p2-hs1)"/><polygon points="88.0,62.4 148.1,78.3 146.0,84.8" fill="url(#p2-hs2)"/><polygon points="88.0,62.4 146.0,84.8 143.9,91.2" fill="url(#p2-hs3)"/><polygon points="88.0,62.4 143.9,91.2 141.8,97.7" fill="url(#p2-hs4)"/><path d="M 79.14 67.51 A 34.0 34.0 0 0 1 35.26 80.64" fill="none" stroke="url(#p2-h0)" stroke-width="12" stroke-linecap="butt"/><path d="M 36.55 81.23 A 34.0 34.0 0 0 1 17.89 38.82" fill="none" stroke="url(#p2-h1)" stroke-width="12" stroke-linecap="butt"/><path d="M 17.45 40.17 A 34.0 34.0 0 0 1 57.47 16.83" fill="none" stroke="url(#p2-h2)" stroke-width="12" stroke-linecap="butt"/><path d="M 56.08 16.55 A 34.0 34.0 0 0 1 83.87 52.96" fill="none" stroke="url(#p2-h3)" stroke-width="12" stroke-linecap="butt"/></svg></div>
+      <div class="cap">Símbolo con haz. Se usa suelto, cuando tiene aire alrededor.</div></div>
+    <div><div class="box" style="height:250px"><svg style="width:150px;height:150px" xmlns="http://www.w3.org/2000/svg" viewBox="8 8 84 84" role="img" aria-label="Mi Optica Digital"><defs><linearGradient id="p3-h0" gradientUnits="userSpaceOnUse" x1="79.14" y1="67.51" x2="35.26" y2="80.64"><stop offset="0" stop-color="#22D3EE"/><stop offset="1" stop-color="#38BDF8"/></linearGradient><linearGradient id="p3-h1" gradientUnits="userSpaceOnUse" x1="36.55" y1="81.23" x2="17.89" y2="38.82"><stop offset="0" stop-color="#38BDF8"/><stop offset="1" stop-color="#3B82F6"/></linearGradient><linearGradient id="p3-h2" gradientUnits="userSpaceOnUse" x1="17.45" y1="40.17" x2="57.47" y2="16.83"><stop offset="0" stop-color="#3B82F6"/><stop offset="1" stop-color="#4F46E5"/></linearGradient><linearGradient id="p3-h3" gradientUnits="userSpaceOnUse" x1="56.08" y1="16.55" x2="83.87" y2="52.96"><stop offset="0" stop-color="#4F46E5"/><stop offset="1" stop-color="#7C3AED"/></linearGradient></defs><path d="M 79.14 67.51 A 34.0 34.0 0 0 1 35.26 80.64" fill="none" stroke="url(#p3-h0)" stroke-width="12" stroke-linecap="butt"/><path d="M 36.55 81.23 A 34.0 34.0 0 0 1 17.89 38.82" fill="none" stroke="url(#p3-h1)" stroke-width="12" stroke-linecap="butt"/><path d="M 17.45 40.17 A 34.0 34.0 0 0 1 57.47 16.83" fill="none" stroke="url(#p3-h2)" stroke-width="12" stroke-linecap="butt"/><path d="M 56.08 16.55 A 34.0 34.0 0 0 1 83.87 52.96" fill="none" stroke="url(#p3-h3)" stroke-width="12" stroke-linecap="butt"/></svg></div>
+      <div class="cap">Sólo el anillo. Para huecos cuadrados: ícono de la app, pestaña del navegador.</div></div>
+  </div>
+  <div class="rule"></div>
+  <h2>Aire mínimo y tamaño mínimo</h2>
+  <p>Alrededor del símbolo tiene que quedar libre, como mínimo, la mitad del diámetro del anillo.
+  Nada se mete en esa zona: ni texto, ni bordes, ni el filo de una foto.</p>
+  <div class="grid2" style="margin-top:6px">
+    <div class="box" style="height:150px;padding:14px">
+      <div style="display:flex;align-items:center;gap:26px">
+        <svg style="width:44px;height:44px" xmlns="http://www.w3.org/2000/svg" viewBox="8 8 84 84" role="img" aria-label="Mi Optica Digital"><defs><linearGradient id="p4-h0" gradientUnits="userSpaceOnUse" x1="79.14" y1="67.51" x2="35.26" y2="80.64"><stop offset="0" stop-color="#22D3EE"/><stop offset="1" stop-color="#38BDF8"/></linearGradient><linearGradient id="p4-h1" gradientUnits="userSpaceOnUse" x1="36.55" y1="81.23" x2="17.89" y2="38.82"><stop offset="0" stop-color="#38BDF8"/><stop offset="1" stop-color="#3B82F6"/></linearGradient><linearGradient id="p4-h2" gradientUnits="userSpaceOnUse" x1="17.45" y1="40.17" x2="57.47" y2="16.83"><stop offset="0" stop-color="#3B82F6"/><stop offset="1" stop-color="#4F46E5"/></linearGradient><linearGradient id="p4-h3" gradientUnits="userSpaceOnUse" x1="56.08" y1="16.55" x2="83.87" y2="52.96"><stop offset="0" stop-color="#4F46E5"/><stop offset="1" stop-color="#7C3AED"/></linearGradient></defs><path d="M 79.14 67.51 A 34.0 34.0 0 0 1 35.26 80.64" fill="none" stroke="url(#p4-h0)" stroke-width="12" stroke-linecap="butt"/><path d="M 36.55 81.23 A 34.0 34.0 0 0 1 17.89 38.82" fill="none" stroke="url(#p4-h1)" stroke-width="12" stroke-linecap="butt"/><path d="M 17.45 40.17 A 34.0 34.0 0 0 1 57.47 16.83" fill="none" stroke="url(#p4-h2)" stroke-width="12" stroke-linecap="butt"/><path d="M 56.08 16.55 A 34.0 34.0 0 0 1 83.87 52.96" fill="none" stroke="url(#p4-h3)" stroke-width="12" stroke-linecap="butt"/></svg><svg style="width:30px;height:30px" xmlns="http://www.w3.org/2000/svg" viewBox="8 8 84 84" role="img" aria-label="Mi Optica Digital"><defs><linearGradient id="p5-h0" gradientUnits="userSpaceOnUse" x1="79.14" y1="67.51" x2="35.26" y2="80.64"><stop offset="0" stop-color="#22D3EE"/><stop offset="1" stop-color="#38BDF8"/></linearGradient><linearGradient id="p5-h1" gradientUnits="userSpaceOnUse" x1="36.55" y1="81.23" x2="17.89" y2="38.82"><stop offset="0" stop-color="#38BDF8"/><stop offset="1" stop-color="#3B82F6"/></linearGradient><linearGradient id="p5-h2" gradientUnits="userSpaceOnUse" x1="17.45" y1="40.17" x2="57.47" y2="16.83"><stop offset="0" stop-color="#3B82F6"/><stop offset="1" stop-color="#4F46E5"/></linearGradient><linearGradient id="p5-h3" gradientUnits="userSpaceOnUse" x1="56.08" y1="16.55" x2="83.87" y2="52.96"><stop offset="0" stop-color="#4F46E5"/><stop offset="1" stop-color="#7C3AED"/></linearGradient></defs><path d="M 79.14 67.51 A 34.0 34.0 0 0 1 35.26 80.64" fill="none" stroke="url(#p5-h0)" stroke-width="12" stroke-linecap="butt"/><path d="M 36.55 81.23 A 34.0 34.0 0 0 1 17.89 38.82" fill="none" stroke="url(#p5-h1)" stroke-width="12" stroke-linecap="butt"/><path d="M 17.45 40.17 A 34.0 34.0 0 0 1 57.47 16.83" fill="none" stroke="url(#p5-h2)" stroke-width="12" stroke-linecap="butt"/><path d="M 56.08 16.55 A 34.0 34.0 0 0 1 83.87 52.96" fill="none" stroke="url(#p5-h3)" stroke-width="12" stroke-linecap="butt"/></svg><svg style="width:22px;height:22px" xmlns="http://www.w3.org/2000/svg" viewBox="8 8 84 84" role="img" aria-label="Mi Optica Digital"><defs><linearGradient id="p6-h0" gradientUnits="userSpaceOnUse" x1="79.14" y1="67.51" x2="35.26" y2="80.64"><stop offset="0" stop-color="#22D3EE"/><stop offset="1" stop-color="#38BDF8"/></linearGradient><linearGradient id="p6-h1" gradientUnits="userSpaceOnUse" x1="36.55" y1="81.23" x2="17.89" y2="38.82"><stop offset="0" stop-color="#38BDF8"/><stop offset="1" stop-color="#3B82F6"/></linearGradient><linearGradient id="p6-h2" gradientUnits="userSpaceOnUse" x1="17.45" y1="40.17" x2="57.47" y2="16.83"><stop offset="0" stop-color="#3B82F6"/><stop offset="1" stop-color="#4F46E5"/></linearGradient><linearGradient id="p6-h3" gradientUnits="userSpaceOnUse" x1="56.08" y1="16.55" x2="83.87" y2="52.96"><stop offset="0" stop-color="#4F46E5"/><stop offset="1" stop-color="#7C3AED"/></linearGradient></defs><path d="M 79.14 67.51 A 34.0 34.0 0 0 1 35.26 80.64" fill="none" stroke="url(#p6-h0)" stroke-width="12" stroke-linecap="butt"/><path d="M 36.55 81.23 A 34.0 34.0 0 0 1 17.89 38.82" fill="none" stroke="url(#p6-h1)" stroke-width="12" stroke-linecap="butt"/><path d="M 17.45 40.17 A 34.0 34.0 0 0 1 57.47 16.83" fill="none" stroke="url(#p6-h2)" stroke-width="12" stroke-linecap="butt"/><path d="M 56.08 16.55 A 34.0 34.0 0 0 1 83.87 52.96" fill="none" stroke="url(#p6-h3)" stroke-width="12" stroke-linecap="butt"/></svg><svg style="width:16px;height:16px" xmlns="http://www.w3.org/2000/svg" viewBox="8 8 84 84" role="img" aria-label="Mi Optica Digital"><defs><linearGradient id="p7-h0" gradientUnits="userSpaceOnUse" x1="79.14" y1="67.51" x2="35.26" y2="80.64"><stop offset="0" stop-color="#22D3EE"/><stop offset="1" stop-color="#38BDF8"/></linearGradient><linearGradient id="p7-h1" gradientUnits="userSpaceOnUse" x1="36.55" y1="81.23" x2="17.89" y2="38.82"><stop offset="0" stop-color="#38BDF8"/><stop offset="1" stop-color="#3B82F6"/></linearGradient><linearGradient id="p7-h2" gradientUnits="userSpaceOnUse" x1="17.45" y1="40.17" x2="57.47" y2="16.83"><stop offset="0" stop-color="#3B82F6"/><stop offset="1" stop-color="#4F46E5"/></linearGradient><linearGradient id="p7-h3" gradientUnits="userSpaceOnUse" x1="56.08" y1="16.55" x2="83.87" y2="52.96"><stop offset="0" stop-color="#4F46E5"/><stop offset="1" stop-color="#7C3AED"/></linearGradient></defs><path d="M 79.14 67.51 A 34.0 34.0 0 0 1 35.26 80.64" fill="none" stroke="url(#p7-h0)" stroke-width="12" stroke-linecap="butt"/><path d="M 36.55 81.23 A 34.0 34.0 0 0 1 17.89 38.82" fill="none" stroke="url(#p7-h1)" stroke-width="12" stroke-linecap="butt"/><path d="M 17.45 40.17 A 34.0 34.0 0 0 1 57.47 16.83" fill="none" stroke="url(#p7-h2)" stroke-width="12" stroke-linecap="butt"/><path d="M 56.08 16.55 A 34.0 34.0 0 0 1 83.87 52.96" fill="none" stroke="url(#p7-h3)" stroke-width="12" stroke-linecap="butt"/></svg>
+      </div></div>
+    <div style="font-size:14px;line-height:1.6">
+      <b>16 px</b> es el piso del anillo solo.<br>
+      <b>120 px</b> de ancho es el piso del lockup completo.<br>
+      Abajo de eso el haz se convierte en una mancha: usar sólo el anillo.
+    </div>
+  </div>
+  <div class="foot"><span>Mi Óptica Digital</span><span>01 · El símbolo</span></div>
+</div>
+
+<!-- 3 - versiones -->
+<div class="page">
+  <div class="kicker">02 · Versiones</div>
+  <h1>Cuál va en cada lugar</h1>
+  <p class="lead" style="margin-top:14px">Son la misma marca en distintos grados de detalle.
+  No son opciones de gusto: cada una resuelve un espacio distinto.</p>
+  <div style="margin-top:22px;display:flex;flex-direction:column;gap:16px">
+    <div class="box" style="padding:30px"><div class="h" style="gap:4px"><svg style="width:80px;height:auto;flex:0 0 auto" xmlns="http://www.w3.org/2000/svg" viewBox="8 8 118 100" role="img" aria-label="Mi Optica Digital"><defs><linearGradient id="p8-h0" gradientUnits="userSpaceOnUse" x1="79.14" y1="67.51" x2="35.26" y2="80.64"><stop offset="0" stop-color="#22D3EE"/><stop offset="1" stop-color="#38BDF8"/></linearGradient><linearGradient id="p8-h1" gradientUnits="userSpaceOnUse" x1="36.55" y1="81.23" x2="17.89" y2="38.82"><stop offset="0" stop-color="#38BDF8"/><stop offset="1" stop-color="#3B82F6"/></linearGradient><linearGradient id="p8-h2" gradientUnits="userSpaceOnUse" x1="17.45" y1="40.17" x2="57.47" y2="16.83"><stop offset="0" stop-color="#3B82F6"/><stop offset="1" stop-color="#4F46E5"/></linearGradient><linearGradient id="p8-h3" gradientUnits="userSpaceOnUse" x1="56.08" y1="16.55" x2="83.87" y2="52.96"><stop offset="0" stop-color="#4F46E5"/><stop offset="1" stop-color="#7C3AED"/></linearGradient><linearGradient id="p8-hs0" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#22D3EE" stop-opacity=".95"/><stop offset="1" stop-color="#22D3EE" stop-opacity="0"/></linearGradient><linearGradient id="p8-hs1" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#38BDF8" stop-opacity=".95"/><stop offset="1" stop-color="#38BDF8" stop-opacity="0"/></linearGradient><linearGradient id="p8-hs2" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#3B82F6" stop-opacity=".95"/><stop offset="1" stop-color="#3B82F6" stop-opacity="0"/></linearGradient><linearGradient id="p8-hs3" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#4F46E5" stop-opacity=".95"/><stop offset="1" stop-color="#4F46E5" stop-opacity="0"/></linearGradient><linearGradient id="p8-hs4" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#7C3AED" stop-opacity=".95"/><stop offset="1" stop-color="#7C3AED" stop-opacity="0"/></linearGradient></defs><polygon points="88.0,62.4 152.3,65.4 150.2,71.8" fill="url(#p8-hs0)"/><polygon points="88.0,62.4 150.2,71.8 148.1,78.3" fill="url(#p8-hs1)"/><polygon points="88.0,62.4 148.1,78.3 146.0,84.8" fill="url(#p8-hs2)"/><polygon points="88.0,62.4 146.0,84.8 143.9,91.2" fill="url(#p8-hs3)"/><polygon points="88.0,62.4 143.9,91.2 141.8,97.7" fill="url(#p8-hs4)"/><path d="M 79.14 67.51 A 34.0 34.0 0 0 1 35.26 80.64" fill="none" stroke="url(#p8-h0)" stroke-width="12" stroke-linecap="butt"/><path d="M 36.55 81.23 A 34.0 34.0 0 0 1 17.89 38.82" fill="none" stroke="url(#p8-h1)" stroke-width="12" stroke-linecap="butt"/><path d="M 17.45 40.17 A 34.0 34.0 0 0 1 57.47 16.83" fill="none" stroke="url(#p8-h2)" stroke-width="12" stroke-linecap="butt"/><path d="M 56.08 16.55 A 34.0 34.0 0 0 1 83.87 52.96" fill="none" stroke="url(#p8-h3)" stroke-width="12" stroke-linecap="butt"/></svg><div class="tx"><div class="l1" style="font-size:46px;color:#0f172a">Mi Óptica</div><div style="height:10px"></div><svg viewBox="0 0 55.1 10.6" style="width:55.1px;height:10.6px;display:block" role="img" aria-label="DIGITAL"><defs><linearGradient id="dg2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#22D3EE"/><stop offset=".5" stop-color="#3B82F6"/><stop offset="1" stop-color="#7C3AED"/></linearGradient></defs><text x="0" y="8.2" font-family="Poppins" font-size="7.82" font-weight="400" letter-spacing="2.66" fill="url(#dg2)">DIGITAL</text></svg></div></div></div>
+    <div class="grid2">
+      <div class="box dk" style="padding:26px"><div class="h" style="gap:2px"><svg style="width:52px;height:auto;flex:0 0 auto" xmlns="http://www.w3.org/2000/svg" viewBox="8 8 118 100" role="img" aria-label="Mi Optica Digital"><defs><linearGradient id="p9-h0" gradientUnits="userSpaceOnUse" x1="79.14" y1="67.51" x2="35.26" y2="80.64"><stop offset="0" stop-color="#22D3EE"/><stop offset="1" stop-color="#38BDF8"/></linearGradient><linearGradient id="p9-h1" gradientUnits="userSpaceOnUse" x1="36.55" y1="81.23" x2="17.89" y2="38.82"><stop offset="0" stop-color="#38BDF8"/><stop offset="1" stop-color="#3B82F6"/></linearGradient><linearGradient id="p9-h2" gradientUnits="userSpaceOnUse" x1="17.45" y1="40.17" x2="57.47" y2="16.83"><stop offset="0" stop-color="#3B82F6"/><stop offset="1" stop-color="#4F46E5"/></linearGradient><linearGradient id="p9-h3" gradientUnits="userSpaceOnUse" x1="56.08" y1="16.55" x2="83.87" y2="52.96"><stop offset="0" stop-color="#4F46E5"/><stop offset="1" stop-color="#7C3AED"/></linearGradient><linearGradient id="p9-hs0" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#22D3EE" stop-opacity=".95"/><stop offset="1" stop-color="#22D3EE" stop-opacity="0"/></linearGradient><linearGradient id="p9-hs1" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#38BDF8" stop-opacity=".95"/><stop offset="1" stop-color="#38BDF8" stop-opacity="0"/></linearGradient><linearGradient id="p9-hs2" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#3B82F6" stop-opacity=".95"/><stop offset="1" stop-color="#3B82F6" stop-opacity="0"/></linearGradient><linearGradient id="p9-hs3" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#4F46E5" stop-opacity=".95"/><stop offset="1" stop-color="#4F46E5" stop-opacity="0"/></linearGradient><linearGradient id="p9-hs4" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#7C3AED" stop-opacity=".95"/><stop offset="1" stop-color="#7C3AED" stop-opacity="0"/></linearGradient></defs><polygon points="88.0,62.4 152.3,65.4 150.2,71.8" fill="url(#p9-hs0)"/><polygon points="88.0,62.4 150.2,71.8 148.1,78.3" fill="url(#p9-hs1)"/><polygon points="88.0,62.4 148.1,78.3 146.0,84.8" fill="url(#p9-hs2)"/><polygon points="88.0,62.4 146.0,84.8 143.9,91.2" fill="url(#p9-hs3)"/><polygon points="88.0,62.4 143.9,91.2 141.8,97.7" fill="url(#p9-hs4)"/><path d="M 79.14 67.51 A 34.0 34.0 0 0 1 35.26 80.64" fill="none" stroke="url(#p9-h0)" stroke-width="12" stroke-linecap="butt"/><path d="M 36.55 81.23 A 34.0 34.0 0 0 1 17.89 38.82" fill="none" stroke="url(#p9-h1)" stroke-width="12" stroke-linecap="butt"/><path d="M 17.45 40.17 A 34.0 34.0 0 0 1 57.47 16.83" fill="none" stroke="url(#p9-h2)" stroke-width="12" stroke-linecap="butt"/><path d="M 56.08 16.55 A 34.0 34.0 0 0 1 83.87 52.96" fill="none" stroke="url(#p9-h3)" stroke-width="12" stroke-linecap="butt"/></svg><div class="tx"><div class="l1" style="font-size:30px;color:#ffffff">Mi Óptica</div><div style="height:6px"></div><svg viewBox="0 0 36.0 6.9" style="width:36.0px;height:6.9px;display:block" role="img" aria-label="DIGITAL"><defs><linearGradient id="dg3" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#22D3EE"/><stop offset=".5" stop-color="#3B82F6"/><stop offset="1" stop-color="#7C3AED"/></linearGradient></defs><text x="0" y="5.4" font-family="Poppins" font-size="5.10" font-weight="400" letter-spacing="1.73" fill="url(#dg3)">DIGITAL</text></svg></div></div></div>
+      <div class="box" style="padding:26px"><div class="h" style="gap:2px"><svg style="width:52px;height:auto;flex:0 0 auto;filter:grayscale(1) brightness(.35)" xmlns="http://www.w3.org/2000/svg" viewBox="8 8 118 100" role="img" aria-label="Mi Optica Digital"><defs><linearGradient id="p10-h0" gradientUnits="userSpaceOnUse" x1="79.14" y1="67.51" x2="35.26" y2="80.64"><stop offset="0" stop-color="#22D3EE"/><stop offset="1" stop-color="#38BDF8"/></linearGradient><linearGradient id="p10-h1" gradientUnits="userSpaceOnUse" x1="36.55" y1="81.23" x2="17.89" y2="38.82"><stop offset="0" stop-color="#38BDF8"/><stop offset="1" stop-color="#3B82F6"/></linearGradient><linearGradient id="p10-h2" gradientUnits="userSpaceOnUse" x1="17.45" y1="40.17" x2="57.47" y2="16.83"><stop offset="0" stop-color="#3B82F6"/><stop offset="1" stop-color="#4F46E5"/></linearGradient><linearGradient id="p10-h3" gradientUnits="userSpaceOnUse" x1="56.08" y1="16.55" x2="83.87" y2="52.96"><stop offset="0" stop-color="#4F46E5"/><stop offset="1" stop-color="#7C3AED"/></linearGradient><linearGradient id="p10-hs0" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#22D3EE" stop-opacity=".95"/><stop offset="1" stop-color="#22D3EE" stop-opacity="0"/></linearGradient><linearGradient id="p10-hs1" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#38BDF8" stop-opacity=".95"/><stop offset="1" stop-color="#38BDF8" stop-opacity="0"/></linearGradient><linearGradient id="p10-hs2" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#3B82F6" stop-opacity=".95"/><stop offset="1" stop-color="#3B82F6" stop-opacity="0"/></linearGradient><linearGradient id="p10-hs3" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#4F46E5" stop-opacity=".95"/><stop offset="1" stop-color="#4F46E5" stop-opacity="0"/></linearGradient><linearGradient id="p10-hs4" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#7C3AED" stop-opacity=".95"/><stop offset="1" stop-color="#7C3AED" stop-opacity="0"/></linearGradient></defs><polygon points="88.0,62.4 152.3,65.4 150.2,71.8" fill="url(#p10-hs0)"/><polygon points="88.0,62.4 150.2,71.8 148.1,78.3" fill="url(#p10-hs1)"/><polygon points="88.0,62.4 148.1,78.3 146.0,84.8" fill="url(#p10-hs2)"/><polygon points="88.0,62.4 146.0,84.8 143.9,91.2" fill="url(#p10-hs3)"/><polygon points="88.0,62.4 143.9,91.2 141.8,97.7" fill="url(#p10-hs4)"/><path d="M 79.14 67.51 A 34.0 34.0 0 0 1 35.26 80.64" fill="none" stroke="url(#p10-h0)" stroke-width="12" stroke-linecap="butt"/><path d="M 36.55 81.23 A 34.0 34.0 0 0 1 17.89 38.82" fill="none" stroke="url(#p10-h1)" stroke-width="12" stroke-linecap="butt"/><path d="M 17.45 40.17 A 34.0 34.0 0 0 1 57.47 16.83" fill="none" stroke="url(#p10-h2)" stroke-width="12" stroke-linecap="butt"/><path d="M 56.08 16.55 A 34.0 34.0 0 0 1 83.87 52.96" fill="none" stroke="url(#p10-h3)" stroke-width="12" stroke-linecap="butt"/></svg><div class="tx"><div class="l1" style="font-size:30px;color:#0f172a">Mi Óptica</div><div style="height:6px"></div><svg viewBox="0 0 36.0 6.9" style="width:36.0px;height:6.9px;display:block" role="img" aria-label="DIGITAL"><text x="0" y="5.4" font-family="Poppins" font-size="5.10" font-weight="400" letter-spacing="1.73" fill="#64748b">DIGITAL</text></svg></div></div></div>
+    </div>
+  </div>
+  <div class="cap" style="margin-bottom:18px">Arriba, la versión principal. Abajo, sobre fondo oscuro y en una sola tinta.</div>
+  <table>
+    <thead><tr><th style="width:230px">Dónde</th><th style="width:160px">Versión</th><th>Por qué</th></tr></thead>
+    <tbody>
+      <tr><td>Ingreso, web, facturas, mails</td><td><b>Lockup completo</b></td><td>Hay ancho de sobra.</td></tr>
+      <tr><td>Barra lateral, encabezados</td><td><b>Lockup completo</b></td><td>Entra desde 120 px de ancho.</td></tr>
+      <tr><td>Ícono, pestaña, favicon</td><td><b>Anillo solo</b></td><td>El nombre no entra en un cuadrado chico.</td></tr>
+      <tr><td>Sello, ticket, fax, una tinta</td><td><b>Tinta plana</b></td><td>Sin degradado no hay nada que imprimir mal.</td></tr>
+    </tbody>
+  </table>
+  <div class="foot"><span>Mi Óptica Digital</span><span>02 · Versiones</span></div>
+</div>
+
+<!-- 4 - color -->
+<div class="page">
+  <div class="kicker">03 · Color</div>
+  <h1>La marca se queda con un tramo</h1>
+  <p class="lead" style="margin-top:14px">El espectro de la marca va de cian a violeta y no pasa de ahí.
+  El rojo y el verde quedan afuera a propósito.</p>
+  <div class="spec-bar" style="margin:16px 0 8px"></div>
+  <div class="sws b5"><div class="sw"><div class="chip" style="background:#22D3EE"></div><div class="nm">Cian</div><div class="hx">#22D3EE</div></div><div class="sw"><div class="chip" style="background:#38BDF8"></div><div class="nm">Celeste</div><div class="hx">#38BDF8</div></div><div class="sw"><div class="chip" style="background:#3B82F6"></div><div class="nm">Azul</div><div class="hx">#3B82F6</div></div><div class="sw"><div class="chip" style="background:#4F46E5"></div><div class="nm">Índigo</div><div class="hx">#4F46E5</div></div><div class="sw"><div class="chip" style="background:#7C3AED"></div><div class="nm">Violeta</div><div class="hx">#7C3AED</div></div></div>
+  <h2>Colores del sistema</h2>
+  <p class="mini" style="margin-bottom:6px">Los que ya usa la aplicación. La marca no los reemplaza.</p>
+  <div class="sws" style="grid-template-columns:repeat(4,1fr)"><div class="sw"><div class="chip" style="background:#2563eb"></div><div class="nm">Primario</div><div class="hx">#2563EB</div><div class=tk>--primary</div></div><div class="sw"><div class="chip" style="background:#1d4ed8"></div><div class="nm">Primario oscuro</div><div class="hx">#1D4ED8</div><div class=tk>--primary-600</div></div><div class="sw"><div class="chip" style="background:#0f172a"></div><div class="nm">Casco</div><div class="hx">#0F172A</div><div class=tk>barra lateral</div></div><div class="sw"><div class="chip" style="background:#1f2937"></div><div class="nm">Texto</div><div class="hx">#1F2937</div><div class=tk>--text</div></div></div>
+  <div class="rule" style="margin:6px 0 22px"></div>
+  <h2>Rojo y verde no son de la marca</h2>
+  <p>Adentro del sistema el rojo dice deuda o stock agotado y el verde dice cobrado o en stock.
+  Son información, no decoración. Por eso la marca no los usa: si el logo tuviera rojo,
+  el rojo de una deuda dejaría de resaltar.</p>
+  <div class="sws" style="grid-template-columns:repeat(3,1fr);margin-bottom:0"><div class="sw"><div class="chip" style="background:#dc2626"></div><div class="nm">Deuda, stock agotado</div><div class="hx">#DC2626</div><div class=tk>--danger</div></div><div class="sw"><div class="chip" style="background:#16a34a"></div><div class="nm">Cobrado, en stock</div><div class="hx">#16A34A</div><div class=tk>--ok</div></div><div class="sw"><div class="chip" style="background:#d97706"></div><div class="nm">Atención</div><div class="hx">#D97706</div><div class=tk>--warn</div></div></div>
+  <div class="foot"><span>Mi Óptica Digital</span><span>03 · Color</span></div>
+</div>
+
+<!-- 5 - tipografia -->
+<div class="page">
+  <div class="kicker">04 · Tipografía</div>
+  <h1>Dos tipografías, dos trabajos</h1>
+  <p class="lead" style="margin-top:14px">Una es de la marca y la otra es de la herramienta.
+  No se mezclan.</p>
+  <div style="margin-top:26px">
+    <h2>Poppins, para la marca</h2>
+    <p class="mini">Nombre, lockup, portadas, facturas, mails. Nunca adentro de una tabla.</p>
+    <div class="type-s" style="font-size:52px;font-weight:600;margin:16px 0 4px">Mi Óptica</div>
+    <svg viewBox="0 0 91.6 17.6" style="width:91.6px;height:17.6px;display:block" role="img" aria-label="DIGITAL"><defs><linearGradient id="dg5" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#22D3EE"/><stop offset=".5" stop-color="#3B82F6"/><stop offset="1" stop-color="#7C3AED"/></linearGradient></defs><text x="0" y="13.7" font-family="Poppins" font-size="13.00" font-weight="400" letter-spacing="4.42" fill="url(#dg5)">DIGITAL</text></svg>
+    <div class="mini" style="margin-top:12px">Poppins SemiBold 600 para el nombre · Poppins Regular 400 con
+    espaciado de 0,34 em para el descriptor.</div>
+  </div>
+  <div class="rule"></div>
+  <div>
+    <h2>Tipografía del sistema, para la aplicación</h2>
+    <p class="mini">La que ya trae cada máquina. Se dibuja más nítida en tamaños chicos y no hay que
+    descargarla, que en una óptica con internet flojo importa.</p>
+    <div style="font-size:30px;font-weight:650;margin:16px 0 6px;color:#0f172a">Productos, ventas, stock</div>
+    <div style="font-size:15px;color:#4b5563">1.284 activos · 212 estilos con variantes</div>
+    <div style="font-family:ui-monospace,Menlo,monospace;font-size:15px;margin-top:10px;
+      font-variant-numeric:tabular-nums">128.400,00 · 96.700,00 · 46.900,00</div>
+    <div class="mini" style="margin-top:12px">Los números siempre alineados a la derecha y con cifras de
+    ancho fijo, para que una columna de precios se lea de un vistazo.</div>
+  </div>
+  <div class="foot"><span>Mi Óptica Digital</span><span>04 · Tipografía</span></div>
+</div>
+
+<!-- 6 - usos -->
+<div class="page">
+  <div class="kicker">05 · Usos</div>
+  <h1>Qué sí y qué no</h1>
+  <div class="dos" style="margin-top:22px">
+    <div class="do"><b>Sí</b>Dejar el aire mínimo alrededor del símbolo.</div>
+    <div class="dont"><b>No</b>Pegarle texto o bordes a menos de medio diámetro.</div>
+    <div class="do"><b>Sí</b>Usar el anillo solo cuando el espacio es cuadrado y chico.</div>
+    <div class="dont"><b>No</b>Achicar el lockup completo abajo de 120 px de ancho.</div>
+    <div class="do"><b>Sí</b>Sobre blanco, sobre #f4f6f9 o sobre el casco #0f172a.</div>
+    <div class="dont"><b>No</b>Sobre fotos o fondos con textura, sin una caja limpia detrás.</div>
+    <div class="do"><b>Sí</b>Una sola tinta cuando la impresión no admite degradado.</div>
+    <div class="dont"><b>No</b>Cambiarle los colores al espectro ni completarlo con rojo o verde.</div>
+    <div class="do"><b>Sí</b>Poppins para el nombre, siempre.</div>
+    <div class="dont"><b>No</b>Reescribir el nombre con otra tipografía ni deformar el lockup.</div>
+    <div class="do"><b>Sí</b>Mantener la proporción original al escalar.</div>
+    <div class="dont"><b>No</b>Rotar, inclinar, ponerle sombra ni contorno.</div>
+  </div>
+  <div class="rule"></div>
+  <h2>Archivos</h2>
+  <table>
+    <thead><tr><th style="width:250px">Archivo</th><th>Qué es</th></tr></thead>
+    <tbody>
+      <tr><td><code>logo-h-stub.svg</code></td><td>Símbolo con haz, para el lockup completo.</td></tr>
+      <tr><td><code>logo-h-anillo.svg</code></td><td>Anillo solo, para ícono y favicon.</td></tr>
+    </tbody>
+  </table>
+  <p class="mini" style="margin-top:14px">El nombre todavía no está convertido a curvas: para artes finales
+  hay que pasarlo a trazos en un editor vectorial, si no depende de que Poppins esté instalada.</p>
+  <div class="foot"><span>Mi Óptica Digital</span><span>05 · Usos</span></div>
+</div>
+
+</body></html>

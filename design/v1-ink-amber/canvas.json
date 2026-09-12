@@ -1,0 +1,26 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html",        "x": 0,    "y": 0,    "w": 1440, "h": 1900, "title": "Marca" },
+    { "file": "Componentes.dc.html", "x": 1560, "y": 0,    "w": 1080, "h": 1780, "title": "Componentes" },
+    { "file": "Ingreso.dc.html",     "x": 0,    "y": 2020, "w": 1440, "h": 900,  "title": "Ingreso" },
+    { "file": "Inicio.dc.html",      "x": 1560, "y": 2020, "w": 1440, "h": 900,  "title": "Inicio" },
+    { "file": "Productos.dc.html",   "x": 0,    "y": 3040, "w": 1440, "h": 900,  "title": "Productos" },
+    { "file": "NuevaVenta.dc.html",  "x": 1560, "y": 3040, "w": 1440, "h": 900,  "title": "Nueva venta" },
+    { "file": "Cliente.dc.html",     "x": 0,    "y": 4060, "w": 1440, "h": 900,  "title": "Ficha de cliente" }
+  ],
+  "annotations": [
+    { "id": "n-brief", "x": -360, "y": 0, "w": 300,
+      "text": "Mi Óptica Digital\nDirección: tinta + ámbar.\n\nEl nombre pasa a ser el del dominio que ya compraste. SGI Óptica queda sólo como nombre interno del repo, si querés.\n\nEl ámbar es la única marca de color fuerte: sólo la acción principal y lo que pide atención. Verde y rojo únicamente para estado." },
+    { "id": "n-marca", "x": -360, "y": 2020, "w": 300,
+      "text": "Ingreso\n\nEl panel de tinta es el único lugar donde la marca ocupa espacio. Adentro del sistema el logo mide 27 px y no vuelve a aparecer.\n\nLa lente gigante del fondo está al 5,5% de opacidad: textura, no ilustración." },
+    { "id": "n-inicio", "x": 3120, "y": 2020, "w": 300,
+      "text": "Inicio\n\nCambio de fondo, no sólo de color: el tablero actual cuenta cosas (productos, proveedores, sucursales). Eso no se mira todos los días.\n\nAcá arranca con las tres cifras que sí: vendido hoy, saldo pendiente y stock bajo. Todas salen de endpoints que ya existen." },
+    { "id": "n-productos", "x": -360, "y": 3040, "w": 300,
+      "text": "Productos\n\nEstá dibujado a 1440 px, así que las columnas de prioridad 3 ya están ocultas: es lo que realmente se ve en un monitor de notebook.\n\nLa fila ámbar de arriba es un estilo con variantes: no se vende ni se stockea, se abre." },
+    { "id": "n-venta", "x": 3120, "y": 3040, "w": 300,
+      "text": "Nueva venta\n\nÚnico cambio de estructura que propongo: el modal pasa de 680 a 960 px y se parte en dos.\n\nIzquierda carga, derecha cierra. El total y el saldo quedan siempre a la vista mientras agregás renglones, en lugar de aparecer al final del scroll." },
+    { "id": "n-cliente", "x": 1560, "y": 4060, "w": 300,
+      "text": "Ficha de cliente\n\nLas recetas son la tabla más difícil del sistema: nueve columnas numéricas que se leen igual.\n\nAgrupadas bajo OD y OI, con línea divisoria entre ojos, dejan de necesitar que leas el encabezado en cada celda." }
+  ],
+  "launch": { "view": "canvas" }
+}

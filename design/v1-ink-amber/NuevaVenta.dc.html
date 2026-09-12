@@ -1,0 +1,388 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap">
+  <style>
+    :root{
+      --ink:#14181F; --ink-800:#1F262F; --ink-700:#2E3641; --text:#1A1D21; --muted:#78736B;
+      --paper:#FAF8F5; --panel:#FFFFFF; --line:#E7E2DA; --line-2:#F1EDE6; --head:#F6F3EE;
+      --amber:#E09A3B; --amber-600:#C77B20; --amber-700:#A8641A; --amber-50:#FDF6EA; --amber-200:#F2DCB0;
+      --pine:#2E7D5B; --pine-50:#EDF7F2; --brick:#C0392B; --brick-50:#FDF1EF;
+      --slate:#3E4A57; --slate-50:#EDF0F3;
+      --sans:'Archivo',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+      --serif:'Instrument Serif',Georgia,serif;
+      --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      --shadow:0 1px 2px rgba(26,29,33,.05),0 1px 3px rgba(26,29,33,.07);
+      --shadow-lg:0 18px 44px rgba(26,29,33,.20);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:var(--sans);font-size:14px;line-height:1.45;color:var(--text);
+      background:var(--paper);-webkit-font-smoothing:antialiased}
+    a{color:var(--amber-700);text-decoration:none} a:hover{color:var(--amber-600)}
+    h1,h2,h3,h4{margin:0;font-weight:600}
+    .ic{flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+    /* ---------- shell ---------- */
+    .app{display:grid;grid-template-columns:228px 1fr;height:900px;overflow:hidden}
+    .sidebar{background:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+    .sidebar .brand{display:flex;align-items:center;gap:11px;padding:17px 16px 15px}
+    .sidebar .brand .wm{font-family:var(--serif);font-size:17px;color:#fff;line-height:1.15}
+    .sidebar .brand .co{font-size:11px;color:#8A8378;line-height:1.3}
+    .nav{padding:4px 10px;display:flex;flex-direction:column;gap:2px;flex:1;overflow:hidden}
+    .navgrp{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+      color:#5E574E;padding:14px 10px 5px}
+    .nv{display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:8px;color:#B4ADA2;
+      font-weight:500;font-size:13.5px;cursor:pointer}
+    .nv .ic{width:17px;height:17px}
+    .nv:hover{background:var(--ink-700);color:#fff}
+    .nv .tail{margin-left:auto;font-size:11px;font-weight:700;background:#3A3229;color:#D9A85E;
+      border-radius:999px;padding:1px 7px;font-variant-numeric:tabular-nums}
+    .sidebar[data-active="inicio"]    .nv[data-a="inicio"],
+    .sidebar[data-active="productos"] .nv[data-a="productos"],
+    .sidebar[data-active="ventas"]    .nv[data-a="ventas"],
+    .sidebar[data-active="clientes"]  .nv[data-a="clientes"]{
+      background:var(--amber);color:#14181F;font-weight:600}
+    .sidebar[data-active="inicio"]    .nv[data-a="inicio"] .tail,
+    .sidebar[data-active="productos"] .nv[data-a="productos"] .tail,
+    .sidebar[data-active="ventas"]    .nv[data-a="ventas"] .tail,
+    .sidebar[data-active="clientes"]  .nv[data-a="clientes"] .tail{background:rgba(20,24,31,.18);color:#14181F}
+    .sfoot{padding:13px 16px;border-top:1px solid var(--ink-700);display:flex;align-items:center;gap:9px}
+    .sfoot .dot{width:7px;height:7px;border-radius:50%;background:#4FA37C;flex:0 0 auto}
+    .sfoot span{font-size:11.5px;color:#7A736A}
+    .main{display:flex;flex-direction:column;min-width:0;background:var(--paper)}
+    .topbar{height:56px;background:var(--panel);border-bottom:1px solid var(--line);display:flex;
+      align-items:center;justify-content:space-between;padding:0 22px;flex:0 0 auto}
+    .crumb{display:flex;align-items:center;gap:9px;font-weight:600;font-size:14.5px}
+    .crumb .mut{color:var(--muted);font-weight:500}
+    .tb-right{display:flex;align-items:center;gap:14px}
+    .gsearch{display:flex;align-items:center;gap:8px;background:var(--paper);border:1px solid var(--line);
+      border-radius:8px;padding:6px 11px;width:250px;color:var(--muted);font-size:13px}
+    .gsearch .ic{width:15px;height:15px}
+    .gsearch kbd{margin-left:auto;font-family:var(--mono);font-size:10.5px;background:var(--panel);
+      border:1px solid var(--line);border-radius:4px;padding:1px 5px;color:var(--muted)}
+    .who{display:flex;align-items:center;gap:9px}
+    .who .av{width:30px;height:30px;border-radius:50%;background:var(--amber-50);color:var(--amber-700);
+      display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;
+      border:1px solid var(--amber-200)}
+    .who .nm{font-size:13px;font-weight:600;line-height:1.2}
+    .who .rl{font-size:11px;color:var(--muted);line-height:1.2}
+    .content{padding:22px;overflow:hidden;flex:1}
+    /* ---------- pieces ---------- */
+    .page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px}
+    .page-head h2{font-family:var(--serif);font-size:27px;font-weight:400;line-height:1.1}
+    .page-head .sub{color:var(--muted);font-size:13px;margin-top:3px}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow)}
+    .card .chd{display:flex;align-items:center;justify-content:space-between;gap:12px;
+      padding:14px 16px;border-bottom:1px solid var(--line-2)}
+    .card .chd h3{font-size:14.5px}
+    .card .pad{padding:16px}
+    .btn{appearance:none;border:1px solid var(--line);background:var(--panel);color:var(--text);
+      padding:8px 14px;border-radius:8px;font-family:inherit;font-weight:600;font-size:13px;cursor:pointer;
+      display:inline-flex;align-items:center;gap:7px;line-height:1.2;white-space:nowrap}
+    .btn .ic{width:16px;height:16px}
+    .btn.primary{background:var(--amber);border-color:var(--amber);color:#14181F}
+    .btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+    .btn.danger{border-color:#EFCFC9;color:var(--brick)}
+    .btn.sm{padding:5px 10px;font-size:12px;border-radius:7px}
+    .btn.ico{padding:6px 8px;min-width:30px;justify-content:center;color:var(--muted)}
+    .toolbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:14px}
+    .toolbar .grow{flex:1}
+    .sbox{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);
+      border-radius:8px;padding:7px 11px;width:300px;color:var(--muted);font-size:13px}
+    .sbox .ic{width:15px;height:15px}
+    .sel{display:flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);
+      border-radius:8px;padding:7px 10px;font-size:13px;font-weight:500;color:var(--text);cursor:pointer}
+    .sel .ic{width:14px;height:14px;color:var(--muted)}
+    .sel.on{background:var(--amber-50);border-color:var(--amber-200);color:var(--amber-700)}
+    table{width:100%;border-collapse:collapse;font-size:13px;background:var(--panel)}
+    thead th{text-align:left;padding:9px 10px;background:var(--head);color:var(--muted);font-weight:600;
+      font-size:11px;letter-spacing:.04em;text-transform:uppercase;border-bottom:1px solid var(--line);white-space:nowrap}
+    tbody td{padding:var(--rowpad,9px) 10px;border-bottom:1px solid var(--line-2);vertical-align:middle}
+    tbody tr:last-child td{border-bottom:0}
+    .num{text-align:right;font-variant-numeric:tabular-nums}
+    .mono{font-family:var(--mono);font-size:12.5px}
+    .badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:600;line-height:1.5;white-space:nowrap}
+    .b-ok{background:var(--pine-50);color:var(--pine)}
+    .b-bad{background:var(--brick-50);color:var(--brick)}
+    .b-am{background:var(--amber-50);color:var(--amber-700)}
+    .b-sl{background:var(--slate-50);color:var(--slate)}
+    .b-gr{background:#F2EFE9;color:#6B665E}
+    .sw{width:14px;height:14px;border-radius:4px;border:1px solid rgba(26,29,33,.16);display:inline-block;flex:0 0 auto}
+    .swrow{display:inline-flex;align-items:center;gap:5px}
+    .swrow .sw + .sw{margin-left:-5px}
+    .fld{display:flex;flex-direction:column;gap:5px;min-width:0}
+    .fld > label{font-size:12px;font-weight:600;color:#3D3A34}
+    .fld .inp{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13.5px;
+      display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .fld .inp .ic{width:14px;height:14px;color:var(--muted)}
+    .fld .help{font-size:11px;color:var(--muted)}
+    .muted{color:var(--muted)}
+  </style>
+</helmet>
+
+<div class="app">
+  <!-- ================= barra lateral ================= -->
+  <div class="sidebar" data-active="ventas">
+    <div class="brand">
+      <svg width="27" height="27" viewBox="0 0 24 24">
+        <path d="M 1.6 12 Q 12 3.1 22.4 12 Q 12 20.9 1.6 12 Z" fill="#E09A3B"></path>
+        <circle cx="12" cy="12" r="4.15" fill="#14181F"></circle>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+        <div class="wm">Mi Óptica Digital</div>
+        <div class="co">Óptica Belgrano</div>
+      </div>
+    </div>
+    <div class="nav">
+      <div class="navgrp" style="padding-top:4px">Operación</div>
+      <div class="nv" data-a="inicio"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Inicio</div>
+      <div class="nv" data-a="ventas"><svg class="ic" viewBox="0 0 24 24"><path d="M5 2v19l3-2 3 2 3-2 3 2 3-2V2z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>Ventas</div>
+      <div class="nv" data-a="pendientes"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Cuentas pendientes<span class="tail">31</span></div>
+      <div class="nv" data-a="clientes"><svg class="ic" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>Clientes</div>
+
+      <div class="navgrp">Catálogo</div>
+      <div class="nv" data-a="productos"><svg class="ic" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>Productos</div>
+      <div class="nv" data-a="catalogo"><svg class="ic" viewBox="0 0 24 24"><path d="M7 7h.01"/><path d="M2 12V4a2 2 0 0 1 2-2h8l10 10-10 10z"/></svg>Catálogo</div>
+      <div class="nv" data-a="precios"><svg class="ic" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.4"/><path d="M6 12h.01M18 12h.01"/></svg>Precios</div>
+      <div class="nv" data-a="stock"><svg class="ic" viewBox="0 0 24 24"><path d="m12.8 2.5 8.2 4.6a1 1 0 0 1 0 1.8l-8.2 4.6a2 2 0 0 1-1.6 0L3 8.9a1 1 0 0 1 0-1.8l8.2-4.6a2 2 0 0 1 1.6 0z"/><path d="m3 14 8.2 4.6a2 2 0 0 0 1.6 0L21 14"/></svg>Stock<span class="tail">9</span></div>
+
+      <div class="navgrp">Administración</div>
+      <div class="nv" data-a="proveedores"><svg class="ic" viewBox="0 0 24 24"><path d="M10 17h4V5H2v12h3"/><path d="M20 17h2v-3.3a2 2 0 0 0-.6-1.4L18 9h-4v8h3"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>Proveedores</div>
+      <div class="nv" data-a="sucursales"><svg class="ic" viewBox="0 0 24 24"><path d="m3 8 1.2-4.1A1 1 0 0 1 5.2 3h13.6a1 1 0 0 1 1 .9L21 8"/><path d="M3 8h18v1.5a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z"/><path d="M5 12.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7.5"/></svg>Sucursales</div>
+      <div class="nv" data-a="usuarios"><svg class="ic" viewBox="0 0 24 24"><path d="M12 2.5 4 6v6c0 5 3.4 8.3 8 9.5 4.6-1.2 8-4.5 8-9.5V6z"/><path d="m9.2 12 2 2 3.6-3.6"/></svg>Usuarios y roles</div>
+      <div class="nv" data-a="empresa"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.1 14.6a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.2a1.6 1.6 0 0 0-2.7-1.1l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H3a2 2 0 1 1 0-4h.2a1.6 1.6 0 0 0 1.1-2.7l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 2.7-1.1V3a2 2 0 1 1 4 0v.2a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1.1 2.7H21a2 2 0 1 1 0 4h-.2a1.6 1.6 0 0 0-1.7 1z"/></svg>Empresa</div>
+    </div>
+    <div class="sfoot"><span class="dot"></span><span>Sincronizado hace instantes</span></div>
+  </div>
+
+  <!-- ================= principal ================= -->
+  <div class="main">
+    <div class="topbar">
+      <div class="crumb">Operación <span class="mut">/</span> Ventas</div>
+      <div class="tb-right">
+        <div class="gsearch">
+          <svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          Buscar producto, cliente o venta<kbd>/</kbd>
+        </div>
+        <div class="who">
+          <div class="av">MR</div>
+          <div><div class="nm">Martina Rossi</div><div class="rl">Encargada</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="page-head">
+        <div>
+          <h2>Ventas</h2>
+          <div class="sub">Septiembre 2026 · 218 comprobantes · $ 7.940.300,00</div>
+        </div>
+        <button class="btn primary"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Nueva venta</button>
+      </div>
+      <div class="toolbar">
+        <div class="sbox"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Buscar por número, cliente o recordatorio</div>
+        <div class="sel">Todos los estados<svg class="ic" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></div>
+        <div class="sel">Todas las sucursales<svg class="ic" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></div>
+        <div class="sel on">Sólo con saldo<svg class="ic" viewBox="0 0 24 24"><path d="m5 5 14 14M19 5 5 19"/></svg></div>
+      </div>
+      <div class="card" style="overflow:hidden">
+        <table>
+          <thead><tr><th>Número</th><th>Fecha</th><th>Cliente</th><th>Sucursal</th>
+            <th class="num">Total</th><th class="num">Abonado</th><th class="num">Saldo</th><th>Estado</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">0001-00004214</td><td>11/09 14:02</td><td>Silvana Ibarra</td><td>Belgrano</td>
+              <td class="num">94.500,00</td><td class="num">0,00</td><td class="num" style="color:var(--brick);font-weight:700">94.500,00</td>
+              <td><span class="badge b-ok">Confirmada</span></td></tr>
+            <tr><td class="mono">0001-00004213</td><td>11/09 12:38</td><td>Consumidor final</td><td>Belgrano</td>
+              <td class="num">18.700,00</td><td class="num">18.700,00</td><td class="num muted">0,00</td>
+              <td><span class="badge b-ok">Confirmada</span></td></tr>
+            <tr><td class="mono">0001-00004212</td><td>11/09 11:05</td><td>Nicolás Vega</td><td>Centro</td>
+              <td class="num">131.120,00</td><td class="num">0,00</td><td class="num" style="color:var(--brick);font-weight:700">131.120,00</td>
+              <td><span class="badge b-ok">Confirmada</span></td></tr>
+            <tr><td class="mono">0001-00004211</td><td>10/09 18:44</td><td>Gustavo Peralta</td><td>Belgrano</td>
+              <td class="num">186.000,00</td><td class="num">0,00</td><td class="num" style="color:var(--brick);font-weight:700">186.000,00</td>
+              <td><span class="badge b-ok">Confirmada</span></td></tr>
+            <tr><td class="mono">0001-00004210</td><td>10/09 17:12</td><td>Carla Domínguez</td><td>Villa Urquiza</td>
+              <td class="num">62.800,00</td><td class="num">20.000,00</td><td class="num" style="color:var(--brick);font-weight:700">42.800,00</td>
+              <td><span class="badge b-sl">Presupuesto</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ================= modal de nueva venta ================= -->
+      <div style="position:fixed;inset:0;background:rgba(20,24,31,.52);display:flex;align-items:center;
+                  justify-content:center;padding:26px">
+        <div style="width:960px;max-height:848px;background:var(--panel);border-radius:14px;
+                    box-shadow:var(--shadow-lg);display:flex;flex-direction:column;overflow:hidden">
+
+          <!-- encabezado -->
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;
+                      padding:15px 20px;border-bottom:1px solid var(--line)">
+            <div style="display:flex;align-items:baseline;gap:11px">
+              <h3 style="font-family:var(--serif);font-size:22px;font-weight:400">Nueva venta</h3>
+              <span class="mono" style="font-size:12.5px;color:var(--muted)">0001-00004215</span>
+            </div>
+            <button class="btn ico"><svg class="ic" viewBox="0 0 24 24"><path d="m5 5 14 14M19 5 5 19"/></svg></button>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 316px;flex:1;min-height:0">
+
+            <!-- ---- columna de carga ---- -->
+            <div style="padding:20px;display:flex;flex-direction:column;gap:18px;overflow:hidden">
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+                <div class="fld">
+                  <label>Cliente</label>
+                  <div class="inp"><span>Nicolás Vega · 30.998.221</span>
+                    <svg class="ic" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></div>
+                  <div class="help">Obligatorio si queda saldo pendiente.</div>
+                </div>
+                <div class="fld">
+                  <label>Sucursal</label>
+                  <div class="inp"><span>Belgrano</span>
+                    <svg class="ic" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></div>
+                  <div class="help">De acá se descuenta el stock.</div>
+                </div>
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:8px;min-height:0">
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <label style="font-size:12px;font-weight:600;color:#3D3A34">Productos <span style="color:var(--brick)">*</span></label>
+                  <button class="btn sm"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Agregar producto</button>
+                </div>
+                <div style="border:1px solid var(--line);border-radius:9px;overflow:hidden">
+                  <table style="font-size:12.5px">
+                    <thead><tr>
+                      <th>Producto</th><th class="num" style="width:62px">Cant.</th>
+                      <th class="num" style="width:96px">Precio</th><th style="width:92px">Desc.</th>
+                      <th class="num" style="width:96px">Total</th><th style="width:34px"></th>
+                    </tr></thead>
+                    <tbody>
+                      <tr>
+                        <td><div style="font-weight:600">Armazón acetato Havana 52</div>
+                          <div class="mono" style="color:var(--muted);font-size:11px">ARM-001-HAV · Havana</div></td>
+                        <td class="num">1,00</td><td class="num">128.400,00</td>
+                        <td><span class="badge b-am">10 %</span></td>
+                        <td class="num" style="font-weight:600">115.560,00</td>
+                        <td><svg class="ic" width="14" height="14" viewBox="0 0 24 24" style="color:var(--muted)"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></td>
+                      </tr>
+                      <tr>
+                        <td><div style="font-weight:600">Cristal antirreflejo 1.50</div>
+                          <div class="mono" style="color:var(--muted);font-size:11px">CRI-AR-150</div></td>
+                        <td class="num">2,00</td><td class="num">72.500,00</td>
+                        <td class="muted">-</td>
+                        <td class="num" style="font-weight:600">145.000,00</td>
+                        <td><svg class="ic" width="14" height="14" viewBox="0 0 24 24" style="color:var(--muted)"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></td>
+                      </tr>
+                      <tr>
+                        <td><div style="font-weight:600">Líquido multipropósito 360 ml</div>
+                          <div class="mono" style="color:var(--muted);font-size:11px">LIQ-010</div></td>
+                        <td class="num">1,00</td><td class="num">18.700,00</td>
+                        <td class="muted">-</td>
+                        <td class="num" style="font-weight:600">18.700,00</td>
+                        <td><svg class="ic" width="14" height="14" viewBox="0 0 24 24" style="color:var(--muted)"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <label style="font-size:12px;font-weight:600;color:#3D3A34">Abonado</label>
+                  <button class="btn sm"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Agregar pago</button>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:7px">
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="inp" style="flex:1;font-size:13px"><span>Efectivo</span>
+                      <svg class="ic" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></div>
+                    <div class="inp" style="width:136px;font-size:13px;justify-content:flex-end;font-variant-numeric:tabular-nums">100.000,00</div>
+                    <button class="btn ico"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="inp" style="flex:1;font-size:13px"><span>Transferencia Galicia</span>
+                      <svg class="ic" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></div>
+                    <div class="inp" style="width:136px;font-size:13px;justify-content:flex-end;font-variant-numeric:tabular-nums">50.000,00</div>
+                    <button class="btn ico"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ---- columna de cierre: siempre a la vista ---- -->
+            <div style="background:var(--head);border-left:1px solid var(--line);padding:20px;
+                        display:flex;flex-direction:column;gap:16px">
+
+              <div style="display:flex;flex-direction:column;gap:11px">
+                <div class="fld">
+                  <label>Estado</label>
+                  <div class="inp" style="background:#fff"><span>Confirmada</span>
+                    <svg class="ic" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></div>
+                </div>
+                <div class="fld">
+                  <label>Descuento sobre el total</label>
+                  <div style="display:flex;gap:6px">
+                    <div class="inp" style="width:62px;background:#fff;justify-content:center;font-weight:600">%</div>
+                    <div class="inp" style="flex:1;background:#fff;justify-content:flex-end;font-variant-numeric:tabular-nums">5,00</div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="height:1px;background:var(--line)"></div>
+
+              <div style="display:grid;grid-template-columns:1fr auto;gap:7px 14px;font-size:13px">
+                <div class="muted">Subtotal</div><div class="num" style="font-variant-numeric:tabular-nums">292.100,00</div>
+                <div class="muted">Descuentos por línea</div><div class="num" style="font-variant-numeric:tabular-nums">-12.840,00</div>
+                <div class="muted">Descuento 5 %</div><div class="num" style="font-variant-numeric:tabular-nums">-13.963,00</div>
+                <div style="font-weight:700;font-size:17px;border-top:1px solid var(--line);padding-top:9px;margin-top:4px">Total</div>
+                <div class="num" style="font-weight:700;font-size:17px;border-top:1px solid var(--line);padding-top:9px;margin-top:4px;font-variant-numeric:tabular-nums">265.297,00</div>
+                <div class="muted">Abonado</div><div class="num" style="font-variant-numeric:tabular-nums">150.000,00</div>
+                <div style="font-weight:700;color:var(--brick)">Saldo</div>
+                <div class="num" style="font-weight:700;color:var(--brick);font-variant-numeric:tabular-nums">115.297,00</div>
+              </div>
+
+              <div style="background:var(--amber-50);border:1px solid var(--amber-200);border-radius:9px;
+                          padding:12px;display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--amber-700)">
+                  <svg class="ic" width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                  Queda saldo pendiente</div>
+                <div class="fld">
+                  <label style="font-size:11.5px">Fecha en que promete pagar</label>
+                  <div class="inp" style="background:#fff;font-size:13px"><span>12/09/2026</span>
+                    <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg></div>
+                </div>
+                <div class="fld">
+                  <label style="font-size:11.5px">Recordatorio</label>
+                  <div class="inp" style="background:#fff;font-size:13px;color:var(--muted)"><span>Retira los anteojos</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- pie -->
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;
+                      padding:14px 20px;border-top:1px solid var(--line)">
+            <div style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:7px">
+              <svg class="ic" width="14" height="14" viewBox="0 0 24 24"><path d="m12.8 2.5 8.2 4.6a1 1 0 0 1 0 1.8l-8.2 4.6a2 2 0 0 1-1.6 0L3 8.9a1 1 0 0 1 0-1.8l8.2-4.6a2 2 0 0 1 1.6 0z"/><path d="m3 14 8.2 4.6a2 2 0 0 0 1.6 0L21 14"/></svg>
+              Descuenta stock de Belgrano al confirmar.
+            </div>
+            <div style="display:flex;gap:10px">
+              <button class="btn ghost">Cancelar</button>
+              <button class="btn primary">Registrar venta</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {}
+</script>
+</body>
+</html>

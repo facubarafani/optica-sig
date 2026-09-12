@@ -1,0 +1,269 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    :root{
+      --lin:#D9D9D9; --lin-h:#B4B4B4; --head:#F1F1F1; --rail:#F6F6F6;
+      --txt:#1A1A1A; --dim:#6F6F6F; --sel:#1567D3; --sel-bg:#E8F0FE;
+      --rojo:#C5221F; --verde:#137333;
+      --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:#fff;color:var(--txt);font-family:var(--sans);font-size:12px;
+      line-height:1.3;-webkit-font-smoothing:antialiased}
+    a{color:var(--sel)} a:hover{color:#0B4DA2}
+    .ic{flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+    .app{display:grid;grid-template-columns:52px 1fr;height:900px;overflow:hidden}
+    /* ---- riel de iconos: la marca casi no ocupa lugar ---- */
+    .rail{background:var(--rail);border-right:1px solid var(--lin);display:flex;flex-direction:column;
+      align-items:center;padding:8px 0;gap:2px}
+    .rail .mk{margin-bottom:10px}
+    .ri{width:36px;height:32px;display:flex;align-items:center;justify-content:center;color:#5A5A5A;
+      border-radius:3px;cursor:pointer;position:relative}
+    .ri .ic{width:17px;height:17px}
+    .ri:hover{background:#E6E6E6;color:var(--txt)}
+    .ri.on{background:var(--sel-bg);color:var(--sel)}
+    .ri .dot{position:absolute;top:5px;right:5px;width:5px;height:5px;border-radius:50%;background:var(--rojo)}
+    .rail .sp{flex:1}
+    /* ---- barras ---- */
+    .main{display:flex;flex-direction:column;min-width:0;overflow:hidden}
+    .bar1{height:38px;border-bottom:1px solid var(--lin);display:flex;align-items:center;
+      justify-content:space-between;padding:0 12px;flex:0 0 auto}
+    .bar1 .ttl{display:flex;align-items:baseline;gap:9px}
+    .bar1 .ttl b{font-size:14px;font-weight:600}
+    .bar1 .ttl span{font-size:11px;color:var(--dim)}
+    .bar1 .r{display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--dim)}
+    .bar1 .av{width:24px;height:24px;border-radius:50%;background:#D7E3F7;color:#12417E;display:flex;
+      align-items:center;justify-content:center;font-size:10px;font-weight:600}
+    .bar2{height:34px;border-bottom:1px solid var(--lin);display:flex;align-items:center;gap:4px;
+      padding:0 8px;flex:0 0 auto;background:#FAFAFA}
+    .tb{display:flex;align-items:center;gap:6px;padding:4px 8px;font-size:11.5px;color:var(--txt);
+      border-radius:3px;cursor:pointer}
+    .tb .ic{width:14px;height:14px;color:#5A5A5A}
+    .tb:hover{background:#EDEDED}
+    .tb.pri{background:var(--sel);color:#fff;font-weight:600}
+    .tb.pri .ic{color:#fff}
+    .sep{width:1px;height:18px;background:var(--lin);margin:0 4px}
+    .chipf{display:flex;align-items:center;gap:5px;padding:3px 7px;font-size:11px;background:var(--sel-bg);
+      color:#12417E;border:1px solid #C3D6F5;border-radius:3px;cursor:pointer}
+    .chipf .ic{width:11px;height:11px}
+    .fx{height:28px;border-bottom:1px solid var(--lin);display:flex;align-items:center;gap:10px;
+      padding:0 10px;flex:0 0 auto;font-size:11.5px;color:var(--dim)}
+    .fx .cell{font-weight:600;color:var(--txt);border:1px solid var(--lin);padding:1px 8px;min-width:88px}
+    /* ---- grilla ---- */
+    .grid{flex:1;overflow:hidden}
+    table{width:100%;border-collapse:collapse;table-layout:fixed}
+    th,td{border:1px solid var(--lin);padding:5px 7px;text-align:left;overflow:hidden;
+      white-space:nowrap;text-overflow:ellipsis}
+    thead th{background:var(--head);border-color:var(--lin-h);font-size:11px;font-weight:600;color:#3C3C3C;
+      padding:5px 7px}
+    thead th.g{background:#E8E8E8;width:34px;text-align:center;color:var(--dim);font-weight:400}
+    td.g{background:var(--head);border-color:var(--lin-h);width:34px;text-align:center;color:var(--dim);
+      font-size:10.5px;font-variant-numeric:tabular-nums}
+    .n{text-align:right;font-variant-numeric:tabular-nums}
+    .dim{color:var(--dim)}
+    .rojo{color:var(--rojo);font-weight:600}
+    .verde{color:var(--verde)}
+    tr.sel td{background:var(--sel-bg)}
+    tr.sel td.g{background:#C9DBF8;color:#12417E;font-weight:600}
+    td.focus{outline:2px solid var(--sel);outline-offset:-2px}
+    .grupo{font-weight:600}
+    .hijo{padding-left:22px}
+    .tri{display:inline-block;width:0;height:0;border-left:5px solid #5A5A5A;border-top:4px solid transparent;
+      border-bottom:4px solid transparent;margin-right:5px;vertical-align:1px}
+    .tri.ab{border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid #5A5A5A;
+      vertical-align:2px;margin-right:4px}
+    .sw{width:10px;height:10px;display:inline-block;border:1px solid rgba(0,0,0,.25);vertical-align:-1px;margin-right:3px}
+    /* ---- barra de estado ---- */
+    .status{height:26px;border-top:1px solid var(--lin);background:#FAFAFA;display:flex;align-items:center;
+      justify-content:space-between;padding:0 12px;font-size:11px;color:var(--dim);flex:0 0 auto}
+    .status .grp{display:flex;align-items:center;gap:16px}
+    .status b{color:var(--txt);font-weight:600;font-variant-numeric:tabular-nums}
+    .tabs{display:flex;align-items:center;gap:0}
+    .tab{padding:3px 12px;font-size:11px;border:1px solid var(--lin);border-bottom:0;background:#EFEFEF;
+      color:var(--dim);cursor:pointer}
+    .tab.on{background:#fff;color:var(--txt);font-weight:600}
+  </style>
+</helmet>
+
+<div class="app">
+  <div class="rail">
+    <div class="mk">
+      <svg width="22" height="22" viewBox="0 0 24 24">
+        <path d="M12 2a10 10 0 0 0 0 20z" fill="#C5221F"></path>
+        <path d="M12 2a10 10 0 0 1 0 20z" fill="#137333"></path>
+        <circle cx="12" cy="12" r="10" fill="none" stroke="#1A1A1A" stroke-width="1.6"></circle>
+      </svg>
+    </div>
+    <div class="ri"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="8" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="11" width="7" height="10" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg></div>
+    <div class="ri"><svg class="ic" viewBox="0 0 24 24"><path d="M5 2v19l3-2 3 2 3-2 3 2 3-2V2z"/><path d="M9 7h6M9 11h6"/></svg></div>
+    <div class="ri"><span class="dot"></span><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+    <div class="ri"><svg class="ic" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+    <div class="ri on"><svg class="ic" viewBox="0 0 24 24"><path d="M21 16V8l-9-5-9 5v8l9 5z"/><path d="m3 8 9 5 9-5M12 21v-8"/></svg></div>
+    <div class="ri"><svg class="ic" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="1"/><circle cx="12" cy="12" r="2.4"/></svg></div>
+    <div class="ri"><span class="dot"></span><svg class="ic" viewBox="0 0 24 24"><path d="m12 2 9 5-9 5-9-5z"/><path d="m3 12 9 5 9-5M3 17l9 5 9-5"/></svg></div>
+    <div class="ri"><svg class="ic" viewBox="0 0 24 24"><path d="M10 17h4V5H2v12h3"/><path d="M20 17h2v-4l-4-4h-4v8h3"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg></div>
+    <div class="sp"></div>
+    <div class="ri"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></div>
+  </div>
+
+  <div class="main">
+    <div class="bar1">
+      <div class="ttl"><b>Productos</b><span>Óptica Belgrano · ARS · guardado 14:02</span></div>
+      <div class="r">Martina Rossi <div class="av">MR</div></div>
+    </div>
+
+    <div class="bar2">
+      <div class="tb pri"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Nuevo</div>
+      <div class="sep"></div>
+      <div class="tb"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v12M8 11l4 4 4-4M4 19h16"/></svg>Importar</div>
+      <div class="tb"><svg class="ic" viewBox="0 0 24 24"><path d="M12 15V3M8 7l4-4 4 4M4 19h16"/></svg>Exportar</div>
+      <div class="sep"></div>
+      <div class="tb"><svg class="ic" viewBox="0 0 24 24"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg>Filtros</div>
+      <div class="chipf">Tipo: Armazón <svg class="ic" viewBox="0 0 24 24"><path d="m5 5 14 14M19 5 5 19"/></svg></div>
+      <div class="chipf">Stock &lt; mínimo <svg class="ic" viewBox="0 0 24 24"><path d="m5 5 14 14M19 5 5 19"/></svg></div>
+      <div class="sep"></div>
+      <div class="tb"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h18M9 3v18"/></svg>Columnas</div>
+      <div style="flex:1"></div>
+      <div class="tb"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>Buscar</div>
+    </div>
+
+    <div class="fx">
+      <span>C4</span><span class="cell">128.400,00</span>
+      <span>Precio de venta resuelto por lista «Mostrador» · categoría B</span>
+    </div>
+
+    <div class="grid">
+      <table>
+        <thead><tr>
+          <th class="g"></th>
+          <th style="width:122px">Código</th><th>Descripción</th><th style="width:96px">Tipo</th>
+          <th style="width:104px">Marca</th><th style="width:88px">Modelo</th><th style="width:104px">Color</th>
+          <th class="n" style="width:104px">Precio</th><th class="n" style="width:98px">Costo</th>
+          <th class="n" style="width:72px">Stock</th><th class="n" style="width:64px">Mín.</th>
+        </tr></thead>
+        <tbody>
+          <tr>
+            <td class="g">1</td>
+            <td class="grupo"><span class="tri ab"></span>ARM-001</td>
+            <td class="grupo">Armazón acetato full rim 52</td>
+            <td>Armazón</td><td>Vulk</td><td>Sole</td><td class="dim">3 colores</td>
+            <td class="n dim">-</td><td class="n dim">-</td><td class="n dim">-</td><td class="n dim">-</td>
+          </tr>
+          <tr>
+            <td class="g">2</td>
+            <td class="hijo">ARM-001-HAV</td><td class="hijo">Armazón acetato Havana 52</td>
+            <td>Armazón</td><td>Vulk</td><td>Sole</td>
+            <td><span class="sw" style="background:#7A4B28"></span>Havana</td>
+            <td class="n">128.400,00</td><td class="n dim">61.200,00</td><td class="n">6,00</td><td class="n dim">3,00</td>
+          </tr>
+          <tr class="sel">
+            <td class="g">3</td>
+            <td class="hijo">ARM-001-NEG</td><td class="hijo">Armazón acetato Negro 52</td>
+            <td>Armazón</td><td>Vulk</td><td>Sole</td>
+            <td><span class="sw" style="background:#14181F"></span>Negro</td>
+            <td class="n focus">128.400,00</td><td class="n dim">61.200,00</td><td class="n">11,00</td><td class="n dim">3,00</td>
+          </tr>
+          <tr>
+            <td class="g">4</td>
+            <td class="hijo">ARM-001-BOR</td><td class="hijo">Armazón acetato Bordó 52</td>
+            <td>Armazón</td><td>Vulk</td><td>Sole</td>
+            <td><span class="sw" style="background:#8C1F2F"></span>Bordó</td>
+            <td class="n">128.400,00</td><td class="n dim">61.200,00</td><td class="n rojo">1,00</td><td class="n dim">3,00</td>
+          </tr>
+          <tr>
+            <td class="g">5</td>
+            <td class="grupo"><span class="tri"></span>ARM-007</td>
+            <td class="grupo">Armazón acetato cat eye 50</td>
+            <td>Armazón</td><td>Vulk</td><td>Nara</td><td class="dim">4 colores</td>
+            <td class="n dim">-</td><td class="n dim">-</td><td class="n dim">-</td><td class="n dim">-</td>
+          </tr>
+          <tr>
+            <td class="g">6</td>
+            <td>ARM-014-NEG</td><td>Armazón metal Negro 54</td>
+            <td>Armazón</td><td>Infinit</td><td>Duna</td>
+            <td><span class="sw" style="background:#14181F"></span>Negro</td>
+            <td class="n">128.400,00</td><td class="n dim">61.200,00</td><td class="n rojo">0,00</td><td class="n dim">2,00</td>
+          </tr>
+          <tr>
+            <td class="g">7</td>
+            <td>LC-0042</td><td>Lente de contacto mensual -1.25</td>
+            <td>Lente contacto</td><td>Bausch &amp; Lomb</td><td class="dim">-</td><td class="dim">-</td>
+            <td class="n">46.900,00</td><td class="n dim">23.100,00</td><td class="n rojo">2,00</td><td class="n dim">6,00</td>
+          </tr>
+          <tr>
+            <td class="g">8</td>
+            <td>LC-0043</td><td>Lente de contacto mensual -1.50</td>
+            <td>Lente contacto</td><td>Bausch &amp; Lomb</td><td class="dim">-</td><td class="dim">-</td>
+            <td class="n">46.900,00</td><td class="n dim">23.100,00</td><td class="n">14,00</td><td class="n dim">6,00</td>
+          </tr>
+          <tr>
+            <td class="g">9</td>
+            <td>CRI-AR-150</td><td>Cristal antirreflejo 1.50 monofocal</td>
+            <td>Cristal</td><td>Essilor</td><td>Crizal</td><td class="dim">-</td>
+            <td class="n">72.500,00</td><td class="n dim">34.800,00</td><td class="n">4,00</td><td class="n dim">10,00</td>
+          </tr>
+          <tr>
+            <td class="g">10</td>
+            <td>CRI-FT-167</td><td>Cristal fotocromático 1.67</td>
+            <td>Cristal</td><td>Transitions</td><td>Gen 8</td><td class="dim">-</td>
+            <td class="n">198.000,00</td><td class="n dim">96.400,00</td><td class="n">22,00</td><td class="n dim">8,00</td>
+          </tr>
+          <tr>
+            <td class="g">11</td>
+            <td>LIQ-010</td><td>Líquido multipropósito 360 ml</td>
+            <td>Accesorio</td><td>Renu</td><td class="dim">-</td><td class="dim">-</td>
+            <td class="n">18.700,00</td><td class="n dim">9.050,00</td><td class="n rojo">3,00</td><td class="n dim">8,00</td>
+          </tr>
+          <tr>
+            <td class="g">12</td>
+            <td>LIQ-011</td><td>Líquido multipropósito 120 ml</td>
+            <td>Accesorio</td><td>Renu</td><td class="dim">-</td><td class="dim">-</td>
+            <td class="n">9.400,00</td><td class="n dim">4.480,00</td><td class="n">26,00</td><td class="n dim">10,00</td>
+          </tr>
+          <tr>
+            <td class="g">13</td>
+            <td class="grupo"><span class="tri"></span>ACC-ES-01</td>
+            <td class="grupo">Estuche rígido chico</td>
+            <td>Accesorio</td><td class="dim">-</td><td class="dim">-</td><td class="dim">2 colores</td>
+            <td class="n dim">-</td><td class="n dim">-</td><td class="n dim">-</td><td class="n dim">-</td>
+          </tr>
+          <tr>
+            <td class="g">14</td>
+            <td>ACC-PA-02</td><td>Paño de microfibra 15x15</td>
+            <td>Accesorio</td><td class="dim">-</td><td class="dim">-</td><td class="dim">-</td>
+            <td class="n">2.900,00</td><td class="n dim">1.150,00</td><td class="n">140,00</td><td class="n dim">30,00</td>
+          </tr>
+          <tr>
+            <td class="g">15</td>
+            <td class="dim" colspan="10" style="color:#9A9A9A">14 de 1.284 filas. Bajá para seguir cargando.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="status">
+      <div class="tabs">
+        <div class="tab on">Productos</div><div class="tab">Costos</div><div class="tab">Stock por sucursal</div>
+      </div>
+      <div class="grp">
+        <span>Seleccionado: <b>ARM-001-NEG</b></span>
+        <span>Suma precio <b>$ 1.056.600,00</b></span>
+        <span>Promedio costo <b>$ 39.229,09</b></span>
+        <span class="rojo">4 bajo mínimo</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {}
+</script>
+</body>
+</html>

@@ -1,0 +1,349 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap">
+  <style>
+    :root{
+      --ink:#14181F; --ink-800:#1F262F; --ink-700:#2E3641; --text:#1A1D21; --muted:#78736B;
+      --paper:#FAF8F5; --panel:#FFFFFF; --line:#E7E2DA; --line-2:#F1EDE6; --head:#F6F3EE;
+      --amber:#E09A3B; --amber-600:#C77B20; --amber-700:#A8641A; --amber-50:#FDF6EA; --amber-200:#F2DCB0;
+      --pine:#2E7D5B; --pine-50:#EDF7F2; --brick:#C0392B; --brick-50:#FDF1EF;
+      --slate:#3E4A57; --slate-50:#EDF0F3;
+      --sans:'Archivo',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+      --serif:'Instrument Serif',Georgia,serif;
+      --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      --shadow:0 1px 2px rgba(26,29,33,.05),0 1px 3px rgba(26,29,33,.07);
+      --shadow-lg:0 18px 44px rgba(26,29,33,.20);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:var(--sans);font-size:14px;line-height:1.45;color:var(--text);
+      background:var(--paper);-webkit-font-smoothing:antialiased}
+    a{color:var(--amber-700);text-decoration:none} a:hover{color:var(--amber-600)}
+    h1,h2,h3,h4{margin:0;font-weight:600}
+    .ic{flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+    /* ---------- shell ---------- */
+    .app{display:grid;grid-template-columns:228px 1fr;height:900px;overflow:hidden}
+    .sidebar{background:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+    .sidebar .brand{display:flex;align-items:center;gap:11px;padding:17px 16px 15px}
+    .sidebar .brand .wm{font-family:var(--serif);font-size:17px;color:#fff;line-height:1.15}
+    .sidebar .brand .co{font-size:11px;color:#8A8378;line-height:1.3}
+    .nav{padding:4px 10px;display:flex;flex-direction:column;gap:2px;flex:1;overflow:hidden}
+    .navgrp{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+      color:#5E574E;padding:14px 10px 5px}
+    .nv{display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:8px;color:#B4ADA2;
+      font-weight:500;font-size:13.5px;cursor:pointer}
+    .nv .ic{width:17px;height:17px}
+    .nv:hover{background:var(--ink-700);color:#fff}
+    .nv .tail{margin-left:auto;font-size:11px;font-weight:700;background:#3A3229;color:#D9A85E;
+      border-radius:999px;padding:1px 7px;font-variant-numeric:tabular-nums}
+    .sidebar[data-active="inicio"]    .nv[data-a="inicio"],
+    .sidebar[data-active="productos"] .nv[data-a="productos"],
+    .sidebar[data-active="ventas"]    .nv[data-a="ventas"],
+    .sidebar[data-active="clientes"]  .nv[data-a="clientes"]{
+      background:var(--amber);color:#14181F;font-weight:600}
+    .sidebar[data-active="inicio"]    .nv[data-a="inicio"] .tail,
+    .sidebar[data-active="productos"] .nv[data-a="productos"] .tail,
+    .sidebar[data-active="ventas"]    .nv[data-a="ventas"] .tail,
+    .sidebar[data-active="clientes"]  .nv[data-a="clientes"] .tail{background:rgba(20,24,31,.18);color:#14181F}
+    .sfoot{padding:13px 16px;border-top:1px solid var(--ink-700);display:flex;align-items:center;gap:9px}
+    .sfoot .dot{width:7px;height:7px;border-radius:50%;background:#4FA37C;flex:0 0 auto}
+    .sfoot span{font-size:11.5px;color:#7A736A}
+    .main{display:flex;flex-direction:column;min-width:0;background:var(--paper)}
+    .topbar{height:56px;background:var(--panel);border-bottom:1px solid var(--line);display:flex;
+      align-items:center;justify-content:space-between;padding:0 22px;flex:0 0 auto}
+    .crumb{display:flex;align-items:center;gap:9px;font-weight:600;font-size:14.5px}
+    .crumb .mut{color:var(--muted);font-weight:500}
+    .tb-right{display:flex;align-items:center;gap:14px}
+    .gsearch{display:flex;align-items:center;gap:8px;background:var(--paper);border:1px solid var(--line);
+      border-radius:8px;padding:6px 11px;width:250px;color:var(--muted);font-size:13px}
+    .gsearch .ic{width:15px;height:15px}
+    .gsearch kbd{margin-left:auto;font-family:var(--mono);font-size:10.5px;background:var(--panel);
+      border:1px solid var(--line);border-radius:4px;padding:1px 5px;color:var(--muted)}
+    .who{display:flex;align-items:center;gap:9px}
+    .who .av{width:30px;height:30px;border-radius:50%;background:var(--amber-50);color:var(--amber-700);
+      display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;
+      border:1px solid var(--amber-200)}
+    .who .nm{font-size:13px;font-weight:600;line-height:1.2}
+    .who .rl{font-size:11px;color:var(--muted);line-height:1.2}
+    .content{padding:22px;overflow:hidden;flex:1}
+    /* ---------- pieces ---------- */
+    .page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px}
+    .page-head h2{font-family:var(--serif);font-size:27px;font-weight:400;line-height:1.1}
+    .page-head .sub{color:var(--muted);font-size:13px;margin-top:3px}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow)}
+    .card .chd{display:flex;align-items:center;justify-content:space-between;gap:12px;
+      padding:14px 16px;border-bottom:1px solid var(--line-2)}
+    .card .chd h3{font-size:14.5px}
+    .card .pad{padding:16px}
+    .btn{appearance:none;border:1px solid var(--line);background:var(--panel);color:var(--text);
+      padding:8px 14px;border-radius:8px;font-family:inherit;font-weight:600;font-size:13px;cursor:pointer;
+      display:inline-flex;align-items:center;gap:7px;line-height:1.2;white-space:nowrap}
+    .btn .ic{width:16px;height:16px}
+    .btn.primary{background:var(--amber);border-color:var(--amber);color:#14181F}
+    .btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+    .btn.danger{border-color:#EFCFC9;color:var(--brick)}
+    .btn.sm{padding:5px 10px;font-size:12px;border-radius:7px}
+    .btn.ico{padding:6px 8px;min-width:30px;justify-content:center;color:var(--muted)}
+    .toolbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:14px}
+    .toolbar .grow{flex:1}
+    .sbox{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);
+      border-radius:8px;padding:7px 11px;width:300px;color:var(--muted);font-size:13px}
+    .sbox .ic{width:15px;height:15px}
+    .sel{display:flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);
+      border-radius:8px;padding:7px 10px;font-size:13px;font-weight:500;color:var(--text);cursor:pointer}
+    .sel .ic{width:14px;height:14px;color:var(--muted)}
+    .sel.on{background:var(--amber-50);border-color:var(--amber-200);color:var(--amber-700)}
+    table{width:100%;border-collapse:collapse;font-size:13px;background:var(--panel)}
+    thead th{text-align:left;padding:9px 10px;background:var(--head);color:var(--muted);font-weight:600;
+      font-size:11px;letter-spacing:.04em;text-transform:uppercase;border-bottom:1px solid var(--line);white-space:nowrap}
+    tbody td{padding:var(--rowpad,9px) 10px;border-bottom:1px solid var(--line-2);vertical-align:middle}
+    tbody tr:last-child td{border-bottom:0}
+    .num{text-align:right;font-variant-numeric:tabular-nums}
+    .mono{font-family:var(--mono);font-size:12.5px}
+    .badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:600;line-height:1.5;white-space:nowrap}
+    .b-ok{background:var(--pine-50);color:var(--pine)}
+    .b-bad{background:var(--brick-50);color:var(--brick)}
+    .b-am{background:var(--amber-50);color:var(--amber-700)}
+    .b-sl{background:var(--slate-50);color:var(--slate)}
+    .b-gr{background:#F2EFE9;color:#6B665E}
+    .sw{width:14px;height:14px;border-radius:4px;border:1px solid rgba(26,29,33,.16);display:inline-block;flex:0 0 auto}
+    .swrow{display:inline-flex;align-items:center;gap:5px}
+    .swrow .sw + .sw{margin-left:-5px}
+    .fld{display:flex;flex-direction:column;gap:5px;min-width:0}
+    .fld > label{font-size:12px;font-weight:600;color:#3D3A34}
+    .fld .inp{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13.5px;
+      display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .fld .inp .ic{width:14px;height:14px;color:var(--muted)}
+    .fld .help{font-size:11px;color:var(--muted)}
+    .muted{color:var(--muted)}
+  </style>
+</helmet>
+
+<div class="app">
+  <!-- ================= barra lateral ================= -->
+  <div class="sidebar" data-active="productos">
+    <div class="brand">
+      <svg width="27" height="27" viewBox="0 0 24 24">
+        <path d="M 1.6 12 Q 12 3.1 22.4 12 Q 12 20.9 1.6 12 Z" fill="#E09A3B"></path>
+        <circle cx="12" cy="12" r="4.15" fill="#14181F"></circle>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+        <div class="wm">Mi Óptica Digital</div>
+        <div class="co">Óptica Belgrano</div>
+      </div>
+    </div>
+    <div class="nav">
+      <div class="navgrp" style="padding-top:4px">Operación</div>
+      <div class="nv" data-a="inicio"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Inicio</div>
+      <div class="nv" data-a="ventas"><svg class="ic" viewBox="0 0 24 24"><path d="M5 2v19l3-2 3 2 3-2 3 2 3-2V2z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>Ventas</div>
+      <div class="nv" data-a="pendientes"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Cuentas pendientes<span class="tail">31</span></div>
+      <div class="nv" data-a="clientes"><svg class="ic" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>Clientes</div>
+
+      <div class="navgrp">Catálogo</div>
+      <div class="nv" data-a="productos"><svg class="ic" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>Productos</div>
+      <div class="nv" data-a="catalogo"><svg class="ic" viewBox="0 0 24 24"><path d="M7 7h.01"/><path d="M2 12V4a2 2 0 0 1 2-2h8l10 10-10 10z"/></svg>Catálogo</div>
+      <div class="nv" data-a="precios"><svg class="ic" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.4"/><path d="M6 12h.01M18 12h.01"/></svg>Precios</div>
+      <div class="nv" data-a="stock"><svg class="ic" viewBox="0 0 24 24"><path d="m12.8 2.5 8.2 4.6a1 1 0 0 1 0 1.8l-8.2 4.6a2 2 0 0 1-1.6 0L3 8.9a1 1 0 0 1 0-1.8l8.2-4.6a2 2 0 0 1 1.6 0z"/><path d="m3 14 8.2 4.6a2 2 0 0 0 1.6 0L21 14"/></svg>Stock<span class="tail">9</span></div>
+
+      <div class="navgrp">Administración</div>
+      <div class="nv" data-a="proveedores"><svg class="ic" viewBox="0 0 24 24"><path d="M10 17h4V5H2v12h3"/><path d="M20 17h2v-3.3a2 2 0 0 0-.6-1.4L18 9h-4v8h3"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>Proveedores</div>
+      <div class="nv" data-a="sucursales"><svg class="ic" viewBox="0 0 24 24"><path d="m3 8 1.2-4.1A1 1 0 0 1 5.2 3h13.6a1 1 0 0 1 1 .9L21 8"/><path d="M3 8h18v1.5a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z"/><path d="M5 12.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7.5"/></svg>Sucursales</div>
+      <div class="nv" data-a="usuarios"><svg class="ic" viewBox="0 0 24 24"><path d="M12 2.5 4 6v6c0 5 3.4 8.3 8 9.5 4.6-1.2 8-4.5 8-9.5V6z"/><path d="m9.2 12 2 2 3.6-3.6"/></svg>Usuarios y roles</div>
+      <div class="nv" data-a="empresa"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.1 14.6a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.2a1.6 1.6 0 0 0-2.7-1.1l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H3a2 2 0 1 1 0-4h.2a1.6 1.6 0 0 0 1.1-2.7l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 2.7-1.1V3a2 2 0 1 1 4 0v.2a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1.1 2.7H21a2 2 0 1 1 0 4h-.2a1.6 1.6 0 0 0-1.7 1z"/></svg>Empresa</div>
+    </div>
+    <div class="sfoot"><span class="dot"></span><span>Sincronizado hace instantes</span></div>
+  </div>
+
+  <!-- ================= principal ================= -->
+  <div class="main">
+    <div class="topbar">
+      <div class="crumb">Catálogo <span class="mut">/</span> Productos</div>
+      <div class="tb-right">
+        <div class="gsearch">
+          <svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          Buscar producto, cliente o venta<kbd>/</kbd>
+        </div>
+        <div class="who">
+          <div class="av">MR</div>
+          <div><div class="nm">Martina Rossi</div><div class="rl">Encargada</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="page-head">
+        <div>
+          <h2>Productos</h2>
+          <div class="sub">1.284 artículos activos · 212 estilos con variantes de color</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:9px">
+          <button class="btn"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>Importar</button>
+          <button class="btn"><svg class="ic" viewBox="0 0 24 24"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>Exportar</button>
+          <button class="btn primary"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Nuevo producto</button>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:14px">
+        <div style="padding:9px 14px;font-weight:600;font-size:13.5px;color:var(--amber-700);border-bottom:2px solid var(--amber);margin-bottom:-1px">Productos</div>
+        <div style="padding:9px 14px;font-weight:600;font-size:13.5px;color:var(--muted)">Costos</div>
+      </div>
+
+      <div class="toolbar">
+        <div class="sbox">
+          <svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          Buscar por código o descripción
+        </div>
+        <div class="sel on">Tipo: Armazón
+          <svg class="ic" viewBox="0 0 24 24"><path d="m5 5 14 14M19 5 5 19"/></svg></div>
+        <div class="sel">Marca<svg class="ic" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></div>
+        <div class="sel">Modelo<svg class="ic" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></div>
+        <div class="sel">Proveedor<svg class="ic" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></div>
+        <div class="sel">Color<svg class="ic" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></div>
+        <div class="grow"></div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:#3D3A34">
+          <span style="width:16px;height:16px;border-radius:4px;border:1px solid var(--line);background:#fff"></span>Ver inactivos</div>
+      </div>
+
+      <div class="card" style="overflow:hidden">
+        <table style="--rowpad:{{rowpad}}">
+          <thead>
+            <tr>
+              <th style="width:132px">Código</th>
+              <th>Descripción</th>
+              <th style="width:104px">Tipo</th>
+              <th style="width:108px">Marca</th>
+              <th style="width:112px">Modelo</th>
+              <th style="width:96px">Colores</th>
+              <th style="width:88px">Variantes</th>
+              <th class="num" style="width:118px">Precio</th>
+              <th class="num" style="width:110px">Costo</th>
+              <th style="width:74px"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- un estilo: no se vende ni se stockea, se abre -->
+            <tr style="background:var(--amber-50)">
+              <td class="mono" style="font-weight:600">ARM-001</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <svg class="ic" width="14" height="14" viewBox="0 0 24 24" style="color:var(--amber-700)"><path d="m9 18 6-6-6-6"/></svg>
+                  <span style="font-weight:600">Armazón acetato full rim 52</span>
+                </div>
+              </td>
+              <td>Armazón</td><td>Vulk</td><td>Sole</td>
+              <td><span class="swrow">
+                <span class="sw" style="background:#7A4B28"></span><span class="sw" style="background:#14181F"></span>
+                <span class="sw" style="background:#8C1F2F"></span></span></td>
+              <td><span class="badge b-am">3 colores</span></td>
+              <td class="num muted" style="font-size:12px">por variante</td>
+              <td class="num muted" style="font-size:12px">por variante</td>
+              <td class="num"><button class="btn ico"><svg class="ic" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></td>
+            </tr>
+            <tr>
+              <td class="mono">ARM-002</td>
+              <td>Armazón metal rectangular 54</td>
+              <td>Armazón</td><td>Infinit</td><td>Cabo</td>
+              <td><span class="swrow"><span class="sw" style="background:#C0A062"></span><span class="sw" style="background:#5A6270"></span></span></td>
+              <td><span class="badge b-am">2 colores</span></td>
+              <td class="num muted" style="font-size:12px">por variante</td>
+              <td class="num muted" style="font-size:12px">por variante</td>
+              <td class="num"><button class="btn ico"><svg class="ic" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></td>
+            </tr>
+            <tr>
+              <td class="mono">ARM-007</td><td>Armazón acetato cat eye 50</td>
+              <td>Armazón</td><td>Vulk</td><td>Nara</td>
+              <td><span class="swrow"><span class="sw" style="background:#2B2118"></span><span class="sw" style="background:#B98A5E"></span><span class="sw" style="background:#7C6A8A"></span><span class="sw" style="background:#D4D0C8"></span></span></td>
+              <td><span class="badge b-am">4 colores</span></td>
+              <td class="num muted" style="font-size:12px">por variante</td>
+              <td class="num muted" style="font-size:12px">por variante</td>
+              <td class="num"><button class="btn ico"><svg class="ic" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></td>
+            </tr>
+            <!-- articulos sueltos -->
+            <tr>
+              <td class="mono">ARM-014-NEG</td><td>Armazón metal Negro 54</td>
+              <td>Armazón</td><td>Infinit</td><td>Duna</td>
+              <td><span class="swrow"><span class="sw" style="background:#14181F"></span></span></td>
+              <td class="muted">-</td>
+              <td class="num" style="font-weight:600">128.400,00</td><td class="num muted">61.200,00</td>
+              <td class="num"><button class="btn ico"><svg class="ic" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></td>
+            </tr>
+            <tr>
+              <td class="mono">LC-0042</td><td>Lente de contacto mensual -1.25</td>
+              <td>Lente contacto</td><td>Bausch &amp; Lomb</td><td class="muted">-</td>
+              <td class="muted">-</td><td class="muted">-</td>
+              <td class="num" style="font-weight:600">46.900,00</td><td class="num muted">23.100,00</td>
+              <td class="num"><button class="btn ico"><svg class="ic" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></td>
+            </tr>
+            <tr>
+              <td class="mono">LC-0043</td><td>Lente de contacto mensual -1.50</td>
+              <td>Lente contacto</td><td>Bausch &amp; Lomb</td><td class="muted">-</td>
+              <td class="muted">-</td><td class="muted">-</td>
+              <td class="num" style="font-weight:600">46.900,00</td><td class="num muted">23.100,00</td>
+              <td class="num"><button class="btn ico"><svg class="ic" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></td>
+            </tr>
+            <tr>
+              <td class="mono">CRI-AR-150</td><td>Cristal antirreflejo 1.50 monofocal</td>
+              <td>Cristal</td><td>Essilor</td><td>Crizal</td>
+              <td class="muted">-</td><td class="muted">-</td>
+              <td class="num" style="font-weight:600">72.500,00</td><td class="num muted">34.800,00</td>
+              <td class="num"><button class="btn ico"><svg class="ic" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></td>
+            </tr>
+            <tr>
+              <td class="mono">CRI-FT-167</td><td>Cristal fotocromático 1.67</td>
+              <td>Cristal</td><td>Transitions</td><td>Gen 8</td>
+              <td class="muted">-</td><td class="muted">-</td>
+              <td class="num" style="font-weight:600">198.000,00</td><td class="num muted">96.400,00</td>
+              <td class="num"><button class="btn ico"><svg class="ic" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></td>
+            </tr>
+            <tr>
+              <td class="mono">LIQ-010</td><td>Líquido multipropósito 360 ml</td>
+              <td>Accesorio</td><td>Renu</td><td class="muted">-</td>
+              <td class="muted">-</td><td class="muted">-</td>
+              <td class="num" style="font-weight:600">18.700,00</td><td class="num muted">9.050,00</td>
+              <td class="num"><button class="btn ico"><svg class="ic" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></td>
+            </tr>
+            <tr>
+              <td class="mono">ACC-ES-01</td><td>Estuche rígido chico</td>
+              <td>Accesorio</td><td class="muted">-</td><td class="muted">-</td>
+              <td><span class="swrow"><span class="sw" style="background:#14181F"></span><span class="sw" style="background:#8C1F2F"></span></span></td>
+              <td><span class="badge b-am">2 colores</span></td>
+              <td class="num muted" style="font-size:12px">por variante</td><td class="num muted" style="font-size:12px">por variante</td>
+              <td class="num"><button class="btn ico"><svg class="ic" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></td>
+            </tr>
+            <tr style="opacity:.5">
+              <td class="mono">ARM-009-VER</td><td>Armazón acetato Verde 48</td>
+              <td>Armazón</td><td>Vulk</td><td>Ola</td>
+              <td><span class="swrow"><span class="sw" style="background:#3E6B4F"></span></span></td>
+              <td class="muted">-</td>
+              <td class="num" style="font-weight:600">112.000,00</td><td class="num muted">54.300,00</td>
+              <td class="num"><button class="btn ico"><svg class="ic" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;
+                    border-top:1px solid var(--line);background:var(--head);font-size:12.5px;color:var(--muted)">
+          <div>Mostrando 11 de 1.284 artículos. Las columnas secundarias se ocultan solas cuando la ventana se angosta.</div>
+          <div style="display:flex;align-items:center;gap:7px">
+            <button class="btn sm">Anterior</button><button class="btn sm">Siguiente</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"density":{"editor":"enum","options":["cómoda","compacta"],"default":"cómoda","section":"Grilla"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const density = this.props.density ?? 'cómoda';
+    return { density, rowpad: density === 'compacta' ? '5px' : '9px' };
+  }
+}
+</script>
+</body>
+</html>

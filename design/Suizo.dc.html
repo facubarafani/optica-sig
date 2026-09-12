@@ -1,0 +1,216 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    :root{
+      --blk:#000000; --red:#E3000F; --gry:#767676; --lin:#C9C9C9;
+      --sans:'Helvetica Neue',Helvetica,Arial,sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:#fff;color:var(--blk);font-family:var(--sans);font-size:13px;
+      line-height:1.35;-webkit-font-smoothing:antialiased}
+    a{color:var(--blk)} a:hover{color:var(--red)}
+    h1,h2,h3{margin:0;font-weight:700;letter-spacing:-.02em}
+    .ic{flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:butt;stroke-linejoin:miter}
+    .app{display:grid;grid-template-columns:196px 1fr;height:900px;overflow:hidden;background:#fff}
+    /* ---- nav ---- */
+    .side{border-right:1px solid var(--blk);display:flex;flex-direction:column;padding:0}
+    .side .brand{padding:26px 20px 22px;border-bottom:1px solid var(--blk)}
+    .side .brand .wm{font-size:15px;font-weight:700;letter-spacing:-.03em;line-height:1.1}
+    .side .brand .co{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--gry);margin-top:5px}
+    .nav{flex:1;padding:18px 0;overflow:hidden}
+    .grp{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--gry);
+      padding:0 20px 7px;margin-top:18px}
+    .grp:first-child{margin-top:0}
+    .nv{display:block;padding:5px 20px;font-size:13px;color:var(--blk);cursor:pointer;position:relative}
+    .nv:hover{color:var(--red)}
+    .nv.on{font-weight:700;color:var(--red)}
+    .nv.on:before{content:"";position:absolute;left:0;top:6px;bottom:6px;width:4px;background:var(--red)}
+    .nv .n{float:right;font-size:11px;color:var(--gry);font-variant-numeric:tabular-nums}
+    .side .ft{border-top:1px solid var(--lin);padding:14px 20px;font-size:10px;color:var(--gry);
+      letter-spacing:.06em;text-transform:uppercase}
+    /* ---- main ---- */
+    .main{display:flex;flex-direction:column;min-width:0;overflow:hidden}
+    .top{height:52px;border-bottom:1px solid var(--blk);display:flex;align-items:center;
+      justify-content:space-between;padding:0 28px;flex:0 0 auto}
+    .top .path{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gry)}
+    .top .path b{color:var(--blk);font-weight:700}
+    .top .r{display:flex;align-items:center;gap:26px;font-size:12px}
+    .top .find{color:var(--gry);display:flex;align-items:center;gap:8px}
+    .top .find .ic{width:14px;height:14px}
+    .body{padding:28px 28px 0;overflow:hidden;flex:1;display:flex;flex-direction:column}
+    .hd{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;
+      padding-bottom:18px;border-bottom:2px solid var(--blk)}
+    .hd h2{font-size:36px;line-height:.98}
+    .hd .meta{font-size:11px;color:var(--gry);margin-top:8px;letter-spacing:.02em}
+    .hd .meta b{color:var(--blk);font-weight:700}
+    .btn{border:1px solid var(--blk);background:#fff;color:var(--blk);padding:7px 14px;font-family:var(--sans);
+      font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;border-radius:0}
+    .btn.fill{background:var(--blk);color:#fff}
+    .btn.red{background:var(--red);border-color:var(--red);color:#fff}
+    .btn.xs{padding:3px 8px;font-size:9.5px;letter-spacing:.05em}
+    .bar{display:flex;align-items:center;gap:22px;padding:14px 0;border-bottom:1px solid var(--lin);flex-wrap:wrap}
+    .bar .lb{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--gry)}
+    .f{font-size:12px;cursor:pointer;border-bottom:1px solid var(--lin);padding-bottom:1px}
+    .f.on{color:var(--red);border-bottom-color:var(--red);font-weight:700}
+    /* ---- table ---- */
+    table{width:100%;border-collapse:collapse;margin-top:0}
+    thead th{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--gry);font-weight:400;
+      text-align:left;padding:12px 10px 8px;border-bottom:1px solid var(--blk);white-space:nowrap}
+    tbody td{padding:9px 10px;border-bottom:1px solid var(--lin);font-size:12.5px;vertical-align:baseline}
+    .n{text-align:right;font-variant-numeric:tabular-nums}
+    .dim{color:var(--gry)}
+    .red{color:var(--red);font-weight:700}
+    .chip{width:10px;height:10px;display:inline-block;border:1px solid #000;vertical-align:-1px}
+    .chips{display:inline-flex;gap:3px}
+    .foot{display:flex;align-items:center;justify-content:space-between;padding:12px 10px;
+      border-top:2px solid var(--blk);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--gry)}
+  </style>
+</helmet>
+
+<div class="app">
+  <div class="side">
+    <div class="brand">
+      <div class="wm">Mi Óptica<br>Digital</div>
+      <div class="co">Belgrano</div>
+    </div>
+    <div class="nav">
+      <div class="grp">Operación</div>
+      <div class="nv">Inicio</div>
+      <div class="nv">Ventas</div>
+      <div class="nv">Cuentas pendientes<span class="n">31</span></div>
+      <div class="nv">Clientes</div>
+      <div class="grp">Catálogo</div>
+      <div class="nv on">Productos</div>
+      <div class="nv">Catálogo</div>
+      <div class="nv">Precios</div>
+      <div class="nv">Stock<span class="n">9</span></div>
+      <div class="grp">Administración</div>
+      <div class="nv">Proveedores</div>
+      <div class="nv">Sucursales</div>
+      <div class="nv">Usuarios y roles</div>
+      <div class="nv">Empresa</div>
+    </div>
+    <div class="ft">v2.4.0 / ARS</div>
+  </div>
+
+  <div class="main">
+    <div class="top">
+      <div class="path">Catálogo / <b>Productos</b></div>
+      <div class="r">
+        <div class="find"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>Buscar</div>
+        <div>Martina Rossi</div>
+      </div>
+    </div>
+
+    <div class="body">
+      <div class="hd">
+        <div>
+          <h2>Productos</h2>
+          <div class="meta"><b>1.284</b> activos &nbsp;/&nbsp; <b>212</b> estilos con variantes &nbsp;/&nbsp; <b class="red">2</b> bajo mínimo</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn">Importar</button>
+          <button class="btn">Exportar</button>
+          <button class="btn fill">Nuevo producto</button>
+        </div>
+      </div>
+
+      <div class="bar">
+        <span class="lb">Filtrar</span>
+        <span class="f on">Tipo: Armazón ×</span>
+        <span class="f dim">Marca</span>
+        <span class="f dim">Modelo</span>
+        <span class="f dim">Proveedor</span>
+        <span class="f dim">Color</span>
+        <span style="flex:1"></span>
+        <span class="f dim">Ver inactivos</span>
+      </div>
+
+      <table>
+        <thead><tr>
+          <th style="width:118px">Código</th><th>Descripción</th><th style="width:94px">Tipo</th>
+          <th style="width:104px">Marca</th><th style="width:88px">Modelo</th><th style="width:68px">Color</th>
+          <th class="n" style="width:110px">Precio</th><th class="n" style="width:104px">Costo</th>
+          <th class="n" style="width:76px">Stock</th><th style="width:70px"></th>
+        </tr></thead>
+        <tbody>
+          <tr>
+            <td style="font-weight:700">ARM-001</td><td style="font-weight:700">Armazón acetato full rim 52</td>
+            <td>Armazón</td><td>Vulk</td><td>Sole</td>
+            <td><span class="chips"><span class="chip" style="background:#7A4B28"></span><span class="chip" style="background:#14181F"></span><span class="chip" style="background:#8C1F2F"></span></span></td>
+            <td class="dim" colspan="2" style="padding-left:22px">3 variantes</td>
+            <td class="n dim">/</td><td class="n"><span class="btn xs">Abrir</span></td>
+          </tr>
+          <tr>
+            <td>ARM-014-NEG</td><td>Armazón metal Negro 54</td>
+            <td>Armazón</td><td>Infinit</td><td>Duna</td>
+            <td><span class="chips"><span class="chip" style="background:#14181F"></span></span></td>
+            <td class="n">128.400,00</td><td class="n dim">61.200,00</td>
+            <td class="n red">0,00</td><td class="n"><span class="btn xs">Abrir</span></td>
+          </tr>
+          <tr>
+            <td style="font-weight:700">ARM-007</td><td style="font-weight:700">Armazón acetato cat eye 50</td>
+            <td>Armazón</td><td>Vulk</td><td>Nara</td>
+            <td><span class="chips"><span class="chip" style="background:#2B2118"></span><span class="chip" style="background:#B98A5E"></span><span class="chip" style="background:#7C6A8A"></span><span class="chip" style="background:#D4D0C8"></span></span></td>
+            <td class="dim" colspan="2" style="padding-left:22px">4 variantes</td>
+            <td class="n dim">/</td><td class="n"><span class="btn xs">Abrir</span></td>
+          </tr>
+          <tr>
+            <td>LC-0042</td><td>Lente de contacto mensual -1.25</td>
+            <td>Lente cont.</td><td>Bausch &amp; Lomb</td><td class="dim">/</td><td class="dim">/</td>
+            <td class="n">46.900,00</td><td class="n dim">23.100,00</td>
+            <td class="n red">2,00</td><td class="n"><span class="btn xs">Abrir</span></td>
+          </tr>
+          <tr>
+            <td>LC-0043</td><td>Lente de contacto mensual -1.50</td>
+            <td>Lente cont.</td><td>Bausch &amp; Lomb</td><td class="dim">/</td><td class="dim">/</td>
+            <td class="n">46.900,00</td><td class="n dim">23.100,00</td>
+            <td class="n">14,00</td><td class="n"><span class="btn xs">Abrir</span></td>
+          </tr>
+          <tr>
+            <td>CRI-AR-150</td><td>Cristal antirreflejo 1.50 monofocal</td>
+            <td>Cristal</td><td>Essilor</td><td>Crizal</td><td class="dim">/</td>
+            <td class="n">72.500,00</td><td class="n dim">34.800,00</td>
+            <td class="n">4,00</td><td class="n"><span class="btn xs">Abrir</span></td>
+          </tr>
+          <tr>
+            <td>CRI-FT-167</td><td>Cristal fotocromático 1.67</td>
+            <td>Cristal</td><td>Transitions</td><td>Gen 8</td><td class="dim">/</td>
+            <td class="n">198.000,00</td><td class="n dim">96.400,00</td>
+            <td class="n">22,00</td><td class="n"><span class="btn xs">Abrir</span></td>
+          </tr>
+          <tr>
+            <td>LIQ-010</td><td>Líquido multipropósito 360 ml</td>
+            <td>Accesorio</td><td>Renu</td><td class="dim">/</td><td class="dim">/</td>
+            <td class="n">18.700,00</td><td class="n dim">9.050,00</td>
+            <td class="n">3,00</td><td class="n"><span class="btn xs">Abrir</span></td>
+          </tr>
+          <tr>
+            <td style="font-weight:700">ACC-ES-01</td><td style="font-weight:700">Estuche rígido chico</td>
+            <td>Accesorio</td><td class="dim">/</td><td class="dim">/</td>
+            <td><span class="chips"><span class="chip" style="background:#14181F"></span><span class="chip" style="background:#8C1F2F"></span></span></td>
+            <td class="dim" colspan="2" style="padding-left:22px">2 variantes</td>
+            <td class="n dim">/</td><td class="n"><span class="btn xs">Abrir</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="foot">
+        <span>9 de 1.284</span>
+        <span>Anterior &nbsp;·&nbsp; Siguiente</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {}
+</script>
+</body>
+</html>

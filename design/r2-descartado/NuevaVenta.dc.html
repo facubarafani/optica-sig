@@ -1,0 +1,285 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <style>
+    :root{
+      --bg:#E9EAEA; --panel:#FFFFFF;
+      --shell:#121416; --shell-2:#1E2225; --shell-ln:#2B3033; --shell-tx:#B0B5B8; --shell-dim:#666D72;
+      --rule:#CBCECF; --rule-2:#E2E4E4; --hard:#111415;
+      --text:#111415; --muted:#69706F;
+      --accent:#0E8F86; --accent-ink:#FFFFFF; --accent-bg:#E6F2F1;
+      --red:#BE123C; --red-bg:#FCE8EC; --green:#15803D; --green-bg:#E7F4EC;
+      --sans:'IBM Plex Sans',system-ui,sans-serif;
+      --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;
+      line-height:1.4;-webkit-font-smoothing:antialiased}
+    a{color:var(--accent)} a:hover{color:var(--hard)}
+    h1,h2,h3{margin:0;font-weight:600}
+    .ic{flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:square;stroke-linejoin:miter}
+    .app{display:grid;grid-template-columns:212px 1fr;height:900px;overflow:hidden}
+
+    /* ---- shell ---- */
+    .side{background:var(--shell);display:flex;flex-direction:column;overflow:hidden}
+    .brand{display:flex;align-items:center;gap:10px;padding:16px 14px;border-bottom:1px solid var(--shell-ln)}
+    .brand .wm{font-size:12px;font-weight:600;letter-spacing:.02em;color:#fff;text-transform:uppercase;line-height:1.25}
+    .brand .co{font-family:var(--mono);font-size:10.5px;color:var(--shell-dim);line-height:1.3}
+    .nav{flex:1;padding:8px 0;overflow:hidden;display:flex;flex-direction:column}
+    .grp{font-family:var(--mono);font-size:9.5px;color:var(--shell-dim);padding:12px 14px 5px;text-transform:uppercase;letter-spacing:.06em}
+    .nv{display:flex;align-items:center;gap:9px;padding:6px 14px;color:var(--shell-tx);font-size:12.5px;
+      cursor:pointer;border-left:2px solid transparent}
+    .nv .ic{width:15px;height:15px}
+    .nv:hover{background:var(--shell-2);color:#fff}
+    .nv.on{background:var(--panel);color:var(--hard);font-weight:600;border-left-color:var(--accent)}
+    .nv .n{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--shell-tx)}
+    .side .ft{border-top:1px solid var(--shell-ln);padding:10px 14px;font-family:var(--mono);font-size:10px;color:var(--shell-dim)}
+
+    /* ---- work area ---- */
+    .main{display:flex;flex-direction:column;min-width:0;background:var(--bg)}
+    .ray{height:3px;display:flex;flex:0 0 auto}
+    .top{height:46px;background:var(--panel);border-bottom:1px solid var(--rule);display:flex;
+      align-items:center;justify-content:space-between;padding:0 16px;flex:0 0 auto}
+    .path{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+    .path b{color:var(--text);font-weight:500}
+    .top .r{display:flex;align-items:center;gap:14px}
+    .find{display:flex;align-items:center;gap:8px;border:1px solid var(--rule);padding:5px 10px;width:270px;
+      color:var(--muted);font-size:12px}
+    .find .ic{width:14px;height:14px}
+    .find .k{margin-left:auto;font-family:var(--mono);font-size:10px;border:1px solid var(--rule);padding:0 4px}
+    .usr{display:flex;align-items:center;gap:8px;font-size:12px}
+    .usr .sq{width:24px;height:24px;background:var(--hard);color:#fff;display:flex;align-items:center;
+      justify-content:center;font-family:var(--mono);font-size:10px;font-weight:500}
+    .body{padding:16px;overflow:hidden;flex:1;display:flex;flex-direction:column;min-height:0}
+    .hd{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:14px}
+    .hd h2{font-size:20px;font-weight:600;letter-spacing:-.01em}
+    .hd .meta{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:3px}
+
+    /* ---- controls ---- */
+    .btn{border:1px solid var(--hard);background:var(--panel);color:var(--hard);padding:6px 12px;
+      font-family:var(--sans);font-size:12px;font-weight:500;cursor:pointer;display:inline-flex;
+      align-items:center;gap:6px;border-radius:0}
+    .btn .ic{width:14px;height:14px}
+    .btn.fill{background:var(--hard);border-color:var(--hard);color:#fff}
+    .btn.flat{border-color:var(--rule);color:var(--muted)}
+    .btn.xs{padding:3px 8px;font-size:11px}
+    .bar{display:flex;align-items:center;gap:7px;margin-bottom:12px;flex-wrap:wrap}
+    .f{border:1px solid var(--rule);background:var(--panel);padding:5px 9px;font-size:11.5px;color:var(--text);
+      display:flex;align-items:center;gap:6px;cursor:pointer}
+    .f .ic{width:12px;height:12px;color:var(--muted)}
+    .f.on{border-color:var(--hard);background:var(--hard);color:#fff}
+    .f.on .ic{color:#fff}
+    .srch{border:1px solid var(--rule);background:var(--panel);padding:5px 9px;font-size:11.5px;
+      color:var(--muted);width:250px;display:flex;align-items:center;gap:7px}
+    .srch .ic{width:13px;height:13px}
+
+    /* ---- sheet ---- */
+    .sheet{background:var(--panel);border:1px solid var(--rule);min-height:0;display:flex;flex-direction:column}
+    table{width:100%;border-collapse:collapse}
+    thead th{font-family:var(--mono);font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.04em;
+      color:var(--muted);text-align:left;padding:7px 9px;border-bottom:1px solid var(--hard);white-space:nowrap}
+    tbody td{padding:6px 9px;border-bottom:1px solid var(--rule-2);font-size:12.5px;vertical-align:middle}
+    tbody tr:last-child td{border-bottom:0}
+    tbody tr.style td{background:#F2F4F4}
+    .n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:12px}
+    .c{font-family:var(--mono);font-size:11.5px}
+    .dim{color:var(--muted)}
+    .src{display:block;font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.02em;margin-top:1px}
+    .min{display:block;font-family:var(--mono);font-size:9px;color:var(--red);margin-top:1px}
+    .tag{display:inline-block;font-family:var(--mono);font-size:10px;padding:1px 5px;border:1px solid currentColor}
+    .t-red{color:var(--red);background:var(--red-bg)}
+    .t-grn{color:var(--green);background:var(--green-bg)}
+    .t-nt{color:var(--muted);background:transparent}
+    .chip{width:11px;height:11px;display:inline-block;border:1px solid rgba(22,19,15,.32)}
+    .chips{display:inline-flex;gap:3px;align-items:center}
+    .tree{color:var(--muted);font-family:var(--mono)}
+    .foot{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;
+      border-top:1px solid var(--hard);font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:auto}
+
+    /* ---- nueva venta ---- */
+    .cols{display:flex;gap:14px;flex:1;min-height:0}
+    .pane{background:var(--panel);border:1px solid var(--rule);display:flex;flex-direction:column}
+    .pane .ph{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.04em;
+      color:var(--muted);padding:7px 10px;border-bottom:1px solid var(--hard)}
+    .kv{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:5px 10px;font-size:12.5px}
+    .kv .k{color:var(--muted)}
+    .kv .v{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:12.5px}
+    .kv.big{padding:8px 10px;border-top:1px solid var(--hard);border-bottom:1px solid var(--hard)}
+    .kv.big .k{color:var(--text);font-weight:600;font-family:var(--sans)}
+    .kv.big .v{font-size:16px;font-weight:600}
+    .kv.owed .v{color:var(--red);font-weight:600;font-size:15px}
+    .mod{display:inline-block;font-family:var(--mono);font-size:9px;color:var(--accent);
+      border:1px solid var(--accent);padding:0 3px;margin-left:5px;vertical-align:1px}
+    .was{font-family:var(--mono);font-size:9px;color:var(--muted);text-decoration:line-through;display:block}
+    .pay{display:flex;gap:6px;padding:8px 10px;flex-wrap:wrap}
+    .cust{padding:9px 10px;display:flex;flex-direction:column;gap:2px}
+    .cust .nm{font-size:13.5px;font-weight:600}
+    .cust .dt{font-family:var(--mono);font-size:11px;color:var(--muted)}
+    .note{padding:8px 10px;border-top:1px solid var(--rule-2);font-size:11.5px;color:var(--muted);line-height:1.45}
+    .adds{display:flex;align-items:center;gap:8px;padding:7px 10px;border-top:1px solid var(--rule-2);
+      font-size:12px;color:var(--muted)}
+  </style>
+</helmet>
+
+<div class="app">
+  <div class="side">
+    <div class="brand">
+      <svg width="21" height="21" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M11 3 3.2 19.4h15.6z" fill="none" stroke="#D8DCDE" stroke-width="1.5" stroke-linejoin="miter"></path>
+        <path d="M1 9.5 8.4 13" fill="none" stroke="#FFFFFF" stroke-width="1.6"></path>
+        <path d="M13.4 13.2 23 9.6" stroke="#8A57B8" stroke-width="1.3"></path>
+        <path d="M13.7 14.4 23 12.2" stroke="#1A87AE" stroke-width="1.3"></path>
+        <path d="M14 15.6 23 14.8" stroke="#4A9433" stroke-width="1.3"></path>
+        <path d="M14.3 16.8 23 17.4" stroke="#B75F16" stroke-width="1.3"></path>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+        <div class="wm">Mi Óptica Digital</div>
+        <div class="co">Belgrano</div>
+      </div>
+    </div>
+    <div class="nav">
+      <div class="grp">operación</div>
+      <div class="nv" style="border-left-color:#8A57B8"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="8"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="11" width="7" height="10"/><rect x="3" y="14" width="7" height="7"/></svg>Inicio</div>
+      <div class="nv on" style="border-left-color:#6366C4"><svg class="ic" viewBox="0 0 24 24"><path d="M5 2v19l3-2 3 2 3-2 3 2 3-2V2z"/><path d="M9 7h6M9 11h6"/></svg>Ventas</div>
+      <div class="nv" style="border-left-color:#3F79C6"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Cuentas pendientes<span class="n">31</span></div>
+      <div class="nv" style="border-left-color:#1A87AE"><svg class="ic" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Clientes</div>
+      <div class="grp">catálogo</div>
+      <div class="nv" style="border-left-color:#0E8F86"><svg class="ic" viewBox="0 0 24 24"><path d="M21 16V8l-9-5-9 5v8l9 5z"/><path d="m3 8 9 5 9-5M12 21v-8"/></svg>Productos</div>
+      <div class="nv" style="border-left-color:#169159"><svg class="ic" viewBox="0 0 24 24"><path d="M2 12V4h8l11 11-8 8z"/><path d="M7 7h.01"/></svg>Catálogo</div>
+      <div class="nv" style="border-left-color:#4A9433"><svg class="ic" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12"/><circle cx="12" cy="12" r="2.4"/></svg>Precios</div>
+      <div class="nv" style="border-left-color:#7F8C12"><svg class="ic" viewBox="0 0 24 24"><path d="m12 2 9 5-9 5-9-5z"/><path d="m3 12 9 5 9-5M3 17l9 5 9-5"/></svg>Stock<span class="n">9</span></div>
+      <div class="grp">administración</div>
+      <div class="nv" style="border-left-color:#A4790C"><svg class="ic" viewBox="0 0 24 24"><path d="M10 17h4V5H2v12h3"/><path d="M20 17h2v-4l-4-4h-4v8h3"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>Proveedores</div>
+      <div class="nv" style="border-left-color:#B75F16"><svg class="ic" viewBox="0 0 24 24"><path d="m3 8 1.5-5h15L21 8M3 8h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z"/><path d="M5 13v8h14v-8"/></svg>Sucursales</div>
+      <div class="nv" style="border-left-color:#C04A26"><svg class="ic" viewBox="0 0 24 24"><path d="M12 2 4 6v6c0 5 3.4 8.3 8 9.5 4.6-1.2 8-4.5 8-9.5V6z"/></svg>Usuarios y roles</div>
+      <div class="nv" style="border-left-color:#C13A3A"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.2 2.2M16.9 16.9l2.2 2.2M19.1 4.9l-2.2 2.2M7.1 16.9l-2.2 2.2"/></svg>Empresa</div>
+    </div>
+    <div class="ft">v2.4.0 · Belgrano · ARS</div>
+  </div>
+
+  <div class="main">
+    <div class="ray"><div style="flex:1;background:#8A57B8"></div><div style="flex:1;background:#6366C4"></div><div style="flex:1;background:#3F79C6"></div><div style="flex:1;background:#1A87AE"></div><div style="flex:1;background:#0E8F86"></div><div style="flex:1;background:#169159"></div><div style="flex:1;background:#4A9433"></div><div style="flex:1;background:#7F8C12"></div><div style="flex:1;background:#A4790C"></div><div style="flex:1;background:#B75F16"></div><div style="flex:1;background:#C04A26"></div><div style="flex:1;background:#C13A3A"></div></div>
+    <div class="top">
+      <div class="path">ventas / <b>nueva venta</b></div>
+      <div class="r">
+        <div class="find"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>Buscar<span class="k">/</span></div>
+        <div class="usr"><div class="sq">MR</div>Martina Rossi</div>
+      </div>
+    </div>
+
+    <div class="body">
+      <div class="hd">
+        <div>
+          <h2>Nueva venta</h2>
+          <div class="meta">presupuesto · el número se asigna al confirmar · Belgrano · Martina Rossi</div>
+        </div>
+        <div style="display:flex;gap:7px">
+          <button class="btn flat">Descartar</button>
+          <button class="btn">Guardar presupuesto</button>
+          <button class="btn fill">Confirmar venta</button>
+        </div>
+      </div>
+
+      <div class="cols">
+        <div class="pane" style="flex:1;min-width:0">
+          <div class="ph">renglones</div>
+          <div class="adds">
+            <div class="srch" style="width:330px"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>Agregar por código o descripción</div>
+            <div>4 renglones</div>
+          </div>
+          <table>
+            <thead><tr>
+              <th style="width:124px">código</th><th>producto</th>
+              <th class="n" style="width:70px">cant</th><th class="n" style="width:122px">precio unit</th>
+              <th class="n" style="width:78px">desc</th><th class="n" style="width:112px">total</th>
+              <th style="width:34px"></th>
+            </tr></thead>
+            <tbody>
+              <tr>
+                <td class="c">ARM-001-HAV</td>
+                <td>Armazón acetato full rim 52 · Havana</td>
+                <td class="n">1,00</td>
+                <td class="n">128.400,00<span class="src">lista B · cat 3</span></td>
+                <td class="n dim">-</td>
+                <td class="n">128.400,00</td>
+                <td class="n dim">×</td>
+              </tr>
+              <tr>
+                <td class="c">CRI-0113</td>
+                <td>Cristal orgánico AR 1.56</td>
+                <td class="n">2,00</td>
+                <td class="n"><span class="was">78.000,00</span>71.500,00<span class="mod">modificado</span></td>
+                <td class="n dim">-</td>
+                <td class="n">143.000,00</td>
+                <td class="n dim">×</td>
+              </tr>
+              <tr>
+                <td class="c">LC-0042</td>
+                <td>Lente de contacto mensual -1.25</td>
+                <td class="n">1,00</td>
+                <td class="n">46.900,00<span class="src">lista A · cat 1</span></td>
+                <td class="n">10%</td>
+                <td class="n">42.210,00</td>
+                <td class="n dim">×</td>
+              </tr>
+              <tr>
+                <td class="c">ACC-0031</td>
+                <td>Estuche rígido bicolor</td>
+                <td class="n">1,00</td>
+                <td class="n">8.900,00<span class="src">manual</span></td>
+                <td class="n dim">-</td>
+                <td class="n">8.900,00</td>
+                <td class="n dim">×</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="foot">
+            <div>los totales quedan guardados tal como se confirman</div>
+            <div>una venta se corrige anulando y emitiendo otra</div>
+          </div>
+        </div>
+
+        <div style="width:334px;display:flex;flex-direction:column;gap:14px;flex:0 0 auto">
+          <div class="pane">
+            <div class="ph">cliente</div>
+            <div class="cust">
+              <div class="nm">Laura Giménez</div>
+              <div class="dt">DNI 32.145.678 · 11 4412 8890</div>
+            </div>
+            <div class="note">Receta del 12/08: OD -1,25 -0,75 180 · OI -1,50 -0,50 175 · DNP 62,0</div>
+          </div>
+
+          <div class="pane">
+            <div class="ph">totales</div>
+            <div class="kv"><span class="k">Subtotal</span><span class="v">322.510,00</span></div>
+            <div class="kv"><span class="k">Descuento 5%</span><span class="v">16.125,50</span></div>
+            <div class="kv big"><span class="k">Total</span><span class="v">306.384,50</span></div>
+            <div class="kv"><span class="k">Pagado</span><span class="v">150.000,00</span></div>
+            <div class="kv owed"><span class="k">Saldo</span><span class="v">156.384,50</span></div>
+          </div>
+
+          <div class="pane">
+            <div class="ph">pago</div>
+            <div class="pay">
+              <div class="f on">Efectivo</div>
+              <div class="f">Transferencia</div>
+              <div class="f">Tarjeta</div>
+            </div>
+            <div class="kv"><span class="k">Importe</span><span class="v">150.000,00</span></div>
+            <div class="note">Queda saldo. Fecha prometida: 28/09. Recordatorio: retira con la hermana.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

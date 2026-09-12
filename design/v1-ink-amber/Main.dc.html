@@ -1,0 +1,391 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap">
+  <style>
+    :root{
+      --ink:#14181F; --ink-800:#1F262F; --ink-700:#2E3641;
+      --text:#1A1D21; --muted:#78736B;
+      --paper:#FAF8F5; --panel:#FFFFFF; --line:#E7E2DA; --line-2:#F1EDE6; --head:#F6F3EE;
+      --amber:#E09A3B; --amber-600:#C77B20; --amber-700:#A8641A; --amber-50:#FDF6EA; --amber-200:#F2DCB0;
+      --pine:#2E7D5B; --pine-50:#EDF7F2; --brick:#C0392B; --brick-50:#FDF1EF;
+      --slate:#3E4A57; --slate-50:#EDF0F3;
+      --sans:'Archivo',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+      --serif:'Instrument Serif',Georgia,'Times New Roman',serif;
+      --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--paper);color:var(--text);font-family:var(--sans);
+      font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+    a{color:var(--amber-700)} a:hover{color:var(--amber-600)}
+    .sheet{padding:72px 72px 80px;display:flex;flex-direction:column;gap:64px}
+    .eyebrow{font-size:11.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+    .sec-title{font-family:var(--serif);font-size:30px;line-height:1.1;margin:0}
+    .sec-head{display:flex;flex-direction:column;gap:8px;margin-bottom:26px}
+    .sec-head p{margin:0;color:var(--muted);font-size:14px;max-width:640px;text-wrap:pretty}
+    .rule{height:1px;background:var(--line);border:0;margin:0}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:10px}
+    .sw{display:flex;flex-direction:column;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}
+    .sw .chip{height:76px}
+    .sw .meta{padding:10px 12px 12px;display:flex;flex-direction:column;gap:3px;border-top:1px solid var(--line-2)}
+    .sw .role{font-size:12.5px;font-weight:600}
+    .sw .hex{font-family:var(--mono);font-size:11.5px;color:var(--muted);text-transform:uppercase}
+    .sw .use{font-size:11.5px;color:var(--muted);line-height:1.35;text-wrap:pretty}
+    .grid5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
+    .grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+    .tile{display:flex;flex-direction:column;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+    .tile .stage{height:150px;display:flex;align-items:center;justify-content:center}
+    .tile .cap{padding:10px 13px;background:var(--panel);border-top:1px solid var(--line-2);
+      font-size:11.5px;color:var(--muted);font-weight:500}
+    .ramp{display:flex;align-items:baseline;gap:20px;padding:14px 0;border-bottom:1px solid var(--line-2)}
+    .ramp:last-child{border-bottom:0}
+    .ramp .spec{flex:0 0 152px;font-family:var(--mono);font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+    .ramp .note{flex:0 0 250px;font-size:12px;color:var(--muted);line-height:1.4;text-wrap:pretty}
+    .ramp .demo{flex:1;min-width:0}
+    .rules{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+    .rule-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px;
+      display:flex;flex-direction:column;gap:7px}
+    .rule-card h4{margin:0;font-size:13.5px;font-weight:700}
+    .rule-card p{margin:0;font-size:12.5px;color:var(--muted);line-height:1.5;text-wrap:pretty}
+    .rule-card .yes{color:var(--pine);font-weight:600}
+    .rule-card .no{color:var(--brick);font-weight:600;text-decoration:line-through}
+  </style>
+</helmet>
+
+<div class="sheet">
+
+  <!-- ============ HERO / LOCKUP ============ -->
+  <div style="display:flex;flex-direction:column;gap:34px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:40px">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="eyebrow">Identidad de marca</div>
+        <div style="font-family:var(--serif);font-size:19px;color:var(--muted);font-style:italic">
+          Sistema de gestion para opticas
+        </div>
+      </div>
+      <div style="font-family:var(--mono);font-size:11.5px;color:var(--muted);text-align:right;line-height:1.7">
+        miopticadigital.com.ar<br>
+        app.miopticadigital.com.ar<br>
+        admin.miopticadigital.com.ar
+      </div>
+    </div>
+
+    <!-- primary lockup -->
+    <div style="display:flex;align-items:center;gap:26px">
+      <svg width="96" height="96" viewBox="0 0 24 24" aria-label="Isotipo">
+        <path d="M 1.6 12 Q 12 3.1 22.4 12 Q 12 20.9 1.6 12 Z" fill="#E09A3B"></path>
+        <circle cx="12" cy="12" r="4.15" fill="#14181F"></circle>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="font-family:var(--serif);font-size:64px;line-height:1;letter-spacing:-.012em">Mi Óptica Digital</div>
+        <div style="font-size:13px;font-weight:500;letter-spacing:.19em;text-transform:uppercase;color:var(--muted);padding-left:3px">
+          Stock · Ventas · Clientes · Caja
+        </div>
+      </div>
+    </div>
+
+    <p style="margin:0;max-width:700px;font-size:15px;color:var(--muted);line-height:1.6;text-wrap:pretty">
+      El isotipo es una lente vista de canto, que es tambien la forma del ojo. Ambar sobre tinta:
+      la calidez de un negocio atendido por su dueño, no la frialdad de una clinica. Es la unica
+      pieza de color fuerte del sistema, asi que se gana la atencion sin competir con nada.
+    </p>
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ EL ISOTIPO ============ -->
+  <div>
+    <div class="sec-head">
+      <div class="eyebrow">01</div>
+      <h2 class="sec-title">El isotipo</h2>
+      <p>Una sola forma, cuatro usos. Sobrevive a 16 px porque es una silueta con un punto adentro:
+        no hay detalle que perder.</p>
+    </div>
+
+    <div class="grid4">
+      <div class="tile">
+        <div class="stage" style="background:var(--panel)">
+          <svg width="72" height="72" viewBox="0 0 24 24">
+            <path d="M 1.6 12 Q 12 3.1 22.4 12 Q 12 20.9 1.6 12 Z" fill="#E09A3B"></path>
+            <circle cx="12" cy="12" r="4.15" fill="#14181F"></circle>
+          </svg>
+        </div>
+        <div class="cap">Positivo, sobre panel blanco</div>
+      </div>
+
+      <div class="tile">
+        <div class="stage" style="background:var(--ink)">
+          <svg width="72" height="72" viewBox="0 0 24 24">
+            <path d="M 1.6 12 Q 12 3.1 22.4 12 Q 12 20.9 1.6 12 Z" fill="#E09A3B"></path>
+            <circle cx="12" cy="12" r="4.15" fill="#14181F"></circle>
+          </svg>
+        </div>
+        <div class="cap">Sobre tinta, para la barra lateral</div>
+      </div>
+
+      <div class="tile">
+        <div class="stage" style="background:var(--paper)">
+          <div style="width:88px;height:88px;border-radius:20px;background:#14181F;display:flex;align-items:center;justify-content:center">
+            <svg width="54" height="54" viewBox="0 0 24 24">
+              <path d="M 1.6 12 Q 12 3.1 22.4 12 Q 12 20.9 1.6 12 Z" fill="#E09A3B"></path>
+              <circle cx="12" cy="12" r="4.15" fill="#14181F"></circle>
+            </svg>
+          </div>
+        </div>
+        <div class="cap">Baldosa: favicon e icono de app</div>
+      </div>
+
+      <div class="tile">
+        <div class="stage" style="background:var(--panel);gap:22px">
+          <svg width="48" height="48" viewBox="0 0 24 24">
+            <path d="M 1.6 12 Q 12 3.1 22.4 12 Q 12 20.9 1.6 12 Z" fill="#E09A3B"></path>
+            <circle cx="12" cy="12" r="4.15" fill="#14181F"></circle>
+          </svg>
+          <svg width="32" height="32" viewBox="0 0 24 24">
+            <path d="M 1.6 12 Q 12 3.1 22.4 12 Q 12 20.9 1.6 12 Z" fill="#E09A3B"></path>
+            <circle cx="12" cy="12" r="4.15" fill="#14181F"></circle>
+          </svg>
+          <svg width="20" height="20" viewBox="0 0 24 24">
+            <path d="M 1.6 12 Q 12 3.1 22.4 12 Q 12 20.9 1.6 12 Z" fill="#E09A3B"></path>
+            <circle cx="12" cy="12" r="4.15" fill="#14181F"></circle>
+          </svg>
+          <svg width="16" height="16" viewBox="0 0 24 24">
+            <path d="M 1.6 12 Q 12 3.1 22.4 12 Q 12 20.9 1.6 12 Z" fill="#E09A3B"></path>
+            <circle cx="12" cy="12" r="4.15" fill="#14181F"></circle>
+          </svg>
+        </div>
+        <div class="cap">48 / 32 / 20 / 16 px</div>
+      </div>
+    </div>
+
+    <!-- lockups in situ -->
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:18px">
+      <div class="tile">
+        <div class="stage" style="background:var(--ink);height:120px;padding:0 22px;justify-content:flex-start">
+          <div style="display:flex;align-items:center;gap:11px">
+            <svg width="28" height="28" viewBox="0 0 24 24">
+              <path d="M 1.6 12 Q 12 3.1 22.4 12 Q 12 20.9 1.6 12 Z" fill="#E09A3B"></path>
+              <circle cx="12" cy="12" r="4.15" fill="#14181F"></circle>
+            </svg>
+            <div style="display:flex;flex-direction:column;gap:1px">
+              <div style="font-family:var(--serif);font-size:17px;color:#FFFFFF;line-height:1.1">Mi Óptica Digital</div>
+              <div style="font-size:11px;color:#8A8378">Óptica Belgrano</div>
+            </div>
+          </div>
+        </div>
+        <div class="cap">Barra lateral: marca arriba, comercio abajo</div>
+      </div>
+
+      <div class="tile">
+        <div class="stage" style="background:var(--panel);height:120px">
+          <div style="display:flex;align-items:center;gap:13px">
+            <svg width="34" height="34" viewBox="0 0 24 24">
+              <path d="M 1.6 12 Q 12 3.1 22.4 12 Q 12 20.9 1.6 12 Z" fill="#E09A3B"></path>
+              <circle cx="12" cy="12" r="4.15" fill="#14181F"></circle>
+            </svg>
+            <div style="font-family:var(--serif);font-size:26px;line-height:1">Mi Óptica Digital</div>
+          </div>
+        </div>
+        <div class="cap">Horizontal: mails, facturas, login</div>
+      </div>
+
+      <div class="tile">
+        <div class="stage" style="background:var(--paper);height:120px">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:9px">
+            <svg width="34" height="34" viewBox="0 0 24 24">
+              <path d="M 1.6 12 Q 12 3.1 22.4 12 Q 12 20.9 1.6 12 Z" fill="#E09A3B"></path>
+              <circle cx="12" cy="12" r="4.15" fill="#14181F"></circle>
+            </svg>
+            <div style="font-family:var(--serif);font-size:21px;line-height:1">Mi Óptica Digital</div>
+          </div>
+        </div>
+        <div class="cap">Apilado: pantallas angostas y papeleria</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ PALETA ============ -->
+  <div>
+    <div class="sec-head">
+      <div class="eyebrow">02</div>
+      <h2 class="sec-title">Paleta</h2>
+      <p>Tinta para el armazon, papel calido para el fondo, ambar para lo unico que el usuario
+        tiene que hacer. Verde y rojo solo dicen si algo salio bien o mal, nunca decoran.</p>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:26px">
+      <div>
+        <div class="eyebrow" style="margin-bottom:11px">Tinta y papel: el 95 por ciento de la pantalla</div>
+        <div class="grid5">
+          <div class="sw"><div class="chip" style="background:#14181F"></div>
+            <div class="meta"><div class="role">Tinta</div><div class="hex">#14181F</div>
+              <div class="use">Barra lateral, toasts, titulos sobre claro</div></div></div>
+          <div class="sw"><div class="chip" style="background:#2E3641"></div>
+            <div class="meta"><div class="role">Tinta 700</div><div class="hex">#2E3641</div>
+              <div class="use">Hover de la navegacion</div></div></div>
+          <div class="sw"><div class="chip" style="background:#FAF8F5"></div>
+            <div class="meta"><div class="role">Papel</div><div class="hex">#FAF8F5</div>
+              <div class="use">Fondo de la aplicacion</div></div></div>
+          <div class="sw"><div class="chip" style="background:#FFFFFF;border-bottom:1px solid #E7E2DA"></div>
+            <div class="meta"><div class="role">Panel</div><div class="hex">#FFFFFF</div>
+              <div class="use">Tarjetas, tablas, modales</div></div></div>
+          <div class="sw"><div class="chip" style="background:#E7E2DA"></div>
+            <div class="meta"><div class="role">Linea</div><div class="hex">#E7E2DA</div>
+              <div class="use">Bordes. Filas internas usan #F1EDE6</div></div></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="eyebrow" style="margin-bottom:11px">Ambar: accion y atencion, nada mas</div>
+        <div class="grid5">
+          <div class="sw"><div class="chip" style="background:#E09A3B"></div>
+            <div class="meta"><div class="role">Ambar</div><div class="hex">#E09A3B</div>
+              <div class="use">Relleno de botones. Texto encima siempre tinta</div></div></div>
+          <div class="sw"><div class="chip" style="background:#C77B20"></div>
+            <div class="meta"><div class="role">Ambar 600</div><div class="hex">#C77B20</div>
+              <div class="use">Hover y estado presionado</div></div></div>
+          <div class="sw"><div class="chip" style="background:#A8641A"></div>
+            <div class="meta"><div class="role">Ambar 700</div><div class="hex">#A8641A</div>
+              <div class="use">Enlaces y ambar sobre blanco</div></div></div>
+          <div class="sw"><div class="chip" style="background:#F2DCB0"></div>
+            <div class="meta"><div class="role">Ambar 200</div><div class="hex">#F2DCB0</div>
+              <div class="use">Borde del foco y de la fila activa</div></div></div>
+          <div class="sw"><div class="chip" style="background:#FDF6EA;border-bottom:1px solid #E7E2DA"></div>
+            <div class="meta"><div class="role">Ambar 50</div><div class="hex">#FDF6EA</div>
+              <div class="use">Fondo de aviso y de fila seleccionada</div></div></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="eyebrow" style="margin-bottom:11px">Semanticos: solo estado, nunca decoracion</div>
+        <div class="grid5">
+          <div class="sw"><div class="chip" style="background:#2E7D5B"></div>
+            <div class="meta"><div class="role">Pino</div><div class="hex">#2E7D5B</div>
+              <div class="use">Cobrado, activo, confirmado</div></div></div>
+          <div class="sw"><div class="chip" style="background:#C0392B"></div>
+            <div class="meta"><div class="role">Ladrillo</div><div class="hex">#C0392B</div>
+              <div class="use">Saldo, vencido, anulado, destructivo</div></div></div>
+          <div class="sw"><div class="chip" style="background:#3E4A57"></div>
+            <div class="meta"><div class="role">Pizarra</div><div class="hex">#3E4A57</div>
+              <div class="use">Informativo neutro: tipo, categoria</div></div></div>
+          <div class="sw"><div class="chip" style="background:#78736B"></div>
+            <div class="meta"><div class="role">Apagado</div><div class="hex">#78736B</div>
+              <div class="use">Texto secundario y ayudas</div></div></div>
+          <div class="sw"><div class="chip" style="background:#F6F3EE;border-bottom:1px solid #E7E2DA"></div>
+            <div class="meta"><div class="role">Encabezado</div><div class="hex">#F6F3EE</div>
+              <div class="use">Cabecera de tabla y totales</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ TIPOGRAFIA ============ -->
+  <div>
+    <div class="sec-head">
+      <div class="eyebrow">03</div>
+      <h2 class="sec-title">Tipografia</h2>
+      <p>Instrument Serif solo para la marca y los titulos de pantalla. Archivo para todo lo demas,
+        porque tiene numeros tabulares y aguanta 13 px en una grilla de precios sin cansar.</p>
+    </div>
+
+    <div class="card" style="padding:8px 24px">
+      <div class="ramp">
+        <div class="spec">Serif 64 / 1.0</div>
+        <div class="note">Marca. Solo en el login y la papeleria.</div>
+        <div class="demo" style="font-family:var(--serif);font-size:44px;line-height:1">Mi Óptica Digital</div>
+      </div>
+      <div class="ramp">
+        <div class="spec">Serif 26 / 1.15</div>
+        <div class="note">Titulo de pantalla, donde antes habia un H2 de 20 px.</div>
+        <div class="demo" style="font-family:var(--serif);font-size:26px;line-height:1.15">Cuentas pendientes</div>
+      </div>
+      <div class="ramp">
+        <div class="spec">Archivo 700 · 28</div>
+        <div class="note">Cifra de tarjeta de indicador.</div>
+        <div class="demo" style="font-weight:700;font-size:28px;font-variant-numeric:tabular-nums">$ 1.284.500,00</div>
+      </div>
+      <div class="ramp">
+        <div class="spec">Archivo 600 · 16</div>
+        <div class="note">Titulo de tarjeta y de modal.</div>
+        <div class="demo" style="font-weight:600;font-size:16px">Stock bajo o agotado</div>
+      </div>
+      <div class="ramp">
+        <div class="spec">Archivo 400 · 14</div>
+        <div class="note">Texto base de la aplicacion.</div>
+        <div class="demo" style="font-size:14px">Obligatorio si queda saldo pendiente.</div>
+      </div>
+      <div class="ramp">
+        <div class="spec">Archivo 400 · 13</div>
+        <div class="note">Celdas de tabla. La densidad que ya tiene el sistema.</div>
+        <div class="demo" style="font-size:13px">Armazon acetato Havana, calibre 52</div>
+      </div>
+      <div class="ramp">
+        <div class="spec">Archivo 600 · 11.5 · .03em</div>
+        <div class="note">Cabecera de tabla y etiquetas al tope.</div>
+        <div class="demo" style="font-size:11.5px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--muted)">Precio de venta</div>
+      </div>
+      <div class="ramp">
+        <div class="spec">Mono 12.5</div>
+        <div class="note">Codigos de articulo y numeros de comprobante.</div>
+        <div class="demo" style="font-family:var(--mono);font-size:12.5px">ARM-001-HAV · 0001-00004215</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ REGLAS ============ -->
+  <div>
+    <div class="sec-head">
+      <div class="eyebrow">04</div>
+      <h2 class="sec-title">Reglas que no se negocian</h2>
+    </div>
+    <div class="rules">
+      <div class="rule-card">
+        <h4>Un solo ambar por pantalla</h4>
+        <p>Si hay dos botones ambar a la vista, ninguno es la accion principal. El resto son
+          botones de panel con borde.</p>
+      </div>
+      <div class="rule-card">
+        <h4>Nada de rayas largas</h4>
+        <p>Nunca una raya larga en texto que lea un usuario: ni en botones, ni en avisos, ni en
+          lo que manda el backend.</p>
+        <p><span class="no">— ninguno —</span> &nbsp; <span class="yes">(ninguno)</span></p>
+      </div>
+      <div class="rule-card">
+        <h4>La plata es tabular</h4>
+        <p>Todo importe usa numeros tabulares y alineacion a la derecha, para que las comas caigan
+          en la misma columna y el ojo compare de un vistazo.</p>
+      </div>
+      <div class="rule-card">
+        <h4>La celda vacia es un guion</h4>
+        <p>Un dato que falta se dibuja como un guion corto y apagado, no como un espacio en blanco
+          que parece un error de carga.</p>
+      </div>
+      <div class="rule-card">
+        <h4>Violeta es la consola nuestra</h4>
+        <p>La consola de proveedor mantiene su violeta. Ambar es del comercio. Ninguna pantalla
+          deberia dejar dudas sobre en cual estas parado.</p>
+      </div>
+      <div class="rule-card">
+        <h4>Iconos de linea, 1.75</h4>
+        <p>Lucide sobre grilla de 24, trazo 1.75 en lugar de 2: con el ambar y el serif, el trazo
+          fino se ve mas prolijo y menos generico.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

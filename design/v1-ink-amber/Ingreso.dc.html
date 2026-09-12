@@ -1,0 +1,122 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap">
+  <style>
+    :root{
+      --ink:#14181F; --text:#1A1D21; --muted:#78736B; --paper:#FAF8F5; --panel:#FFFFFF;
+      --line:#E7E2DA; --amber:#E09A3B; --amber-700:#A8641A; --amber-50:#FDF6EA;
+      --sans:'Archivo',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+      --serif:'Instrument Serif',Georgia,serif;
+      --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:var(--sans);font-size:14px;line-height:1.45;color:var(--text);
+      -webkit-font-smoothing:antialiased}
+    a{color:var(--amber-700);text-decoration:none} a:hover{color:#C77B20;text-decoration:underline}
+    .fld{display:flex;flex-direction:column;gap:6px}
+    .fld label{font-size:12.5px;font-weight:600;color:#3D3A34}
+    .fld input{width:100%;font:inherit;font-size:14px;color:var(--text);background:#fff;
+      border:1px solid var(--line);border-radius:8px;padding:10px 12px;outline:none}
+  </style>
+</helmet>
+
+<div style="display:grid;grid-template-columns:600px 1fr;height:900px;background:var(--paper)">
+
+  <!-- ---------- panel de marca ---------- -->
+  <div style="background:var(--ink);padding:52px 56px;display:flex;flex-direction:column;
+              justify-content:space-between;position:relative;overflow:hidden">
+
+    <!-- lente gigante, recortada por el borde: textura, no ilustracion -->
+    <svg width="720" height="720" viewBox="0 0 24 24"
+         style="position:absolute;right:-330px;bottom:-230px;opacity:.055">
+      <path d="M 1.6 12 Q 12 3.1 22.4 12 Q 12 20.9 1.6 12 Z" fill="#E09A3B"></path>
+      <circle cx="12" cy="12" r="4.15" fill="#FAF8F5"></circle>
+    </svg>
+
+    <div style="display:flex;align-items:center;gap:13px;position:relative">
+      <svg width="36" height="36" viewBox="0 0 24 24">
+        <path d="M 1.6 12 Q 12 3.1 22.4 12 Q 12 20.9 1.6 12 Z" fill="#E09A3B"></path>
+        <circle cx="12" cy="12" r="4.15" fill="#14181F"></circle>
+      </svg>
+      <div style="font-family:var(--serif);font-size:25px;color:#fff;line-height:1">Mi Óptica Digital</div>
+    </div>
+
+    <div style="position:relative;display:flex;flex-direction:column;gap:22px;max-width:430px">
+      <div style="font-family:var(--serif);font-size:46px;line-height:1.12;color:#fff;letter-spacing:-.01em">
+        Toda la óptica,<br>en una sola pantalla.
+      </div>
+      <p style="margin:0;color:#9D958A;font-size:15px;line-height:1.6;text-wrap:pretty">
+        Stock por sucursal, ventas con saldo, cuentas corrientes, recetas y listas de precios.
+        Sin planillas sueltas y sin dos sistemas que no se hablan.
+      </p>
+    </div>
+
+    <div style="position:relative;display:flex;flex-direction:column;gap:6px">
+      <div style="font-size:12px;color:#6E675E;font-family:var(--mono)">app.miopticadigital.com.ar</div>
+      <div style="font-size:12px;color:#6E675E">Hecho en Argentina, para ópticas argentinas.</div>
+    </div>
+  </div>
+
+  <!-- ---------- formulario ---------- -->
+  <div style="display:flex;align-items:center;justify-content:center;padding:40px">
+    <div style="width:392px;display:flex;flex-direction:column;gap:24px">
+
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <h1 style="margin:0;font-family:var(--serif);font-size:32px;font-weight:400;line-height:1.1">Ingresá a tu óptica</h1>
+        <p style="margin:0;color:var(--muted);font-size:13.5px">Usá el correo con el que te dieron de alta.</p>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="fld">
+          <label>Correo</label>
+          <input value="martina@opticabelgrano.com.ar">
+        </div>
+        <div class="fld">
+          <label>Contraseña</label>
+          <div style="position:relative;display:flex;align-items:center">
+            <input type="password" value="............" style="padding-right:42px;border-color:{{accent}};box-shadow:0 0 0 3px var(--amber-50)">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#78736B" stroke-width="1.75"
+                 stroke-linecap="round" stroke-linejoin="round" style="position:absolute;right:13px">
+              <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <button style="width:100%;appearance:none;border:0;background:{{accent}};color:#14181F;
+                     padding:12px 16px;border-radius:9px;font-family:inherit;font-weight:700;font-size:14.5px;
+                     cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+        Ingresar
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+
+      <div style="display:flex;flex-direction:column;gap:18px;align-items:center">
+        <a href="#" style="font-size:13px;font-weight:600">Olvidé mi contraseña</a>
+        <div style="width:100%;height:1px;background:var(--line)"></div>
+        <p style="margin:0;font-size:12.5px;color:var(--muted);text-align:center;line-height:1.55;text-wrap:pretty">
+          ¿Tu óptica todavía no tiene cuenta?<br>
+          Escribinos a <a href="#">hola@miopticadigital.com.ar</a>
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{"accent":{"editor":"color","default":"#E09A3B","options":["#E09A3B","#D98324","#C77B20","#E8B04B"],"section":"Marca"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { accent: this.props.accent ?? '#E09A3B' };
+  }
+}
+</script>
+</body>
+</html>
