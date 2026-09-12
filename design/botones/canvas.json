@@ -1,0 +1,26 @@
+{
+  "pages": [
+    { "id": "page-1", "name": "Elegido" },
+    { "id": "page-2", "name": "Exploración" }
+  ],
+  "artboards": [
+    { "file": "Main.dc.html",     "page": "page-1", "x": 0,    "y": 0, "w": 940, "h": 1500, "title": "Botón de acción · Destello" },
+
+    { "file": "Espectro.dc.html", "page": "page-2", "x": 0,    "y": 0, "w": 940, "h": 1500, "title": "Cápsula · Espectro (base)" },
+    { "file": "Aro.dc.html",      "page": "page-2", "x": 1040, "y": 0, "w": 940, "h": 1500, "title": "Variante · Aro" },
+    { "file": "Haz.dc.html",      "page": "page-2", "x": 2080, "y": 0, "w": 940, "h": 1500, "title": "Variante · Haz" },
+    { "file": "Indigo.dc.html",   "page": "page-2", "x": 3120, "y": 0, "w": 940, "h": 1500, "title": "Cápsula · Índigo" },
+    { "file": "Tinte.dc.html",    "page": "page-2", "x": 4160, "y": 0, "w": 940, "h": 1500, "title": "Cápsula · Tinte" },
+    { "file": "Actual.dc.html",   "page": "page-2", "x": 5200, "y": 0, "w": 940, "h": 1420, "title": "Sistema actual (punto de partida)" },
+    { "file": "Casco.dc.html",    "page": "page-2", "x": 6240, "y": 0, "w": 940, "h": 1420, "title": "Opción A · Casco" },
+    { "file": "Aire.dc.html",     "page": "page-2", "x": 7280, "y": 0, "w": 940, "h": 1420, "title": "Opción B · Aire" },
+    { "file": "Capsula.dc.html",  "page": "page-2", "x": 8320, "y": 0, "w": 940, "h": 1420, "title": "Opción C · Cápsula" }
+  ],
+  "annotations": [
+    { "id": "elegido", "page": "page-1", "x": 0, "y": -250, "w": 940,
+      "text": "Decidido: cápsula con destello.\nEsta hoja ya no es una propuesta, es lo que hay en el código. Los valores de abajo salen de src/tokens.ts y de las dos consolas, no al revés.\nUn cambio contra la hoja original: el destello quedó también en :active, no sólo en :hover, porque en una tablet del mostrador no hay \"encima\" y si no el degradado no se vería nunca." },
+    { "id": "exploracion", "page": "page-2", "x": 0, "y": -215, "w": 940,
+      "text": "Cómo se llegó hasta acá, de derecha a izquierda.\nRonda 1: el sistema actual y tres alternativas de color, peso y forma; ganó la cápsula. Ronda 2: cuánta marca entra; ganó el espectro. Ronda 3: tres variantes del espectro; ganó el destello." }
+  ],
+  "launch": { "view": "canvas", "page": "page-1" }
+}
