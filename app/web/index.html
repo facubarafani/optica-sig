@@ -3,36 +3,134 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>SGI Óptica — Gestión</title>
+<title>Mi Óptica Digital</title>
 <style>
+  /* Los tokens salen de design-system/src/tokens.ts. Este bloque es una copia
+     literal de design-system/dist/console-root.css: para cambiar un valor se
+     toca tokens.ts, se corre `node scripts/gen-tokens.mjs` y se pega acá. El
+     porqué de cada token está en tokens.ts, no duplicado en este archivo. */
   :root{
-    --bg:#f4f6f9; --panel:#ffffff; --border:#e3e8ef; --text:#1f2937; --muted:#6b7280;
-    --primary:#2563eb; --primary-600:#1d4ed8; --primary-50:#eff6ff;
-    --danger:#dc2626; --danger-50:#fef2f2; --ok:#16a34a; --ok-50:#f0fdf4; --warn:#d97706; --warn-50:#fffbeb;
-    --radius:10px; --radius-sm:7px; --shadow:0 1px 3px rgba(16,24,40,.08),0 1px 2px rgba(16,24,40,.04);
-    --shadow-lg:0 12px 32px rgba(16,24,40,.18); --sidebar:228px;
-    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --bg: #f4f6f9;
+    --panel: #ffffff;
+    --border: #e3e8ef;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --ink: #0f172a;
+    --label: #374151;
+    --on-ink: #cbd5e1;
+    --on-ink-muted: #94a3b8;
+    --on-ink-faint: #7c8aa5;
+    --on-ink-dim: #64748b;
+    --on-ink-line: #1e293b;
+    --hover: #f8fafc;
+    --press: #f1f5f9;
+    --action: #4f46e5;
+    --action-600: #4338ca;
+    --action-bloom: linear-gradient(100deg, #3b82f6, #7c3aed);
+    --action-bloom-press: linear-gradient(100deg, #2e65c0, #612db9);
+    --action-bloom-border: #6f34d4;
+    --action-ring: #ede9fe;
+    --primary: #2563eb;
+    --primary-600: #1d4ed8;
+    --primary-200: #bfdbfe;
+    --primary-700: #1e40af;
+    --primary-50: #eff6ff;
+    --danger: #dc2626;
+    --danger-200: #fecaca;
+    --danger-50: #fef2f2;
+    --ok: #16a34a;
+    --ok-50: #f0fdf4;
+    --warn: #d97706;
+    --warn-50: #fffbeb;
+    --brand-cyan: #22d3ee;
+    --brand-sky: #38bdf8;
+    --brand-blue: #3b82f6;
+    --brand-indigo: #4f46e5;
+    --brand-violet: #7c3aed;
+    --radius: 10px;
+    --radius-sm: 7px;
+    --radius-control: 12px;
+    --radius-pill: 999px;
+    --radius-lg: 14px;
+    --shadow: 0 1px 3px rgba(16,24,40,.08),0 1px 2px rgba(16,24,40,.04);
+    --shadow-lg: 0 12px 32px rgba(16,24,40,.18);
+    --sidebar: 228px;
+    --topbar: 56px;
+    --sans: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono: ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --brand-font: 'Poppins',-apple-system,BlinkMacSystemFont,sans-serif;
   }
   *{box-sizing:border-box}
   html,body{margin:0;height:100%}
   body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.45}
   a{color:var(--primary);text-decoration:none}
   h1,h2,h3{margin:0;font-weight:650}
-  /* ---------- login ---------- */
-  .login-wrap{min-height:100%;display:grid;place-items:center;padding:24px}
-  .login-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);width:360px;max-width:100%;padding:28px}
-  .login-card .brand{display:flex;align-items:center;gap:10px;margin-bottom:4px}
-  .login-card .brand .logo{width:34px;height:34px;border-radius:9px;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:800}
+  /* Poppins, sólo para el lockup de la marca. Incrustada porque la consola
+     no hace pedidos externos. Subconjunto latin, que ya cubre la Ó. */
+  @font-face{font-family:'Poppins';font-style:normal;font-weight:400;font-display:swap;src:url(data:font/woff2;base64,d09GMgABAAAAAB7cAAwAAAAAP6AAAB6LAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGx4cLgZgAIFUCudM0jYLgzYAATYCJAOGaAQgBYNcB4QLG34ysyLYOAAgoXcURZmgxNl/mcCNIWAf1kVCRIRXVQOGljoBwzESk5sQeb9S/HGFv0CJANWv1QqHitAxEYaPUxXzIzT2SS5P1Bivb/fC6FBlYskROpRM49HGpmg7kZWtcNXVQEIBy39DNGcNUryi4A2iMSHiG9kkm4TEyUZI0GCSGkUr4lQM2oOTXo9U/KmY3/Wkqq/0++0LJr1AEtW0o209Yx5fxKx/ne/vSnZg5ippGaqcVM2jC2Y9DgC5DgGWhJ9I9gfgNgrqtCCz3KgEsPNeAlJRb61lYi/zssQKmGSyq12rif0D20Mwtv//mp92JrAIRYwsCNPZgh5Zcqy/enNfYF5e3pxJPoSo9Hk2KS1PXilJAchVIU2WMSkhuXVrC+QqhPyyKCukq8qYSAq+27n64LvZt3eZJTU55yxKGWJM8iIK7Zc+rGk705dK1OAS6B6gAFZIkCDgxCnECMIEA8wJAoIbaRDGj7ld7KOAUYfghvdSyYUvGoYsMAjou1oB53lBrqIERttiK7mlnqOzl2RacAjYtTk4bmGjokU1bdgBwHuA7ukewA7BgAIGYJMgAcwfrNJsn+jxjAKs1uL/IcfQfR3ord7ZMQoTh0nCpGAyMGyMBLMzOSVlRMpobZWPIzHW99dvPRITg0mQsn5WzXw/H88jc+GsWwj/4ftv3/97sPvBbw9+fdD3YOeDVQ8WPsi5//u9gXvHQIDVwB+srXwF+AtY/S2w8XMAxgYg/6oy2ueDCzJIoADQDMEXZIHbbJDAubo9PjUM7ton4kbzxeZ9RYDsCVMUQbUAPcAFzZ2LuKUB0chgQWcMnCuswANPeAkjSPbcGarjGB4CWRDnUwZp+YA9QZRFY7UAgRHWzvFCMOwDpMagNE+DbP+UqvN+diNySAvYHv9qvtoIYZIC44JQsjlKybdUhPNh7TJD9PAOaGpTR1VB3zdmaqe7QcKqBWFZnlrtT3P38YZbj5htR+wDH64u0rBJaxBrAfnt0j+gUzQhGEGqsuLUkarsqXorMgch5PA6el3GItjTH68pDLWWt+QAK+WvBlx9hpkeAf4bVXaF4PtiW/Q2LaD01QFFk6qLGlYWnryz5ZYCizBYOZhWFwRc+M+VkGX8xjXF4965zCtGJFop2VXBCX9DrCL4+eK1Pr8An12Pr3P/Qr65ToqgHhqMsTcH87/dJ+pUF9HAwQnsomzNWNx/EMTDDQdv/HqAzL2LhnGyAZpQb+87bIi0l3Du0fVDfwXUIwreJbuFKLT+yQ1vB5kInDZvu+RKmd08IuX5zm6u3iFYH3boPO1yCFTgdQlDAeWsHOqariTugte12GDoCFW1lCSYU+aQb15+fJtkNAXRnU/EqBqcNp/JI+jHFE8fgXAqpLyZeBxBZzOiBFJc7k1WG7l6z9UAwfY5xMkf0iZ3PeEa6etSHxd8EppHTm/N2XNGky8K6DV1hqs3xbNIbn9YvFclav7dc6u6JmN2oqmA8VWtkg+0brkM0YVcnNJZhD9KBUDyRhsC+C4/V1X7pxXyR+17gptaUlk4BJCuEAmfJKWTQwADpu8XWveoZCxSVuFLhV8uWmuL5JPUumsc+OoxLvyiAhcS3Glh6yorwUw8yVCe0vPPMRUKJBGTT2S+mA9qlKtcrnwMbTSRT8qJzbevziE2nwyMkjjNScv8HHgi4dNeqjNAb9J/Vms2e/sCxeS5viBaQe0oYDUdinmX6txO+86cJy43zEye1bcLwUBryCdR5XWdXOifR1Alxu7/IM1qrUlJA//WVuyvkpoN2uSYXaETXzSSacGJdh9af/M8i8PYEuSQxxKIAJNyGQ3VvNzVczCP1XR9BbWKrV1KN//ZRZQKKJdYLHN1IUK89weUwIAug6wXDKBgcNc6ru2CciDT0FlaglVCvPbOP7/hmI4lF48VJ8yEFqTA1b/73Z1N2ZmxZ1P991q3xbvhVvwdY17YmLyvyLQhVIOT2YgQQxmchKwtJgj/iJeD4zPY1zSrbcwDCOMRYohTGBL1pi6/YUdP5gIlH2OZ+pVZUrz1W71MfMa5wN4+0FW8tlNqUJQ7oGj57nUyV388NZtjTpH3M8JACrRqX3IAYtVy3A7x4InHBedCtnp5Ivg2c6v1F5k3oaciK8aw4Im5k/sMshoQbS7hOHFPmRXUuL4CO1IzShdLvB3B2bjAQnH1GpRrp7bZHeVmAJRfbLurJqKe9S2+OJyXXAGvIWixmZgwkF+AulwFDQDqCsW9yrFLfSlAlle08SMcKyYi4AudLU8/v+XbgkbykwhWZlzYCtaG4ZtOUna1I8EifgAlploOw3pB294TM+HRaBiF8sSTcED94j2OpuA44L9wbdz2/gjutPI7egOw2C5o2xup7Q5e637wZYRv0IW6RzWKnSkUOtRn+Q5jdcB6qtUmyR8uNht4Hzdp9F/j5iL1W5dalfjNrldLWYO3DPBNj+Ib1/opPqA3z+T14QFzmHlhmT62apAFMlFrhGF6c3nkaWUEPaRdvvFGAz0xktRVQo36KT+QWcFu5yQn8ckDroxx64PivmLzqdyrxJAz8SKP1oQpjf8ggjLbmmm4dxTxBX4Mw0mdZOvOanfVJsn5+uFEZpKHy0O+qqgMh1aV70mthtXrBzaWb5gzQ5FHkMXp03Aa7m2v/A+eQ5JWgcYVMSdZQvKhlCdp2vPgluzqmYP51ZZPHCj0lim+9c8+OYlTqb7YdPkfIKfnNFCwzEXnD4eszYh3Rmos5ifSGxd+oOqLZHmVso+mONTubTOexlrM6fhicezxtj34DhfarFv9oEo9BzYiPLRzpP0Q+a+pdpn8x9w7/RXAfNWEcf3xqe9Ar3jv0nZRdm94kzhO08ZJvnt47yDQ/LCWLxRjTvNI64p02+v7Ko6VQizV/pzBsBxOWDF8LFf5hvy3Jrlmthqu8PmgJwD7pdkKQzZ7FqOftY6u10pXXOO8USwC/iia/fDkan4Q9z4gY7oCYu4eKEpb3maOMzYUUbfav4bLhV/HmAqrfPwQuHvHpYi9qYNelXHyzYVa9XVBQPLgrfYZE5+kkZuXfZ28f8sTHclTBfm3KQe2dl4wb8X1ehl9MOWiMFw05zWzsqa1HDAmHtzbsCmu/WNrTqCgPIIY+q1odtkJmIJDYAAbZlcpN/8IZSyO4C1KEWIWy1OLfv9/M56dabt/vMIyQnDn945uPRvkSD/eyLhF3EPqiDg9NrWbYWosGLh3GC8FfHnXsQIr3k6/O6t1dc6rAPoRIsdbe1356tadma2tbz+qXp+XwCU7ZB7RbGcJg3QMnS20rgio3ayq6C/iYbpUlkqoq/U6BhkYBmNIqTNU5RYzt78TDdOnMFWiplGLa/+i3aDe3cMVEci7av4D2Q26PKFQlyeRcoNUPnOJ37bPbzKumkCoSUmpxRNaUv7bHyPkxSV5ug8Yqu0tBHzLYGt5W4EiG5rWQFHA1VSuS6jQV+eNfX8wA4eTGTJzGdrsTGUiGvYjIysqNSm07PyFeKjOo5s7uGDNmtkic3bFmbOtpHKOUS0Bob8lRA4IogbANbQ8efvO2pyyAld4TVltRtfq8tgSb7gLEP3hgh59dZePYshGOZTXd27/9htzOUDH2lThLNZsZrp4vGXoMtWQZeOtGdAs1qzcNPEk69DlyLDlwCi7esN044r6yk3TzaugZ3JNFA+OAi2DGmPucSN7h6dZbcNHWQEvoebQnNnssrOv5vDsOTvsW2MeM16mgCRINrDYxkzQJRAQ/ujZQHqrYd9lexv4pXd+h2eeVMRXyiRKY6DMGlTTOqG4dHxdkcGzZrLPrbEiD0VAPL61tETiIVEMdL4sf84g4VCVA2FRbaVURfn06tBia4VBJZPBMFtVKCqORmJQ4GDz6RKBkK8SFOeDzPVS59OqO0Xaog22DUGno5oHA3S6ntTkZ9EMpRJcJQ+m11WL9N72isH5+ScMAqFW69RotEYNXUOJN6/4DexZ2pBvmQHWFJazxaUTW+sktIpyAVLagOI3jKsBnhpveJ7x1yWqFIKMilicepnerNRorWrwZfbo2fbYjg7NLTBzLsfAZdDN5RQEwVIxzAw2z2y8BDshkaCgkYYg9TRYiSC56+KQ61qRTIq585l6SAzpJcz7RxwSqdCmXl+Z+WohhMpUYN8MmMc3aNoDViJuChcqY3C8qopJHfVzan/f1YLbVG5ylNRVhRqN5xea9HKVAUVkegus0Fk0QDL91dN/nyx//eS/p1L5f3WYOvTaEAcOvZ8s774T7sMTapze9qKaQKc2aG1iYQ3HwJVLeXyZmG3m0m0essh6vO77sL62TQbLskItdYEnX0zRsf9xkumI2a5V8dtrNHIXRv6TloxJGcalZ7FVifXMzjXz5487UF9xfALo7Jo3zylP3m9Nq6jYmGddVjS3/dmfUxdIhCoa1sagMYU0EszMtFPoDip4toqUu6rg6y7vl10FuieTXZNd4HzBwzRFDp1uLCHJgv1f5IUEspbCF+e5A9JWCqUcOp0z4uVPUqb6WWytGFr3YQPIOYJuXIe667urMoqqzlVCiKIBEjUbDUDyr0iBVIrPVWUUdlfWu9fZ0A0lYHn/VqN1bUWFdc1Wff1N/81pVXPntXfMWzitJa0FbKv++4fqx6sE1bg941TgWr+S+O8H5Qc26gf2F2eqxApFo1jcrNeLJzWKFSWdEyJKxyjHyUJN6Lyleru7y2bfUFJi39hlc9f0VGUUguJ+P8ot5KJ+lFJIAdv6/agf7OgPMntLLFZvGYoGEqnUBGIQeJXE46N+FBorbuDY+SjYpnin1PpRQA7ctQsNfhok/DN4UHmX5/+cyVGHVuVg0T1oVXYOCjJDumz2jfmpHtoA3VBaimhuHljTCIknG4zi5gZIqQSCbjTYyP8eVoCkpb76idNSUf9D38Q62+YWuYjXvmQamAYmdc6ahae7E5u0yNKF4Pt6vXNVqyvSfLuCfVsSqhNR/0NtJZ2OcmB9lX54b2pb8TSlAubxYUg1DTwJqSTxzGFuoUwsESmF1KxfRLEtkuH6VDYiYrEsZUSJp9kdmlckV3B5LDmbntH3bL5khCGNg4ip9HxvLgw+9ysP1KA1B5VgS7/fYcvX5bGVw4/2W6Q+H0upVBYSn6UfzOkP6feaiPuW1TydgLPIf7K/ZANpG6kIHPG7l2u2aUq6kBUI8KJX0dKtQ9cNLb6CXrWXbBvWNawE0Pof/RKKhj7+pXhHgWoUrNQYtYdgXbJGuwcGIxdvVblOupBdBWBv98glVhu1g2T/LiTwtKt2gY7tzn8iTf9Gun5fDZrTjaOM4OkCyZU6LcgphVp8UgXs5a0rsqfZS/rK+XJFkxxqN5znklEjiUo1EKWdLyDbDQ+yETXIB0dfVPCkyiYp1GI0QO0+uUJezusrRp+gGQ0V3yNEKuVLhmLn8VnR2KWCPOoeL9UUd7hHmT0X81hcjavcU+iq0HC1uY89ow2dRYWaXBJqNWtTUymsYp9PsT+xl673qt3hezUJo3C7g/OKbDBHw/juGa3p9Hg0E6XSNpMJap0oydOMg4Q+lUOGV2oySNICS4jaBrA3Gm6iN+UqeabdafQi3CGMzAbQhCunYNVJKkGjT6StnF8cZbE9dHDFKqfD1NDnFRSCGuk6R6dvF2Udr8IX0pheBLIx9DqzHDbmm4noE3RItxPPAe7myWsCrDUNTQOFzS/vZllwbxUKSE5XZ2Q8T1uJgtZrr9/8z+q3S29aA4YFjgDbHtNkTwAlkFBIY6V+q3lmqdxgMxNe1jKahmp7bPhcqZe32usViMBe/KTx9UVB2aXSdNvxTPAirFkqazMZ4bbJEo2G64BbTSZlW6tUQ9Ka8DRULKaiBhyZoseRnw0gEqrLgSPPyxvDVPeqzL5TD3jRLLS4oRJQo6r80xdibpE9y+5dWyGA4Sb0DQc/W6lCZ8zKrTloGpoPzocV5rCQZCdTQmXS9qemvREPO49gGEJ6DlmKZnHQGjRIi+Y8ppNXpsSnSP7rUySpA/BkuS2LA/begLKG5UBqPaKS5kFylXwWOmu+ClBS01DdSjuBKSymsb2IyEbX6cxyhSHfjAcxhu7z7mup5buFB1Dq03pSnZ2/mv8NOnekOiafnn7aMeXMpDOgov1082nXz0N/HlnafmrSKVffkJ9HgbTUUZsynBWhdxKLd+zt3gsWKAermlTh88KUdUpQtqJ4hDkjHA134+A8lYStzc7UZyWGGoeEpzg6TVYRWEGT03HhriGhNjFLn5mtZUvyVDAu3B2OZpiLR4ADXnQqCn7w1W3y3Sq7r3LAn9kQv3FDy/PhcWKeJGZhU1zd4ZZ7I+P0PAj0UtskjWufDWWfQiLeekCLFmGsN4Upat3mECfDWRE2bk5FBWfC7Ay7hyIv4zDYdFCVy0OcBWaz04UAjAI58HZdlkkQ11knRI/cyxAynB6qsKSqKSjfGCeWC9gwJEu+df2IsLczziVDwH7u956Ze5+zuTt7Vvbc5fK/nT58ZieHs++MaTBSMKPpQG5uHzZnHpM5GQuWtcwU7wzYlHkCOrEWXXtYZf62I0A8czOrpMe1PT8lIASKRyeitgh0Egr88vlELEluz+bbG80BapS7jcXowcYegzDvipM9BhlTZhaPyJon3lBgb7AMwG4fsSc7bsvkd0WYwnqlJmjU1zqdSAppxCSKTiCRaEQkQK96PmbMizGjX9AGz0fPuavea+FiMQa8PrjWZl5fWspI9OISEIsWLXMvsWfO1CjmOh2KeTO1DvsMLekOp201Q2Pn6T25rDKZTFt6mFxVVd5IyJioR6+ISZuHuri4L8ftCFmVGgEYKVanwhGJ4rTBPNgJc7/1cyeQEAJWT1eyBBCRJBCzWLAgEQUiFpgzztVbj8j39I5Anb1+22lpgKPvCjrnFgyYh1Ea1c5mUx0SZHMm0SHYjRx5rRVVKDgCK8wEeDrzd7eZc/UPiNrhebTrBSmdY30x2ZH/Rkb+HpkNao9JCiQg3uZxaTRul5aO1+ZhqZqCgrxoJluIx6mlYHHm4fEH2aB9/O7L6u/qq7uvqkiPqUf3tQCzihNAq7REYBLjz0bH9GQqkiAOhyUREDL2BGlywdh5MIPNVHGwSdF/BPqVSdlILo8L51Jgdnh8QmRMDDYBS8pOjI2J/pYQ9xckBU8PXKmTXGkGualpaNFSJ4OXJU4Usm1ZNpzFiMrl+nwzEYToqtRVuqTIpnE1Ntv4usYv4A+mlEoiQrmMBo47+XFM9ONkygSeCMRMZ7YUwFkAIyXqjDga3YAjA4NO0hvxGKjHr2gmSygiEPkiDpsnJBJEIhZYkuHpza/s5Jhe90sLSE/j3v1EbvKbm/zbGklSWPpHztrX7uekpt7q3hqQP50hvPM35lf6LVX+063VsQdi5yAyT/GbOv3LGok5OohnLMQuPOdqw3FT+14BbN3Lb7Jv7+PgptWR5lWFs/x9cOP8xY8WgUuwvXq7U9FlFUWh9PXVeOdW2QYtshvWeEos3jOCbgu3obqbZIvRQrs5tX7uoo6OuQuntfxzyHjo3xbwYOm6Vd3bZFevXrUG6l5MvnYdmJvXi2+GbciZC2ozjvIhZYG3izBJbhF6/JOXnGDIq+dDTLcF2BFQTodrrt3GYQwkBZuYBYvQPejCafcfuC3tsITHh6WqaSHTAGeur7FR6sFTVDgSUbxoa/OwMfeFo+FoEcKBi6z5lipXiMGO6aYQYzPT9rrz4iQcQqpBmBSZgJdQuPMXZKBkIHodxTwqp2u0mTihgXHXM1rT6nFBtbxj5VrvpQq+1JCoX9IyTopAZczgYqRYVjULaZQIfLBDSEDysshwGRqiaenzxbA6f5GMgTrIdLohI9WNHksIpQ7unApJiBdmT9SaDK/fTWD4cmiufEGLQqdtlkk6TAZpywQpMo6HjnVKkHYsxTH2R5uj3tSBpTrGolojkeIQicgOA4FC0RNINpGY6NSRKIAW2qKu/Vu9+of6T1bgyGD45XcpbrZJMTO3grFWJNe8T/Fw7I2ZFiuYfaJLjrTw1E8yEyNSg2Be8adisu1xHeDwX+US2NL4PMFeWXcz+gylNTic0LZUk2qpn3R8l39/Fw/75mfIZ6itzjU2dGNJKbpBFuGwzlRlyGb75PH2EvGkLwsjJun1WuNnp9kC4cUo5q4gncuu4NqTH6dQ2Sh7OXaiTKWZZC8tlXK8dMiPJimi8UGiJmXXExOB6miMFLsRTybrmdjxNNh1BHJ9Kl6jySLJC9BgnQ2s7p5lhGfpZ+ph8GT5CQL+JpF4E084QVK8iI5+ERv7clqal7EgeqE0a+RO7E3b4OFNaTSd6bXBmYTP2fUUp9NB/hL1EDWgLFyqvqsGk6+WuB6JgK2/eNhQCFj1TBRyxpJH4c13Ht0MYtYH7l8VrLwkk1Fp2w3lMhq1ZOYwj2sG8Mm/xI/u70YwTFUpOlOZXthdWef7rT250i00ZMfFZhoEBaPhguppXG1dd1V6UeXZChFibDbFqf4TfMuMTWR8Ff6boGjW60DMwTdMUxZ8F4HMK3tzCyDw4/EPaiswSHzdURlRswLc+kg9Xw1A3fgdgF2GA5Y+ZvOlTJl1TH4SaOh2oIZFR4OS+Mme1gs5a6FH6pMP2C0/4Sd5ud9HH3fDniWHTJT65AMKR5fz2HFyaH6Q+uQD8/7o8nmPkbWy77NTLgglFFKffMAr+QnPRpd7WcmkRMqUMiuZJDCulH29KCED6XOAR+qTD/hDfkKfvNzu0cfdtMNyyK9Sn3zA6tHlVopHrlDQ/3e78MkM/Dqo/Bem08a+jumpSO8T6kp98gFb5CesHV1uM7NC2OeD1Acp+IBVRMDsUmwpwxoKL0fWma7dhtvLB2acUHwnjjjMmyVgVRjCw4L7XY8PSQIwRwA7cE5mKdz8YmtTRM86x5oa9W0RE607iyUDfTu6uLPdme8sa9oRaiDfjC5nu7FMKOAneBGcr6Auzg2c78VALz72i5EPOz/3L/C4o92HkWVUopUDZztC50ig+1Wv4WMtYwgb2lfOE+w6s5OZSMbHhvYVu667NgTuMqCcGwoA7FCaF2Eao/nQfnSeb8o98PxU6hgytK+M10UtLDRdu6HYhZhcc6j+pnvOmsiHPs3ZMHoFABYlBPrQ8to1lPtfWFDQM4DvPnQ/FMCPWxhnvj//fiwiNDi7Y7LAjhEA3y3Vlz/PDPhcDYHSVeKHvENrVm4b3cuaNKkDltxq3H6U08fSdUnNgEr1yCbnT7zuYDEwfzQT2yW43EFvI36EMipArRq5TbKmqKKT8MpJkdxxuPVRuAqXMBBdLGMvK248Z6NA+ngP7kbJLaYewQDbo9QNAOp8oh4RANtd1D5gixGyawnm5xhx2OSgkBE5AkEcJRQ0VBVWE6V0E1U3GzMuiG4VfGEjYxMSss3ULtKJ2tVtkt67vAkAw78RLMfVdTEEoTIfhegLbcu7mO/TfNogRNWLQkDbtlgFZAakqYFGAGIqxbUNXLKoQROV+waXKrWOy8453qQqUj2ShoJ02ufblUSthGssQQ1ixctdAULYokcMco5Izln4zpKN5yDf0dJpeFZJaC9rlJKCiPbR8E6lrtFYVxAzzHDHxGaX6vwpbZPRTdL6P6kNBQTKj3ObH1NENYM9wIdNfBA6cL7qed+rwpuAi2w7lQpNbQYzA0Bz5dqNS9lxugMWKbBbpRL8vFMtsE3AZ/GFNGVFkMDQDNBcwHEzLh0fdhET1m2Y5BruraHJR81ugYwmiNtieIcYe+aPNItBz8A4a61hqBQuMfCYPyUvhA+s2DEYxDYTMiy+JQGAHywVxSdkCK7aEAhYpkSQgEXhAPjCFXfbAEMMiIHO/m2DcDVvGyyJc9tBIhhJSMzJIEPGduC+xs21VgM2oiLthep5PdL4jCRoIJVEaiKkNDehlgwiT02zZS2v6nY8veKRNH0i7rppNAQkJLRxYb4ICkYyWhwYgNCc4kV4MF94ihTy0AlloKWlQzpOQdpGMYxe9eLcwEvqiZTHaaF0VKRJaFmpQVQ9i6Z4Ke9rtIlnLC5UowoxSEqeCZtUK1JvAjj55LMFWu3n/BrF1D8AaUAQCPpl0n9ywoSLECnKYEMMNcxwI4w0ymhjRIsRK068BImSjIWRLEWqNOkyZMqSLQcWDh4BEQkZBRUNHUMuJhY2Di4ePgEhETGIhJSMHExBSQWhpqGVR0fPwMjEzMIqnw3KzsHJpYA7wWCTKabab5lnpplntrW6bc4gMMstnRZ74625CQEzHHXPa+v0eO+dDzb6yUnH9fIotECR04qdcMp5Z5x1zt9KXHbBRX1KvbLQNVdcVeZfz81UzqtClUrV1qtRp1a9Bk0a+Yzzj/EmmmCSyZr126BVizbt/vPCHtf97JeEghvuuulXv9ntD8fs8rv/mW6HAw7alzAwx8uEB2suI0ggdCG06amXRBKRuEMyWEzPUcRQ8P8pw1WOQiHTAQ==) format('woff2');}
+  @font-face{font-family:'Poppins';font-style:normal;font-weight:600;font-display:swap;src:url(data:font/woff2;base64,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) format('woff2');}
+
+  /* ---------- pantallas de acceso ---------- */
+  /* Panel oscuro con la marca a la izquierda y el formulario a la derecha. El
+     #0f172a es el mismo de la barra lateral de adentro, así el sistema no
+     cambia de identidad cuando entrás: lo que ves antes de loguearte es lo que
+     te acompaña después. */
+  /* 100vh y no 100%: #root no tiene alto propio, así que un porcentaje no
+     resuelve y el panel oscuro queda cortado a media pantalla. */
+  .auth{min-height:100vh;display:grid;grid-template-columns:520px 1fr}
+  .auth .side{background:var(--ink);color:var(--on-ink);padding:52px 48px;
+    display:flex;flex-direction:column;justify-content:space-between}
+  .auth .side .what{color:var(--on-ink-muted);font-size:15px;line-height:1.55;max-width:330px;margin-top:28px}
+  .auth .side .help{font-size:12.5px;color:var(--on-ink-dim);line-height:1.6}
+  .auth .side .help b{display:block;color:var(--on-ink-muted);font-weight:600;margin-bottom:2px}
+  /* Flex y no grid: una pista `auto` de grilla se agranda hasta el
+     max-content de la tarjeta, así que el max-width:100% no tenía contra
+     qué recortar y en pantalla angosta la tarjeta se iba de costado. */
+  .auth .pane{display:flex;align-items:center;justify-content:center;
+    padding:24px;min-width:0}
+  .login-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-lg);width:380px;max-width:100%;padding:30px}
   .login-card h1{font-size:19px}
-  .login-card p.sub{color:var(--muted);margin:2px 0 20px;font-size:13px}
-  .hint{margin-top:16px;font-size:12px;color:var(--muted);text-align:center}
+  .login-card p.sub{color:var(--muted);margin:3px 0 22px;font-size:13px}
+  .hint{margin-top:16px;font-size:12.5px;color:var(--muted);text-align:center}
+  /* Lockup: el anillo hace de símbolo y el espectro vive en las letras de
+     DIGITAL. Poppins es sólo de marca, nunca entra en una tabla. */
+  .lk{display:inline-flex;align-items:center;gap:3px;font-family:var(--brand-font)}
+  .lk .wm{display:flex;flex-direction:column;min-width:0}
+  .lk .nm{font-size:42px;font-weight:600;letter-spacing:-.012em;line-height:1;
+    white-space:nowrap;color:#fff}
+  .lk .dg{font-size:7.2px;font-weight:400;letter-spacing:.34em;line-height:1;
+    text-indent:.34em;margin-top:.6em;color:var(--on-ink-faint)}
+  /* Sin recorte de fondo el texto transparente desaparece, así que el color
+     plano es el piso y el degradado sólo se aplica si el navegador lo soporta. */
+  @supports ((-webkit-background-clip:text) or (background-clip:text)){
+    .lk .dg{background:linear-gradient(90deg,var(--brand-cyan),var(--brand-blue) 50%,var(--brand-violet));
+      -webkit-background-clip:text;background-clip:text;color:transparent}
+  }
+  .lk svg{flex:0 0 auto}
+  /* En pantalla angosta el panel se convierte en una franja con la marca sola. */
+  @media(max-width:860px){
+    /* auto 1fr: sin eso las dos filas se reparten el alto y la franja de marca
+       se come media pantalla. Y min-width:0 en las celdas, porque una celda de
+       grilla no achica abajo de su contenido y la tarjeta se iba de costado. */
+    .auth{grid-template-columns:1fr;grid-template-rows:auto 1fr;min-height:100vh}
+    .auth .side{flex-direction:row;align-items:center;padding:18px 20px;min-width:0}
+    .auth .pane{padding:20px;min-width:0;align-items:flex-start}
+    .auth .side .what,.auth .side .help{display:none}
+    .lk .nm{font-size:26px}
+    .lk .dg{font-size:4.5px}
+    .lk svg{width:46px;height:39px}
+  }
   /* Same email at more than one shop: pick which one to open. */
   .pick-co{display:flex;flex-direction:column;gap:8px;margin-top:4px}
   .pick-co button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;
-    background:var(--panel);border:1px solid var(--border);border-radius:9px;padding:11px 13px;
+    background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:11px 13px;
     font:inherit;font-weight:600;cursor:pointer}
-  .pick-co button:hover{background:var(--primary-50);border-color:#c7ddfb;color:var(--primary-600)}
+  .pick-co button .grow{flex:1;min-width:0}
+  /* La dirección abajo del nombre: dos sucursales de la misma cadena se
+     confunden si sólo se ve el nombre. */
+  .pick-co button small{display:block;font-weight:500;font-size:11.5px;color:var(--muted)}
+  .pick-co button:hover{background:var(--primary-50);border-color:var(--primary-200);color:var(--primary-600)}
   /* Support session banner. Loud on purpose: nobody should mistake our
      session inside a customer's data for the customer's own. */
   .impbar{background:#7c2d12;color:#fff;display:flex;align-items:center;gap:10px;
@@ -43,35 +141,46 @@
     padding:4px 10px;border-radius:6px;cursor:pointer}
   .impbar button:hover{background:rgba(255,255,255,.28)}
   /* ---------- app shell ---------- */
-  .app{display:grid;grid-template-columns:var(--sidebar) 1fr;min-height:100%}
-  .sidebar{background:#0f172a;color:#cbd5e1;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+  /* height y no min-height: el marco se queda con el alto de la ventana y
+     reparte hacia adentro. Así la página nunca scrollea: scrollea la región
+     que corresponda, y la barra lateral y la de arriba no se van nunca. */
+  .app{display:grid;grid-template-columns:var(--sidebar) 1fr;height:100vh}
+  .sidebar{background:var(--ink);color:var(--on-ink);display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
   .sidebar .brand{display:flex;align-items:center;gap:10px;padding:18px 18px 14px}
   .sidebar .brand .logo{width:30px;height:30px;border-radius:8px;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:800}
   .sidebar .brand b{color:#fff;font-size:15px}
-  .sidebar .brand small{display:block;color:#7c8aa5;font-size:11px}
+  .sidebar .brand small{display:block;color:var(--on-ink-faint);font-size:11px}
   .nav{padding:6px;overflow:auto;flex:1}
-  .nav a{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:8px;color:#cbd5e1;font-weight:500;margin:1px 0}
+  .nav a{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:8px;color:var(--on-ink);font-weight:500;margin:1px 0}
   .nav a .ic{width:18px;height:18px;opacity:.9}
   .nav a:hover{background:#1e293b;color:#fff}
   .nav a.active{background:var(--primary);color:#fff}
-  .sidebar .foot{padding:12px;border-top:1px solid #1e293b;font-size:12px;color:#94a3b8}
-  .main{display:flex;flex-direction:column;min-width:0}
+  .sidebar .foot{padding:12px;border-top:1px solid var(--on-ink-line);font-size:12px;color:var(--on-ink-muted)}
+  /* min-height:0 o el hijo que scrollea se estira hasta su contenido y el
+     scroll se escapa al documento. */
+  .main{display:flex;flex-direction:column;min-width:0;min-height:0}
   .topbar{height:56px;background:var(--panel);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:5}
   .topbar .crumb{font-weight:650;font-size:15px}
   .topbar .who{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:13px}
   .topbar .who .avatar{width:30px;height:30px;border-radius:50%;background:var(--primary-50);color:var(--primary);display:grid;place-items:center;font-weight:700}
   /* No global width cap: the data grids need the whole window. Reading-width
      layouts (Empresa, ficha de cliente) are capped individually below. */
-  .content{padding:22px;width:100%;min-width:0}
+  .content{padding:18px 22px;width:100%;min-width:0;flex:1;min-height:0;overflow:auto}
+  /* Una pantalla de grilla no scrollea entera: el encabezado, los filtros y
+     los nombres de columna quedan fijos y se desplazan sólo las filas. La
+     clase la pone el router cuando la tabla es el contenido de la pantalla. */
+  .content.grid-page{overflow:hidden;display:flex;flex-direction:column}
+  .content.grid-page > #view{flex:1;min-height:0;display:flex;flex-direction:column}
+  .content.grid-page > #view > .tbl-wrap{flex:1;min-height:0}
   .menu-btn{display:none;background:none;border:0;font-size:20px;cursor:pointer}
   /* ---------- generic ---------- */
   .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
   .card.pad{padding:18px}
   .card.error{padding:16px;color:var(--danger);background:var(--danger-50);border-color:#fecaca}
-  .page-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+  .page-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap}
   .page-head h2{font-size:20px}
   .page-head .sub{color:var(--muted);font-size:13px;margin-top:2px}
-  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
   .toolbar .grow{flex:1}
   /* --- ventas --- */
   .lines{width:100%;border-collapse:collapse;margin-top:4px}
@@ -100,7 +209,7 @@
     color:var(--muted);margin:0 0 5px}
   .pick-row{display:flex;align-items:center;gap:10px;width:100%;text-align:left;
     background:none;border:1px solid transparent;border-radius:8px;padding:7px 9px;cursor:pointer;font:inherit}
-  .pick-row:hover{background:var(--primary-50);border-color:#c7ddfb}
+  .pick-row:hover{background:var(--primary-50);border-color:var(--primary-200)}
   .pick-row .code{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted)}
   .pick-row .grow{flex:1;min-width:0}
   .pick-row .price{font-weight:700;font-variant-numeric:tabular-nums}
@@ -115,51 +224,123 @@
   .loading{padding:40px;text-align:center;color:var(--muted)}
   .empty{padding:36px;text-align:center;color:var(--muted)}
   /* buttons */
-  .btn{appearance:none;border:1px solid var(--border);background:var(--panel);color:var(--text);padding:8px 14px;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:background .12s,border-color .12s}
-  .btn:hover{background:#f8fafc}
+  /* Ningún color escrito a mano: los tintes son tokens. Y --sans explícito,
+     porque un <button> no hereda la tipografía del body: se queda con la del
+     sistema operativo si nadie se la dice. */
+  .btn{appearance:none;border:1px solid var(--border);background:var(--panel);color:var(--text);padding:8px 17px;border-radius:var(--radius-pill);font-weight:600;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;font-family:var(--sans);transition:background .12s,border-color .12s,box-shadow .12s,color .12s}
+  /* `:not(:disabled)` en cada estado: un botón apagado se atenúa y no contesta. */
+  .btn:hover:not(:disabled){background:var(--hover)}
+  .btn:active:not(:disabled){background:var(--press)}
+  /* El mismo anillo que un campo de texto: el sistema tiene un solo foco.
+     `:focus-visible` y no `:focus`, si no aparece también al hacer clic. */
+  .btn:focus{outline:none}
+  .btn:focus-visible{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-50)}
   .btn:disabled{opacity:.55;cursor:not-allowed}
-  .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
-  .btn.primary:hover{background:var(--primary-600)}
-  .btn.danger{background:#fff;border-color:#fecaca;color:var(--danger)}
-  .btn.danger:hover{background:var(--danger-50)}
-  .btn.sm{padding:5px 10px;font-size:12px;border-radius:7px}
+  /* El principal es el único que sale de la marca: índigo plano en reposo y el
+     tramo azul a violeta recién cuando alguien lo toca. El destello va también
+     en `:active` y no sólo en `:hover`, porque en el mostrador se trabaja con
+     pantalla táctil y ahí no hay "encima": tocarlo es la única forma de verlo. */
+  .btn.primary{background:var(--action);border-color:var(--action-600);color:#fff;position:relative;z-index:0}
+  /* Un degradado no interpola: `transition:background` de un color plano a
+     linear-gradient() no anima nada, salta. Por eso el destello es una capa
+     propia que se desvanece encima del índigo. `z-index:-1` con el botón en
+     `z-index:0` la deja arriba del fondo y abajo del texto y del ícono. */
+  .btn.primary::before{content:"";position:absolute;inset:0;border-radius:inherit;z-index:-1;
+    background:var(--action-bloom);opacity:0;transition:opacity .24s ease}
+  /* Entra más rápido de lo que sale: al salir se apaga de a poco, que es lo
+     que lo hace parecer luz y no un interruptor. */
+  .btn.primary:hover:not(:disabled)::before{opacity:1;transition:opacity .16s ease-out}
+  /* `background` acá parece redundante contra la regla de arriba, pero es lo
+     que sostiene todo: sin él gana `.btn:hover` (una clase menos, pero un
+     estado más) y el fondo pasa a --hover, que es casi blanco. Con la capa
+     del destello a media opacidad se ve ese blanco por debajo y el botón
+     destella en blanco antes de llegar al degradado. */
+  .btn.primary:hover:not(:disabled){background:var(--action);border-color:var(--action-bloom-border)}
+  /* Apretar es inmediato: un botón que tarda en hundirse se siente roto. */
+  .btn.primary:active:not(:disabled)::before{background:var(--action-bloom-press);opacity:1;transition:none}
+  .btn.primary:active:not(:disabled){background:var(--action);border-color:var(--action-bloom-border)}
+  .btn.primary:focus-visible{border-color:var(--action-bloom-border);box-shadow:0 0 0 3px var(--action-ring)}
+  /* Quien pidió menos movimiento ve el mismo destello, sin el desvanecido. */
+  @media(prefers-reduced-motion:reduce){
+    .btn.primary::before,.btn.primary:hover:not(:disabled)::before{transition:none}
+  }
+  /* Rojo de contorno, no lleno: un rojo lleno es un saldo, no un botón. El foco
+     también va en rojo, porque acá el color dice qué hace el botón. */
+  .btn.danger{background:var(--panel);border-color:var(--danger-200);color:var(--danger)}
+  .btn.danger:hover:not(:disabled){background:var(--danger-50)}
+  .btn.danger:active:not(:disabled){background:var(--danger-50);border-color:var(--danger)}
+  .btn.danger:focus-visible{border-color:var(--danger);box-shadow:0 0 0 3px var(--danger-50)}
+  .btn.sm{padding:5px 10px;font-size:12px}
   /* ---------- icons (embedded Lucide sprite) ---------- */
   .ic{width:16px;height:16px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2;
       stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px}
   .ic.lg{width:18px;height:18px}
   .btn .ic{margin-right:-1px}
+  /* Sin borde, así que le toca el tinte fuerte: es lo único que lo señala. */
   .btn.ghost{border-color:transparent;background:transparent}
-  .btn.ghost:hover{background:#f1f5f9}
+  .btn.ghost:hover:not(:disabled){background:var(--press)}
   /* inputs */
-  label.fld{display:block;font-size:12.5px;font-weight:600;color:#374151;margin-bottom:5px}
+  label.fld{display:block;font-size:12.5px;font-weight:600;color:var(--label);margin-bottom:5px}
   label.fld .req{color:var(--danger)}
-  input,select,textarea{width:100%;font:inherit;color:var(--text);background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 10px;outline:none}
+  input,select,textarea{width:100%;font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-control);padding:8px 10px;outline:none}
   input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-50)}
   textarea{resize:vertical;min-height:64px}
   input[type=checkbox]{width:auto}
   .inp-sm{padding:6px 9px;font-size:13px}
-  .switch{display:flex;align-items:center;gap:8px;font-size:13px;color:#374151;font-weight:500;cursor:pointer;user-select:none}
+  .switch{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--label);font-weight:500;cursor:pointer;user-select:none}
   /* table */
   .tbl-wrap{overflow:auto;border-radius:var(--radius)}
   table{width:100%;border-collapse:collapse;background:var(--panel);font-size:13px}
-  thead th{text-align:left;padding:10px 10px;background:#f8fafc;color:#64748b;font-weight:600;font-size:11.5px;letter-spacing:.03em;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap}
-  tbody td{padding:9px 10px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+  /* Clavados arriba del marco que scrollea: mirar la fila 200 sin saber qué
+     columna es cada una es lo que hace inusable una grilla larga. */
+  thead th{text-align:left;padding:9px 10px;background:#f8fafc;color:#64748b;font-weight:600;font-size:11.5px;letter-spacing:.03em;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;z-index:2}
+  /* Una fila, una línea. Con el texto cortando en dos, un código como
+     ARM-001 o un tipo como "Lentes de contacto" llevaban la fila de 37 a
+     55 px y se perdía un tercio de las filas visibles. El texto largo se
+     recorta con `trunc`, que deja el valor entero en el title. */
+  tbody td{padding:6px 10px;border-bottom:1px solid #f1f5f9;vertical-align:middle;white-space:nowrap;
+    max-width:200px;overflow:hidden;text-overflow:ellipsis}
+  /* Las acciones y los números no se recortan: un botón a medias no se
+     puede apretar y un importe cortado miente. */
+  td.actions,td.num{max-width:none;overflow:visible}
+  /* Un estilo se abre en sus colores adentro de la misma grilla: la fila padre
+     no se va de pantalla, así se compara el color contra el estilo sin perder
+     el lugar. El triángulo dice si está abierta. */
+  tr.expandable{cursor:pointer}
+  tr.expandable>td:first-child{position:relative;padding-left:26px}
+  tr.expandable>td:first-child::before{content:"";position:absolute;left:9px;top:50%;
+    width:0;height:0;border:4px solid transparent;border-left-color:var(--muted);
+    transform:translateY(-50%);transition:transform .15s}
+  tr.expandable.open>td:first-child::before{transform:translateY(-50%) rotate(90deg)}
+  tr.expandable:hover{background:var(--hover)}
+  tr.expandable:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--primary-50)}
+  /* La hija va corrida y con el filo del color de acción: se lee como parte de
+     la de arriba y no como un producto suelto de la lista. */
+  tr.subrow>td{background:#fbfdff}
+  tr.subrow>td:first-child{padding-left:40px;box-shadow:inset 3px 0 0 var(--action)}
+  tr.subrow td .fhelp{display:none}
   /* Long free text must not push the grid into a horizontal scroll. The full
      value stays available in the cell's title tooltip. */
-  td.trunc{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  td.trunc{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   /* Secondary columns drop out as the window narrows, so a wide grid degrades
      by showing less rather than by scrolling sideways. Mark them with
-     `priority: 2 | 3` in the column definition — 3 disappears first. */
-  @media(max-width:1460px){ .col-p3{display:none} }
-  @media(max-width:1250px){ .col-p2{display:none} }
+     `priority: 2 | 3` in the column definition — 3 disappears first.
+     Los cortes salen de medir el ancho natural de la grilla de Productos, que
+     es la más ancha: con las tres prioridades pide 1610px de ventana, sin la 3
+     pide 1438 y sin ninguna 1058. Los valores anteriores (1460 y 1250) caían
+     adentro de esos rangos, así que la columna seguía visible justo cuando ya
+     no entraba y la tabla se iba de costado. Van con aire para nombres más
+     largos que los del demo. */
+  @media(max-width:1680px){ .col-p3{display:none} }
+  @media(max-width:1500px){ .col-p2{display:none} }
   tbody tr:last-child td{border-bottom:0}
   tbody tr:hover{background:#fbfdff}
   tr.inactive{opacity:.5}
   td.actions{text-align:right;white-space:nowrap}
-  td.actions .btn{margin-left:4px}
+  td.actions .btn{margin-left:3px}
   /* Icon-only buttons for secondary row actions — they carry a title tooltip.
      Five text buttons per row cost ~390px, a quarter of the product grid. */
-  .btn.ico{padding:5px 7px;line-height:1;min-width:28px;justify-content:center}
+  .btn.ico{padding:5px;line-height:1;min-width:28px;justify-content:center}
   /* row overflow menu */
   .rowmenu{position:absolute;z-index:60;background:var(--panel);border:1px solid var(--border);
     border-radius:10px;box-shadow:var(--shadow-lg);padding:5px;min-width:190px;animation:pop .12s ease}
@@ -204,10 +385,14 @@
   .modal footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px}
   .x{background:none;border:0;font-size:20px;line-height:1;cursor:pointer;color:var(--muted)}
   /* form */
-  form.form .form-row{margin-bottom:14px}
+  /* El aire es de la fila, no de quien la envuelve: con `form.` adelante no
+     lo recibían ni las pantallas de acceso (form.login-card) ni el editor de
+     ventas (div.form.grid2), y cada una lo parchaba con un margin inline. */
+  .form-row{margin-bottom:14px}
   form.form.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px}
-  form.form.grid2 .form-row{margin-bottom:0}
-  form.form.grid2 .form-row.full{grid-column:1/-1}
+  /* En dos columnas separa el gap de la grilla, no el margen de la fila. */
+  .form.grid2 .form-row{margin-bottom:0}
+  .form.grid2 .form-row.full{grid-column:1/-1}
   /* label + an action button on one line. Selects host their own "create"
      entry (see quickCreateTail); a checklist has no list to host it, so the
      button lives up here beside the label. */
@@ -222,10 +407,43 @@
   .fhelp{font-size:11.5px;color:var(--muted);margin-top:4px}
   .fwarn{font-size:11.5px;color:var(--warn);background:var(--warn-50);border:1px solid #fde68a;border-radius:6px;padding:5px 8px;margin-top:5px}
   /* ---------- import wizard ---------- */
-  .wizard .steps{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-  .wizard .steps span{font-size:12px;font-weight:600;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:999px;padding:5px 12px}
-  .wizard .steps span.on{background:var(--primary);border-color:var(--primary);color:#fff}
-  .wizard .steps span.done{background:var(--ok-50);border-color:#bbf7d0;color:var(--ok)}
+  /* ---------- mapa de pasos ----------
+     Un camino, no una fila de pastillas: la línea dice cuánto falta y por dónde
+     se viene. Lo recorrido se pinta con el tramo de la marca, el mismo azul a
+     violeta del botón principal. La línea lleva el degradado entero y se
+     descubre de izquierda a derecha con clip-path, así el color no se comprime
+     en el tramo hecho: a mitad de camino se ve la mitad del espectro. */
+  .stepmap{position:relative;display:flex;margin:2px 0 20px}
+  .stepmap-line{position:absolute;top:13px;height:2px;border-radius:2px;background:var(--border);
+    left:calc(50% / var(--n));right:calc(50% / var(--n))}
+  .stepmap-line::after{content:"";position:absolute;inset:0;border-radius:2px;
+    background:var(--action-bloom);clip-path:inset(0 calc(100% - var(--avance)) 0 0);
+    transition:clip-path .35s ease}
+  .stepmap-step{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:7px}
+  .stepmap-dot{width:26px;height:26px;border-radius:var(--radius-pill);display:grid;place-items:center;
+    font-size:12px;font-weight:700;background:var(--panel);border:2px solid var(--border);
+    color:var(--muted);position:relative;z-index:1;transition:background .25s,border-color .25s,color .25s}
+  .stepmap-dot .ic{width:14px;height:14px;stroke-width:3}
+  /* `background-origin` va DESPUÉS de la taquigrafía `background`, que lo
+     resetea: el degradado se dimensiona con la caja de origen (padding-box,
+     22px) pero se pinta hasta el borde (border-box, 26px), así que los 2px del
+     borde transparente los rellenaba repitiendo el mosaico y aparecía una
+     medialuna violeta, el final del degradado, pegada al azul del principio. */
+  .stepmap-step.done .stepmap-dot{background:var(--action-bloom);background-origin:border-box;
+    border-color:transparent;color:#fff}
+  .stepmap-step.on .stepmap-dot{background:var(--action);border-color:var(--action);color:#fff;
+    box-shadow:0 0 0 4px var(--action-ring)}
+  .stepmap-txt{font-size:12px;font-weight:600;color:var(--muted);text-align:center;
+    overflow:hidden;text-overflow:ellipsis;max-width:100%;white-space:nowrap}
+  .stepmap-step.on .stepmap-txt{color:var(--text)}
+  .stepmap-step.done .stepmap-txt{color:var(--action-600)}
+  @media(prefers-reduced-motion:reduce){ .stepmap-line::after{transition:none} }
+  /* El contenido de un paso entra y sale, y el marco acompaña el cambio de alto
+     en vez de saltar. El sentido lo da la dirección: adelante entra desde la
+     derecha, atrás desde la izquierda, igual que el mapa de arriba. */
+  .wizstage{transition:height .26s ease}
+  .wizpane{transition:opacity .16s ease,transform .16s ease}
+  @media(prefers-reduced-motion:reduce){ .wizstage,.wizpane{transition:none} }
   .wizard table{margin-bottom:12px}
   .wizard input[type=file]{display:block;width:100%;padding:10px;border:1px dashed var(--border);border-radius:var(--radius-sm);background:var(--bg);font-size:13px}
   .wizard .stats{margin-bottom:16px}
@@ -404,6 +622,31 @@ const $  = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = (v) => (v == null ? "" : String(v).replace(/[&<>"']/g, c =>
   ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])));
+/* Una <label> sin `for` no etiqueta nada: el clic no enfoca el campo y un
+   lector de pantalla anuncia el control sin nombre. El markup de los
+   formularios se arma con strings en decenas de lugares, así que en vez de
+   repartir ids a mano los emparejamos acá: cada `.fld` toma el primer control
+   de su fila y le presta un id. Corre sobre lo que se va agregando al DOM, así
+   no hay forma de que una pantalla nueva se olvide. */
+let _fldSeq = 0;
+function linkFields(scope) {
+  const labels = scope.querySelectorAll ? scope.querySelectorAll("label.fld:not([for])") : [];
+  for (const lab of labels) {
+    if (lab.querySelector("input,select,textarea")) continue;   // ya lo envuelve
+    const row = lab.closest(".form-row") || lab.parentElement;
+    if (!row) continue;
+    const ctl = row.querySelector("input,select,textarea");
+    if (!ctl) continue;
+    if (!ctl.id) ctl.id = "f" + (++_fldSeq);
+    lab.setAttribute("for", ctl.id);
+  }
+}
+new MutationObserver(muts => {
+  for (const m of muts)
+    for (const n of m.addedNodes)
+      if (n.nodeType === 1) linkFields(n);
+}).observe(document.documentElement, { childList: true, subtree: true });
+
 const el = (html) => { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; };
 
 /* Wait for typing to pause before firing. Search boxes hit the API on every
@@ -637,12 +880,52 @@ function logout() {
 }
 
 /* ----------------------------- login view ------------------------------ */
-function renderLogin(prefill = true) {
-  root.innerHTML = `
-    <div class="login-wrap">
+/* El marco común de las pantallas de acceso. Antes cada una repetía el bloque de
+   marca (y las cinco decían "SGI Óptica", que es el nombre del repositorio, no el
+   que ve un cliente: los mails salen como "Mi Óptica Digital"). Ahora sale de un
+   solo lado. */
+let brandSeq = 0;
+function brandLockup() {
+  const u = `lk${++brandSeq}`;
+  return `<div class="lk">
+      <svg width="73" height="62" viewBox="8 8 118 100" aria-hidden="true"><defs><linearGradient id="${u}-h0" gradientUnits="userSpaceOnUse" x1="79.14" y1="67.51" x2="35.26" y2="80.64"><stop offset="0" stop-color="#22D3EE"/><stop offset="1" stop-color="#38BDF8"/></linearGradient><linearGradient id="${u}-h1" gradientUnits="userSpaceOnUse" x1="36.55" y1="81.23" x2="17.89" y2="38.82"><stop offset="0" stop-color="#38BDF8"/><stop offset="1" stop-color="#3B82F6"/></linearGradient><linearGradient id="${u}-h2" gradientUnits="userSpaceOnUse" x1="17.45" y1="40.17" x2="57.47" y2="16.83"><stop offset="0" stop-color="#3B82F6"/><stop offset="1" stop-color="#4F46E5"/></linearGradient><linearGradient id="${u}-h3" gradientUnits="userSpaceOnUse" x1="56.08" y1="16.55" x2="83.87" y2="52.96"><stop offset="0" stop-color="#4F46E5"/><stop offset="1" stop-color="#7C3AED"/></linearGradient><linearGradient id="${u}-hs0" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#22D3EE" stop-opacity=".95"/><stop offset="1" stop-color="#22D3EE" stop-opacity="0"/></linearGradient><linearGradient id="${u}-hs1" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#38BDF8" stop-opacity=".95"/><stop offset="1" stop-color="#38BDF8" stop-opacity="0"/></linearGradient><linearGradient id="${u}-hs2" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#3B82F6" stop-opacity=".95"/><stop offset="1" stop-color="#3B82F6" stop-opacity="0"/></linearGradient><linearGradient id="${u}-hs3" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#4F46E5" stop-opacity=".95"/><stop offset="1" stop-color="#4F46E5" stop-opacity="0"/></linearGradient><linearGradient id="${u}-hs4" gradientUnits="userSpaceOnUse" x1="88.0" y1="62.4" x2="147.0" y2="81.5"><stop offset="0" stop-color="#7C3AED" stop-opacity=".95"/><stop offset="1" stop-color="#7C3AED" stop-opacity="0"/></linearGradient></defs><polygon points="88.0,62.4 152.3,65.4 150.2,71.8" fill="url(#${u}-hs0)"/><polygon points="88.0,62.4 150.2,71.8 148.1,78.3" fill="url(#${u}-hs1)"/><polygon points="88.0,62.4 148.1,78.3 146.0,84.8" fill="url(#${u}-hs2)"/><polygon points="88.0,62.4 146.0,84.8 143.9,91.2" fill="url(#${u}-hs3)"/><polygon points="88.0,62.4 143.9,91.2 141.8,97.7" fill="url(#${u}-hs4)"/><path d="M 79.14 67.51 A 34.0 34.0 0 0 1 35.26 80.64" fill="none" stroke="url(#${u}-h0)" stroke-width="12" stroke-linecap="butt"/><path d="M 36.55 81.23 A 34.0 34.0 0 0 1 17.89 38.82" fill="none" stroke="url(#${u}-h1)" stroke-width="12" stroke-linecap="butt"/><path d="M 17.45 40.17 A 34.0 34.0 0 0 1 57.47 16.83" fill="none" stroke="url(#${u}-h2)" stroke-width="12" stroke-linecap="butt"/><path d="M 56.08 16.55 A 34.0 34.0 0 0 1 83.87 52.96" fill="none" stroke="url(#${u}-h3)" stroke-width="12" stroke-linecap="butt"/></svg>
+      <div class="wm"><div class="nm">Mi Óptica</div><div class="dg">DIGITAL</div></div>
+    </div>`;
+}
+
+/* El panel oscuro es el mismo #0f172a de la barra lateral de adentro: lo que ves
+   antes de entrar es lo que te acompaña después. */
+/* El anillo solo, para huecos cuadrados: la barra lateral y el favicon. */
+function brandMark(size) {
+  const u = `mk${++brandSeq}`;
+  return `<svg width="${size}" height="${size}" viewBox="8 8 84 84" aria-hidden="true"><defs><linearGradient id="${u}-h0" gradientUnits="userSpaceOnUse" x1="79.14" y1="67.51" x2="35.26" y2="80.64"><stop offset="0" stop-color="#22D3EE"/><stop offset="1" stop-color="#38BDF8"/></linearGradient><linearGradient id="${u}-h1" gradientUnits="userSpaceOnUse" x1="36.55" y1="81.23" x2="17.89" y2="38.82"><stop offset="0" stop-color="#38BDF8"/><stop offset="1" stop-color="#3B82F6"/></linearGradient><linearGradient id="${u}-h2" gradientUnits="userSpaceOnUse" x1="17.45" y1="40.17" x2="57.47" y2="16.83"><stop offset="0" stop-color="#3B82F6"/><stop offset="1" stop-color="#4F46E5"/></linearGradient><linearGradient id="${u}-h3" gradientUnits="userSpaceOnUse" x1="56.08" y1="16.55" x2="83.87" y2="52.96"><stop offset="0" stop-color="#4F46E5"/><stop offset="1" stop-color="#7C3AED"/></linearGradient></defs><path d="M 79.14 67.51 A 34.0 34.0 0 0 1 35.26 80.64" fill="none" stroke="url(#${u}-h0)" stroke-width="12" stroke-linecap="butt"/><path d="M 36.55 81.23 A 34.0 34.0 0 0 1 17.89 38.82" fill="none" stroke="url(#${u}-h1)" stroke-width="12" stroke-linecap="butt"/><path d="M 17.45 40.17 A 34.0 34.0 0 0 1 57.47 16.83" fill="none" stroke="url(#${u}-h2)" stroke-width="12" stroke-linecap="butt"/><path d="M 56.08 16.55 A 34.0 34.0 0 0 1 83.87 52.96" fill="none" stroke="url(#${u}-h3)" stroke-width="12" stroke-linecap="butt"/></svg>`;
+}
+
+function authShell(inner) {
+  return `<div class="auth">
+      <div class="side">
+        <div>
+          ${brandLockup()}
+          <div class="what">Sistema de gestión para ópticas: ventas, stock,
+            clientes y cuentas pendientes.</div>
+        </div>
+        <div class="help"><b>¿No podés entrar?</b>Pedile un enlace nuevo a quien
+          te dio el acceso.</div>
+      </div>
+      <div class="pane">${inner}</div>
+    </div>`;
+}
+
+/* Las credenciales del seed se precargan sólo en desarrollo. Antes venían por
+   defecto siempre, así que en producción la pantalla de un cliente aparecía con
+   un usuario y una contraseña ya escritos. */
+const IS_LOCAL = ["localhost", "127.0.0.1", ""].includes(location.hostname);
+
+function renderLogin(prefill = IS_LOCAL) {
+  root.innerHTML = authShell(`
       <form class="login-card" id="loginForm">
-        <div class="brand"><div class="logo">S</div><div><h1>SGI Óptica</h1></div></div>
-        <p class="sub">Ingresá al sistema de gestión</p>
+        <h1>Ingresar</h1>
+        <p class="sub">Usá el correo con el que te dieron de alta.</p>
         <div class="form-row">
           <label class="fld">Email</label>
           <input name="email" type="email" autocomplete="username" required value="${prefill ? "admin@sgi.com" : ""}">
@@ -653,8 +936,7 @@ function renderLogin(prefill = true) {
         </div>
         <button class="btn primary" type="submit" style="width:100%;justify-content:center;margin-top:6px">Ingresar</button>
         <div class="hint"><a href="#" id="forgotLink">Olvidé mi contraseña</a></div>
-      </form>
-    </div>`;
+      </form>`);
   $("#forgotLink").addEventListener("click", (e) => {
     e.preventDefault();
     renderForgot($("[name=email]").value.trim());
@@ -688,10 +970,9 @@ function renderLogin(prefill = true) {
 /* "Olvidé mi contraseña". The response is the same whether or not the address
    exists, so this screen says so plainly rather than pretending to confirm. */
 function renderForgot(prefill = "") {
-  root.innerHTML = `
-    <div class="login-wrap">
+  root.innerHTML = authShell(`
       <form class="login-card" id="forgotForm">
-        <div class="brand"><div class="logo">S</div><div><h1>SGI Óptica</h1></div></div>
+        <h1>Recuperar el acceso</h1>
         <p class="sub">Te mandamos un enlace para definir una contraseña nueva.</p>
         <div class="form-row">
           <label class="fld">Email</label>
@@ -699,8 +980,7 @@ function renderForgot(prefill = "") {
         </div>
         <button class="btn primary" type="submit" style="width:100%;justify-content:center;margin-top:16px">Enviar enlace</button>
         <div class="hint"><a href="#" id="backLogin">Volver</a></div>
-      </form>
-    </div>`;
+      </form>`);
   $("#backLogin").addEventListener("click", (e) => { e.preventDefault(); renderLogin(false); });
   $("#forgotForm").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -724,14 +1004,12 @@ function renderForgot(prefill = "") {
 }
 
 function renderNotice(title, message) {
-  root.innerHTML = `
-    <div class="login-wrap">
+  root.innerHTML = authShell(`
       <div class="login-card">
-        <div class="brand"><div class="logo">S</div><div><h1>${esc(title)}</h1></div></div>
+        <h1>${esc(title)}</h1>
         <p class="sub" style="margin-bottom:0">${esc(message)}</p>
         <div class="hint" style="margin-top:22px"><a href="#" id="backLogin">Ir al inicio de sesión</a></div>
-      </div>
-    </div>`;
+      </div>`);
   $("#backLogin").addEventListener("click", (e) => {
     e.preventDefault();
     location.hash = "";
@@ -744,8 +1022,8 @@ function renderNotice(title, message) {
    fragment, which browsers never send to the server, so it stays out of access
    logs and the Referer header. */
 async function renderSetPassword(token) {
-  root.innerHTML = `<div class="login-wrap"><div class="login-card">
-    <p class="sub" style="margin:0">Verificando el enlace…</p></div></div>`;
+  root.innerHTML = authShell(`<div class="login-card">
+      <p class="sub" style="margin:0">Verificando el enlace…</p></div>`);
   let info;
   try {
     info = await (await fetch(`/api/auth/password-token/${encodeURIComponent(token)}`))
@@ -755,10 +1033,9 @@ async function renderSetPassword(token) {
     return renderNotice("Enlace no válido", err.message || "El enlace no sirve. Pedí uno nuevo.");
   }
   const isInvite = info.purpose === "invitation";
-  root.innerHTML = `
-    <div class="login-wrap">
+  root.innerHTML = authShell(`
       <form class="login-card" id="pwdForm">
-        <div class="brand"><div class="logo">S</div><div><h1>${isInvite ? "Bienvenido/a" : "Nueva contraseña"}</h1></div></div>
+        <h1>${isInvite ? "Bienvenido/a" : "Nueva contraseña"}</h1>
         <p class="sub">${isInvite
           ? `Definí tu contraseña para entrar a <b>${esc(info.company_name)}</b>.`
           : `Elegí una contraseña nueva para <b>${esc(info.company_name)}</b>.`}</p>
@@ -766,18 +1043,17 @@ async function renderSetPassword(token) {
           <label class="fld">Email</label>
           <input value="${esc(info.email)}" disabled>
         </div>
-        <div class="form-row" style="margin-top:14px">
+        <div class="form-row">
           <label class="fld">Contraseña <span class="req">*</span></label>
           <input name="p1" type="password" autocomplete="new-password" required minlength="8">
           <div class="fhelp">Mínimo 8 caracteres.</div>
         </div>
-        <div class="form-row" style="margin-top:14px">
+        <div class="form-row">
           <label class="fld">Repetir contraseña <span class="req">*</span></label>
           <input name="p2" type="password" autocomplete="new-password" required minlength="8">
         </div>
         <button class="btn primary" type="submit" style="width:100%;justify-content:center;margin-top:18px">Guardar y entrar</button>
-      </form>
-    </div>`;
+      </form>`);
   $("#pwdForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const form = $("#pwdForm");
@@ -809,18 +1085,18 @@ async function renderSetPassword(token) {
 /* Second step of login, shown only when the credentials open more than one
    company — an owner with two shops, an accountant working for several. */
 function renderCompanyPicker(email, password, companies) {
-  root.innerHTML = `
-    <div class="login-wrap">
+  root.innerHTML = authShell(`
       <div class="login-card">
-        <div class="brand"><div class="logo">S</div><div><h1>SGI Óptica</h1></div></div>
-        <p class="sub">Tu usuario existe en más de una óptica. ¿A cuál entrás?</p>
+        <h1>Elegí la óptica</h1>
+        <p class="sub">Tu usuario existe en más de una. Entrás a la que elijas.</p>
         <div class="pick-co">
           ${companies.map(c => `<button type="button" data-id="${c.id}">
-            <svg class="ic lg"><use href="#i-store"/></svg>${esc(c.name)}</button>`).join("")}
+            <svg class="ic lg"><use href="#i-store"/></svg>
+            <span class="grow">${esc(c.name)}${c.address
+              ? `<small>${esc(c.address)}</small>` : ""}</span></button>`).join("")}
         </div>
         <div class="hint"><a href="#" id="backLogin">Usar otro usuario</a></div>
-      </div>
-    </div>`;
+      </div>`);
   $("#backLogin").addEventListener("click", (e) => { e.preventDefault(); renderLogin(false); });
   $$(".pick-co button").forEach(b => b.addEventListener("click", async () => {
     $$(".pick-co button").forEach(x => x.disabled = true);
@@ -877,7 +1153,7 @@ function renderApp() {
   root.innerHTML = `
     <div class="app">
       <aside class="sidebar" id="sidebar">
-        <div class="brand"><div class="logo">S</div><div><b>SGI Óptica</b><small>${esc(state.company?.name || "Panel de gestión")}</small></div></div>
+        <div class="brand">${brandMark(30)}<div><b>Mi Óptica</b><small>${esc(state.company?.name || "Panel de gestión")}</small></div></div>
         <nav class="nav">${navHtml}</nav>
         <div class="foot">v0.1 · datos maestros</div>
       </aside>
@@ -947,6 +1223,12 @@ async function route() {
     view.innerHTML = `<div class="card error">${esc(e.message)}</div>`;
     toast(e.message, "err");
   }
+  /* Una pantalla es "de grilla" cuando la tabla es su contenido, no cuando está
+     metida adentro de una ficha o de una solapa. Se decide mirando el DOM ya
+     pintado en vez de listar secciones a mano: una sección nueva que devuelva
+     una tabla entra sola, y una que la anide no se rompe. */
+  const content = view.parentElement;
+  if (content) content.classList.toggle("grid-page", !!view.querySelector(":scope > .tbl-wrap"));
 }
 
 /* ------------------------------- modal --------------------------------- */
@@ -961,13 +1243,18 @@ function openModal({ title, body, onConfirm, confirmLabel = "Guardar", wide = fa
   const close = () => { document.removeEventListener("keydown", onKeydown); overlay.remove(); };
   overlay.querySelector(".body").appendChild(body);
   const foot = overlay.querySelector("footer");
-  const cancel = el(`<button class="btn" type="button">${onConfirm ? "Cancelar" : "Cerrar"}</button>`);
-  cancel.addEventListener("click", close); foot.appendChild(cancel);
+  /* "Cancelar" existe para hacer pareja con "Guardar": es la salida sin
+     guardar. Un modal que no guarda nada no la necesita, y el "Cerrar" que iba
+     ahí repetía la cruz de la esquina. Sin botones, el pie no se dibuja: la
+     cruz, Escape y el clic afuera ya cierran. */
   if (onConfirm) {
+    const cancel = el(`<button class="btn" type="button">Cancelar</button>`);
+    cancel.addEventListener("click", close); foot.appendChild(cancel);
     const ok = el(`<button class="btn primary" type="button">${esc(confirmLabel)}</button>`);
     ok.addEventListener("click", async () => { ok.disabled = true; try { await onConfirm(close); } finally { ok.disabled = false; } });
     foot.appendChild(ok);
   }
+  if (!foot.children.length) foot.remove();
   overlay.querySelector(".x").addEventListener("click", close);
   overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) close(); });
   document.addEventListener("keydown", onKeydown);
@@ -1318,6 +1605,19 @@ function confirmDanger({ title, message, confirmLabel = "Eliminar", onConfirm })
 }
 
 /* ------------------------------- table --------------------------------- */
+/* El mapa de pasos de cualquier asistente. `i` es el paso actual, base 0. */
+function stepMap(labels, i) {
+  const n = labels.length;
+  const avance = n > 1 ? (i / (n - 1)) * 100 : 100;
+  return `<div class="stepmap" style="--n:${n};--avance:${avance}%">
+    <div class="stepmap-line"></div>
+    ${labels.map((l, k) => `<div class="stepmap-step ${k < i ? "done" : k === i ? "on" : ""}">
+      <div class="stepmap-dot">${k < i ? `<svg class="ic"><use href="#i-check"/></svg>` : (k + 1)}</div>
+      <div class="stepmap-txt" title="${esc(l)}">${esc(l)}</div>
+    </div>`).join("")}
+  </div>`;
+}
+
 function renderTable(columns, rows, rowActions, ctx) {
   if (!rows || !rows.length) return `<div class="card"><div class="empty">Sin registros.</div></div>`;
   const prio = (c) => c.priority ? ` col-p${c.priority}` : "";
@@ -1586,11 +1886,9 @@ async function openImportWizard(specKey, onDone) {
   const close = openModal({ title: `Importar — ${spec.label}`, body, wide: true });
   step1();
 
-  function head(n) {
-    return `<div class="steps">${[["1","Archivo"],["2","Columnas"],["3","Revisión"]]
-      .map(([i,l]) => `<span class="${Number(i)===n?"on":(Number(i)<n?"done":"")}">${i}. ${l}</span>`)
-      .join("")}</div>`;
-  }
+  // El mismo mapa que el alta de productos: un asistente se ve igual en toda la
+  // app. Declaración y no `const`: step1() corre antes de llegar a esta línea.
+  function head(n) { return stepMap(["Archivo", "Columnas", "Revisión"], n - 1); }
 
   /* ---- 1. plantilla + archivo ---- */
   function step1() {
@@ -1742,7 +2040,7 @@ async function dashboardView(view) {
 
   view.innerHTML = `
     <div class="page-head"><div><h2>Hola, ${esc((state.user.full_name||"").split(" ")[0] || state.user.email)}</h2>
-      <div class="sub">${esc(state.company?.name || "SGI Óptica")} · ${esc(state.currency)}</div></div></div>
+      <div class="sub">${esc(state.company?.name || "Mi Óptica")} · ${esc(state.currency)}</div></div></div>
     <div class="stats">${stats || '<div class="stat"><div class="k">Sin permisos de lectura</div></div>'}</div>
     ${lowStockHtml}`;
 }
@@ -1885,17 +2183,26 @@ async function productsView(view) {
         : `Esa lista no tiene la categoría ${esc(code)}.`;
     }
 
-    typeSel.addEventListener("change", refreshModels);
-    supSel.addEventListener("change", refreshBrands);
-    listSel.addEventListener("change", previewPrice);
-    catSel.addEventListener("change", previewPrice);
+    /* El asistente de alta arma un paso por vez, así que este formulario puede
+       traer sólo algunos de estos campos: cada enganche se hace si las dos
+       puntas están. Sin esto, el paso que no lleva los selects de precio moría
+       en el primer addEventListener y el modal quedaba sin botones. */
+    if (typeSel && modelSel) typeSel.addEventListener("change", refreshModels);
+    if (supSel && brandSel) supSel.addEventListener("change", refreshBrands);
+    if (listSel) listSel.addEventListener("change", previewPrice);
+    if (catSel)  catSel.addEventListener("change", previewPrice);
     form.addEventListener("change", (e) => {
-      if (e.target.name === "pricing_mode") previewPrice();
+      if (e.target.name === "pricing_mode" && listSel && catSel) previewPrice();
     });
-    await Promise.all([refreshModels(), refreshBrands(), previewPrice()]);
+    await Promise.all([
+      typeSel && modelSel ? refreshModels() : null,
+      supSel && brandSel ? refreshBrands() : null,
+      listSel && catSel ? previewPrice() : null,
+    ]);
   }
 
   async function load() {
+    variantCache.clear();
     const qs = new URLSearchParams();
     for (const [k,v] of Object.entries(filters)) if (v) qs.set(k, v);
     if (showInactive) qs.set("include_inactive", "true");
@@ -1908,10 +2215,177 @@ async function productsView(view) {
   function enterFamily(row) { family = { id: row.id, code: row.code }; load(); }
   function leaveFamily() { family = null; load(); }
 
+  /* ---------------------------------------------------------------- alta
+     El alta iba en un solo modal de catorce campos: había que scrollear, y el
+     campo que más decide (Colores, que define si se crea UN producto o DIEZ)
+     quedaba sexto en la lista, sin explicación a la vista. Se parte en tres
+     pasos, uno por idea, con el mismo chrome de pastillas que el asistente de
+     importación. La edición NO se parte: ahí uno entra a cambiar un campo
+     concreto y un asistente sería un estorbo. */
+  const PASOS = [
+    { label:"Qué es",         keys:["code","product_type_id","brand_id","model_id","supplier_id","description"] },
+    { label:"Colores",        keys:["color_ids"] },
+    { label:"Precio y costo", keys:["pricing_mode","sale_price","price_list_id","price_category_code","current_cost","min_stock"] },
+  ];
+
+  async function openProductWizard() {
+    const todos = baseFields().concat([{ key:"current_cost", label:"Costo inicial", type:"decimal", step:"0.01",
+      help:"Después de crear, cambiá el costo desde el menú ⋯ de la fila (queda auditado)." }]);
+    const porKey = Object.fromEntries(todos.map(f => [f.key, f]));
+    /* La explicación larga de Colores la hace ahora el resumen de abajo, con los
+       códigos reales. Acá queda sólo lo que el resumen no puede decir: cuándo
+       corresponde dejarlo vacío. La edición conserva el texto completo, porque
+       ahí no hay resumen que lo muestre. */
+    if (porKey.color_ids)
+      porKey.color_ids = { ...porKey.color_ids,
+        help:"Dejalo vacío si el producto no viene en colores, como unos lentes de contacto." };
+    const colores = await api("GET", "/api/colors").catch(() => []);
+    const codigoDeColor = Object.fromEntries(colores.map(c => [String(c.id), c.code]));
+
+    const acc = { pricing_mode: "price_list" };
+    const body = el(`<div class="wizard"></div>`);
+    const cerrar = openModal({ title:"Nuevo producto", body, wide:true });
+    let i = 0;
+    await pintar();
+
+    // Declaración y no `const`: pintar() corre antes de llegar a esta línea.
+    function pastillas() { return stepMap(PASOS.map(p => p.label), i); }
+
+    const menosMovimiento = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const esperar = (ms) => new Promise(r => setTimeout(r, ms));
+
+    /* El mapa se actualiza, no se vuelve a dibujar: si se reemplaza el elemento
+       la línea aparece ya pintada y la transición no llega a correr nunca. */
+    function actualizarMapa() {
+      const m = body.querySelector(".stepmap");
+      if (!m) return false;
+      m.style.setProperty("--avance", (i / (PASOS.length - 1)) * 100 + "%");
+      [...m.querySelectorAll(".stepmap-step")].forEach((paso, k) => {
+        paso.classList.toggle("done", k < i);
+        paso.classList.toggle("on", k === i);
+        const dot = paso.querySelector(".stepmap-dot");
+        const quiere = k < i ? "ok" : String(k + 1);
+        if (dot.dataset.v !== quiere) {
+          dot.dataset.v = quiere;
+          dot.innerHTML = k < i ? `<svg class="ic"><use href="#i-check"/></svg>` : String(k + 1);
+        }
+      });
+      return true;
+    }
+
+    /* Saca el paso viejo, mete el nuevo y lleva el alto de uno a otro. Devuelve
+       apenas el nuevo está en pantalla, así el foco no espera a que termine. */
+    async function mostrar(pane, dir) {
+      const stage = body.querySelector(".wizstage");
+      const viejo = stage.firstElementChild;
+      if (!viejo || menosMovimiento.matches) { stage.replaceChildren(pane); return; }
+      stage.style.height = stage.getBoundingClientRect().height + "px";
+      stage.style.overflow = "hidden";
+      viejo.style.opacity = "0";
+      viejo.style.transform = `translateX(${-14 * dir}px)`;
+      await esperar(130);
+      stage.replaceChildren(pane);
+      pane.style.opacity = "0";
+      pane.style.transform = `translateX(${14 * dir}px)`;
+      const alto = pane.getBoundingClientRect().height;
+      requestAnimationFrame(() => {
+        stage.style.height = alto + "px";
+        pane.style.opacity = "";
+        pane.style.transform = "";
+      });
+      esperar(280).then(() => { stage.style.height = ""; stage.style.overflow = ""; });
+    }
+
+    /* El paso 2 dice en castellano qué va a pasar al confirmar, con los códigos
+       ya armados: es la única forma de que la regla (un estilo con variantes no
+       se vende ni se stockea) se vea antes de crear y no después. */
+    function resumenColores(form) {
+      const ids = (form.read({ all:true }).color_ids || []).map(String);
+      const code = (acc.code || "").trim() || "el código";
+      if (!ids.length)
+        return `<div class="fhelp">Se crea <b>un solo producto</b>: <code>${esc(code)}</code>. Se vende y se stockea él mismo.</div>`;
+      if (ids.length === 1)
+        return `<div class="fhelp">Se crea <b>un solo producto</b>: <code>${esc(code)}</code>, en ese color. Se vende y se stockea él mismo.</div>`;
+      const hijos = ids.map(id => `${code}-${codigoDeColor[id] || "?"}`);
+      return `<div class="fhelp">Se crean <b>${hijos.length} productos</b>, uno por color:
+        ${hijos.map(h => `<code>${esc(h)}</code>`).join(" ")}.<br>
+        <code>${esc(code)}</code> queda como estilo: agrupa a los colores y no se vende ni se stockea.</div>`;
+    }
+
+    async function pintar(dir = 0) {
+      const paso = PASOS[i];
+      const campos = paso.keys.map(k => porKey[k]).filter(Boolean);
+      const form = await buildForm(campos, acc, true);
+      if (!body.querySelector(".stepmap"))
+        body.innerHTML = pastillas() + `<div class="wizstage"></div>`;
+      else actualizarMapa();
+      const caja = el(`<div class="wizpane"></div>`);
+      caja.appendChild(form);
+      if (i === 0) await wireDependentSelects(form, null);
+
+      const previo = i === 1 ? el(`<div style="margin:-4px 0 4px"></div>`) : null;
+      if (previo) {
+        const repintar = () => { previo.innerHTML = resumenColores(form); };
+        form.addEventListener("change", repintar);
+        caja.appendChild(previo);
+        repintar();
+      }
+
+      const nav = el(`<div class="toolbar" style="justify-content:space-between;margin:14px 0 0"></div>`);
+      caja.appendChild(nav);
+      const izq = el(`<div></div>`);
+      const der = el(`<div style="display:flex;align-items:center;gap:12px;min-width:0"></div>`);
+      nav.append(izq, der);
+      if (i) {
+        const atras = el(`<button class="btn" type="button"><svg class="ic"><use href="#i-arrow-left"/></svg>Volver</button>`);
+        // Volver no valida: lo escrito se guarda igual, para no perderlo.
+        atras.addEventListener("click", async () => { Object.assign(acc, form.read()); i--; await pintar(-1); });
+        izq.appendChild(atras);
+      }
+      const ultimo = i === PASOS.length - 1;
+      const seguir = el(`<button class="btn primary" type="button">${ultimo
+        ? `<svg class="ic"><use href="#i-check"/></svg>Crear producto`
+        : `Siguiente<svg class="ic"><use href="#i-arrow-right"/></svg>`}</button>`);
+      /* El botón arranca apagado y se prende solo cuando el paso está completo.
+         Un botón apagado sin explicación es una pared, así que al lado va lo
+         que falta: es el mismo texto que antes aparecía recién al apretarlo. */
+      const falta = el(`<div class="fhelp" style="margin:0"></div>`);
+      let enviando = false;
+      const revisar = () => {
+        if (enviando) return;
+        const err = validate(campos, form.read());
+        seguir.disabled = !!err;
+        falta.textContent = err || "";
+      };
+      form.addEventListener("input", revisar);
+      form.addEventListener("change", revisar);
+      seguir.addEventListener("click", async () => {
+        const datos = form.read();
+        const err = validate(campos, datos);
+        if (err) return toast(err, "err");
+        Object.assign(acc, datos);
+        if (!ultimo) { i++; return pintar(1); }
+        enviando = true; seguir.disabled = true;
+        try {
+          const saved = await api("POST", "/api/products", acc);
+          const hechas = saved.variant_count || 0;
+          clearOptions();
+          toast(hechas > 0 ? `Guardado · ${hechas} producto(s) por color` : "Guardado", "ok");
+          cerrar();
+          if (hechas > 0) enterFamily(saved); else await load();
+        } catch (e) { toast(e.message || "No se pudo guardar.", "err"); enviando = false; revisar(); }
+      });
+      der.append(falta, seguir);
+      revisar();
+      await mostrar(caja, dir);
+      const primero = form.querySelector("input,select,textarea");
+      if (primero) primero.focus();
+    }
+  }
+
   function openForm(mode, row) {
-    let fields = baseFields();
-    if (mode === "create") fields = fields.concat([{ key:"current_cost", label:"Costo inicial", type:"decimal", step:"0.01", help:"Después de crear, cambiá el costo desde el menú ⋯ de la fila (queda auditado)." }]);
-    else fields = fields.concat([{ key:"is_active", label:"Activo", type:"checkbox" }]);
+    if (mode === "create") return openProductWizard();
+    let fields = baseFields().concat([{ key:"is_active", label:"Activo", type:"checkbox" }]);
     formModal({ title: (mode==="edit"?"Editar producto":"Nuevo producto"), fields, values: row || {}, grid:true,
       onReady: (form) => wireDependentSelects(form, row),
       onSubmit: async (payload) => {
@@ -2040,7 +2514,119 @@ async function productsView(view) {
     return `<select class="inp-sm" data-filter="${key}" style="width:auto"><option value="">${esc(label)}</option>${opts}</select>`;
   }
 
+  /* Las mismas columnas para el estilo y para sus variantes: una variante se
+     dibuja con la misma definición, así la fila hija cae exactamente abajo de
+     la columna que le corresponde. */
+  const cols = [
+        { key:"code", label:"Código", mono:true },
+        { key:"description", label:"Descripción", trunc:true,
+          render:(v)=>v ? `<span title="${esc(v)}">${esc(v)}</span>` : "—" },
+        { key:"product_type_id", label:"Tipo", render:(v)=>esc(typeMap[v]||"—") },
+        { key:"brand_id", label:"Marca", render:(v)=>esc(brandMap[v]||"—") },
+        { key:"model_id", label:"Modelo", priority:2, render:(v)=>esc(modelMap[v]||"—") },
+        { key:"colors", label:"Colores", priority:2, render:(v)=> swatchList(v) },
+        { key:"variant_count", label:"Variantes", priority:2, render:(v, r) => v
+            ? badge(`${v} colores`, "blue")
+            : (r.parent_code ? `<span class="fhelp">de ${esc(r.parent_code)}</span>` : "—") },
+        { key:"price_category_code", label:"Cat.", priority:3, render:(v)=>v?badge(v,"gray"):"—" },
+        { key:"resolved_sale_price", label:"Precio", align:"right", render:(v, r) => v != null
+            ? `<span title="${esc(r.price_source === "manual" ? "Precio manual" : ("Lista: " + (listMap[r.price_list_id] || "por defecto")))}">${fmtMoney(v, r.price_currency)}</span>`
+            : r.variant_count
+              ? `<span class="fhelp" title="Se vende por color">por color</span>`
+              : `<span class="badge gray" title="${esc(r.price_reason || "")}">sin precio</span>` },
+        { key:"current_cost", label:"Costo", type:"money", align:"right", priority:2 },
+        { key:"min_stock", label:"Mín", type:"num", align:"right", priority:3 },
+        { key:"is_active", label:"Estado", type:"bool", priority:3 },
+  ];
+
+  /* Abrir un estilo trae sus colores una sola vez: la segunda apertura sale de
+     acá y no vuelve a pegarle a la API. Se limpia con cada `load()`, que es
+     cuando los filtros o el alta pueden haberlos cambiado. */
+  const variantCache = new Map();
+  let listaActual = [];        // lo último que pintó paint(), para medir la reserva
+
+  /* `table-layout:auto` mide las columnas con lo que hay adentro, así que al
+     abrir un estilo entraban códigos más largos (pepe -> pepe-NEG) más la
+     sangría, la primera columna crecía y TODA la grilla se corría de lugar.
+     Antes de abrir nada le reservamos a la primera columna el ancho del código
+     de variante más largo que puede aparecer (el del estilo más un código de
+     color, que son tres letras) y clavamos el resto con lo que ya midieron. A
+     partir de ahí abrir y cerrar no mueve una sola columna. */
+  function anchoDeTexto(txt, molde) {
+    const probe = document.createElement("span");
+    probe.style.cssText = "position:absolute;visibility:hidden;white-space:pre;font:" + getComputedStyle(molde).font;
+    probe.textContent = txt;
+    document.body.appendChild(probe);
+    const w = probe.getBoundingClientRect().width;
+    probe.remove();
+    return w;
+  }
+
+  function fijarColumnas(list) {
+    const t = view.querySelector("table");
+    if (!t || t.dataset.fijada) return;
+    const ths = [...t.querySelectorAll("thead th")];
+    const anchos = ths.map(th => th.getBoundingClientRect().width);
+    const primera = t.querySelector("tbody td");
+    const conVariantes = list.filter(r => r.variant_count);
+    if (primera && conVariantes.length) {
+      const reserva = Math.max(...conVariantes.map(r => anchoDeTexto((r.code || "") + "-XXX", primera)));
+      anchos[0] = Math.max(anchos[0], reserva + 40 + 10);   // sangría de la hija + aire
+    }
+    /* Con `table-layout:fixed` los anchos mandan: si la suma pasa el marco, la
+       grilla se va de costado. Lo que la reserva suma se lo saca a la columna
+       que sabe achicarse, que es la que recorta con puntos suspensivos. */
+    const disponible = t.parentElement.clientWidth;
+    const total = anchos.reduce((a, b) => a + b, 0);
+    if (total > disponible) {
+      const cuerpo = [...t.querySelectorAll("tbody tr:not(.subrow)")[0].children];
+      let elastica = cuerpo.findIndex((td, k) => td.classList.contains("trunc") && anchos[k] > 0);
+      if (elastica < 0) elastica = anchos.indexOf(Math.max(...anchos.slice(0, -1)));
+      anchos[elastica] = Math.max(80, anchos[elastica] - (total - disponible));
+    }
+    ths.forEach((th, i) => { th.style.width = anchos[i] + "px"; });
+    t.style.tableLayout = "fixed";
+    t.dataset.fijada = "1";
+  }
+
+  async function toggleFamilyRow(tr, row) {
+    const abrir = !tr.classList.contains("open");
+    for (let n = tr.nextElementSibling; n && n.classList.contains("subrow");) {
+      const x = n; n = n.nextElementSibling; x.remove();
+    }
+    tr.classList.toggle("open", abrir);
+    tr.setAttribute("aria-expanded", String(abrir));
+    if (!abrir) return;
+    let kids = variantCache.get(row.id);
+    if (!kids) {
+      const qs = new URLSearchParams({ parent_id: row.id });
+      if (showInactive) qs.set("include_inactive", "true");
+      try { kids = await api("GET", "/api/products?" + qs); }
+      catch (e) { toast(e.message, "err"); tr.classList.remove("open");
+                  tr.setAttribute("aria-expanded", "false"); return; }
+      variantCache.set(row.id, kids);
+    }
+    /* Se dibujan con renderTable y las mismas columnas, y después se roban las
+       filas: así una columna nueva aparece sola en las hijas y nunca se corren
+       respecto del encabezado. */
+    const tmp = el(renderTable(cols, kids, actions));
+    const nuevas = [...tmp.querySelectorAll("tbody tr")];
+    nuevas.forEach(r => r.classList.add("subrow"));
+    tr.after(...nuevas);
+    nuevas.forEach(r => r.querySelectorAll("[data-act]").forEach(btn => {
+      const hijo = kids.find(k => String(k.id) === btn.dataset.id);
+      btn.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        const act = btn.dataset.act;
+        if (act === "edit") openForm("edit", hijo);
+        else if (act === "stock") stockModal(hijo);
+        else if (act === "more") rowMenu(btn, hijo);
+      });
+    }));
+  }
+
   function paint(list) {
+    listaActual = list;
     const head = family
       ? `<button class="btn sm ghost" id="backAll"><svg class="ic"><use href="#i-arrow-left"/></svg>Productos</button>
          <h2>Colores de ${esc(family.code)}</h2>
@@ -2063,27 +2649,7 @@ async function productsView(view) {
         ${selectFilter("color_id", colorMap, "Todos los colores")}
         <label class="switch"><input type="checkbox" id="inact" ${showInactive?"checked":""}> Ver inactivos</label>
       </div>
-      ${renderTable([
-        { key:"code", label:"Código", mono:true },
-        { key:"description", label:"Descripción", trunc:true,
-          render:(v)=>v ? `<span title="${esc(v)}">${esc(v)}</span>` : "—" },
-        { key:"product_type_id", label:"Tipo", render:(v)=>esc(typeMap[v]||"—") },
-        { key:"brand_id", label:"Marca", render:(v)=>esc(brandMap[v]||"—") },
-        { key:"model_id", label:"Modelo", priority:2, render:(v)=>esc(modelMap[v]||"—") },
-        { key:"colors", label:"Colores", priority:2, render:(v)=> swatchList(v) },
-        { key:"variant_count", label:"Variantes", priority:2, render:(v, r) => v
-            ? badge(`${v} colores`, "blue")
-            : (r.parent_code ? `<span class="fhelp">de ${esc(r.parent_code)}</span>` : "—") },
-        { key:"price_category_code", label:"Cat.", priority:3, render:(v)=>v?badge(v,"gray"):"—" },
-        { key:"resolved_sale_price", label:"Precio", align:"right", render:(v, r) => v != null
-            ? `<span title="${esc(r.price_source === "manual" ? "Precio manual" : ("Lista: " + (listMap[r.price_list_id] || "por defecto")))}">${fmtMoney(v, r.price_currency)}</span>`
-            : r.variant_count
-              ? `<span class="fhelp" title="Se vende por color">por color</span>`
-              : `<span class="badge gray" title="${esc(r.price_reason || "")}">sin precio</span>` },
-        { key:"current_cost", label:"Costo", type:"money", align:"right", priority:2 },
-        { key:"min_stock", label:"Mín", type:"num", align:"right", priority:3 },
-        { key:"is_active", label:"Estado", type:"bool", priority:3 },
-      ], list, actions)}`;
+      ${renderTable(cols, list, actions)}`;
     // Exporting mirrors what is on screen: same filters, same inactive toggle.
     $("#expBtn", view).addEventListener("click", (e) => openExportMenu(
       e.currentTarget,
@@ -2098,13 +2664,32 @@ async function productsView(view) {
     $$("[data-filter]", view).forEach(s => s.addEventListener("change", () => { filters[s.dataset.filter] = s.value; load(); }));
     const back = $("#backAll", view);
     if (back) back.addEventListener("click", leaveFamily);
-    $$("[data-act]", view).forEach(b => b.addEventListener("click", async () => {
+    $$("[data-act]", view).forEach(b => b.addEventListener("click", async (ev) => {
+      ev.stopPropagation();                       // no abrir la fila al apretar un botón
       const row = list.find(x => String(x.id) === b.dataset.id), act = b.dataset.act;
       if (act === "edit") openForm("edit", row);
       else if (act === "stock") stockModal(row);
-      else if (act === "family") enterFamily(row);
+      else if (act === "family") toggleFamilyRow(b.closest("tr"), row);
       else if (act === "more") rowMenu(b, row);
     }));
+    /* La fila de un estilo se abre tocándola en cualquier lado. Con teclado es
+       un elemento más del recorrido: Enter o barra la abren y la cierran. */
+    fijarColumnas(list);          // antes de que nada se pueda abrir
+    $$("tbody tr", view).forEach((tr, i) => {
+      const row = list[i];
+      if (!row || !row.variant_count) return;
+      tr.classList.add("expandable");
+      tr.tabIndex = 0;
+      tr.setAttribute("aria-expanded", "false");
+      tr.addEventListener("click", (ev) => {
+        if (ev.target.closest("button,a,input,select,label")) return;
+        toggleFamilyRow(tr, row);
+      });
+      tr.addEventListener("keydown", (ev) => {
+        if (ev.key !== "Enter" && ev.key !== " ") return;
+        ev.preventDefault(); toggleFamilyRow(tr, row);
+      });
+    });
   }
   await load();
 }

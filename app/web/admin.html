@@ -9,11 +9,20 @@
      alike enough to share muscle memory and different enough that nobody
      mistakes "suspender empresa" for a shop screen. */
   :root{
-    --bg:#f6f5fa; --panel:#ffffff; --border:#e5e3ee; --text:#1f2937; --muted:#6b7280;
-    --primary:#7c3aed; --primary-600:#6d28d9; --primary-50:#f5f0ff;
-    --danger:#dc2626; --danger-50:#fef2f2; --ok:#16a34a; --ok-50:#f0fdf4;
+    --bg:#f6f5fa; --panel:#ffffff; --border:#e5e3ee; --text:#1f2937; --muted:#6b7280; --label:#374151;
+    /* Acá está toda la diferencia de los botones con los de la consola de
+       tienda: los mismos dos tintes, en violeta. Las reglas son idénticas. */
+    --hover:#faf9fd; --press:#f1eff7;
+    /* La cápsula es del sistema, el destello no: acá los tokens del destello
+       son colores planos. Si el botón de plataforma también viajara a violeta
+       terminaría en el mismo #7c3aed de la consola de tienda, y estas dos
+       aplicaciones existen separadas justamente para que nadie las confunda. */
+    --action:#7c3aed; --action-600:#6d28d9; --action-bloom:#6d28d9;
+    --action-bloom-press:#5b21b6; --action-bloom-border:#6d28d9; --action-ring:#f5f0ff;
+    --primary:#7c3aed; --primary-600:#6d28d9; --primary-700:#5b21b6; --primary-50:#f5f0ff;
+    --danger:#dc2626; --danger-200:#fecaca; --danger-50:#fef2f2; --ok:#16a34a; --ok-50:#f0fdf4;
     --warn:#d97706; --warn-50:#fffbeb;
-    --radius:10px; --shadow:0 1px 3px rgba(16,24,40,.08),0 1px 2px rgba(16,24,40,.04);
+    --radius:10px; --radius-sm:7px; --radius-control:12px; --radius-pill:999px; --shadow:0 1px 3px rgba(16,24,40,.08),0 1px 2px rgba(16,24,40,.04);
     --shadow-lg:0 12px 32px rgba(16,24,40,.18); --sidebar:224px;
     --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
     --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -59,24 +68,53 @@
   .page-head .sub{color:var(--muted);font-size:13px;margin-top:2px}
   .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
   .loading,.empty{padding:38px;text-align:center;color:var(--muted)}
-  .btn{appearance:none;border:1px solid var(--border);background:var(--panel);color:var(--text);padding:8px 14px;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:background .12s,border-color .12s}
-  .btn:hover{background:#faf9fd}
+  /* Copia exacta de las reglas de la consola de tienda: lo único violeta lo
+     ponen --hover y --press del :root. Si cambia una, cambian las dos. */
+  .btn{appearance:none;border:1px solid var(--border);background:var(--panel);color:var(--text);padding:8px 17px;border-radius:var(--radius-pill);font-weight:600;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;font-family:var(--sans);transition:background .12s,border-color .12s,box-shadow .12s,color .12s}
+  .btn:hover:not(:disabled){background:var(--hover)}
+  .btn:active:not(:disabled){background:var(--press)}
+  .btn:focus{outline:none}
+  .btn:focus-visible{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-50)}
   .btn:disabled{opacity:.55;cursor:not-allowed}
-  .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
-  .btn.primary:hover{background:var(--primary-600)}
-  .btn.danger{background:#fff;border-color:#fecaca;color:var(--danger)}
-  .btn.danger:hover{background:var(--danger-50)}
-  .btn.sm{padding:5px 10px;font-size:12px;border-radius:7px}
+  .btn.primary{background:var(--action);border-color:var(--action-600);color:#fff;position:relative;z-index:0}
+  /* Un degradado no interpola: `transition:background` de un color plano a
+     linear-gradient() no anima nada, salta. Por eso el destello es una capa
+     propia que se desvanece encima del índigo. `z-index:-1` con el botón en
+     `z-index:0` la deja arriba del fondo y abajo del texto y del ícono. */
+  .btn.primary::before{content:"";position:absolute;inset:0;border-radius:inherit;z-index:-1;
+    background:var(--action-bloom);opacity:0;transition:opacity .24s ease}
+  /* Entra más rápido de lo que sale: al salir se apaga de a poco, que es lo
+     que lo hace parecer luz y no un interruptor. */
+  .btn.primary:hover:not(:disabled)::before{opacity:1;transition:opacity .16s ease-out}
+  /* `background` acá parece redundante contra la regla de arriba, pero es lo
+     que sostiene todo: sin él gana `.btn:hover` (una clase menos, pero un
+     estado más) y el fondo pasa a --hover, que es casi blanco. Con la capa
+     del destello a media opacidad se ve ese blanco por debajo y el botón
+     destella en blanco antes de llegar al degradado. */
+  .btn.primary:hover:not(:disabled){background:var(--action);border-color:var(--action-bloom-border)}
+  /* Apretar es inmediato: un botón que tarda en hundirse se siente roto. */
+  .btn.primary:active:not(:disabled)::before{background:var(--action-bloom-press);opacity:1;transition:none}
+  .btn.primary:active:not(:disabled){background:var(--action);border-color:var(--action-bloom-border)}
+  .btn.primary:focus-visible{border-color:var(--action-bloom-border);box-shadow:0 0 0 3px var(--action-ring)}
+  /* Quien pidió menos movimiento ve el mismo destello, sin el desvanecido. */
+  @media(prefers-reduced-motion:reduce){
+    .btn.primary::before,.btn.primary:hover:not(:disabled)::before{transition:none}
+  }
+  .btn.danger{background:var(--panel);border-color:var(--danger-200);color:var(--danger)}
+  .btn.danger:hover:not(:disabled){background:var(--danger-50)}
+  .btn.danger:active:not(:disabled){background:var(--danger-50);border-color:var(--danger)}
+  .btn.danger:focus-visible{border-color:var(--danger);box-shadow:0 0 0 3px var(--danger-50)}
+  .btn.sm{padding:5px 10px;font-size:12px}
   .btn.ghost{border-color:transparent;background:transparent}
-  .btn.ghost:hover{background:#f1eff7}
-  .btn.ico{padding:5px 7px;line-height:1;min-width:28px;justify-content:center}
+  .btn.ghost:hover:not(:disabled){background:var(--press)}
+  .btn.ico{padding:5px;line-height:1;min-width:28px;justify-content:center}
   .ic{width:16px;height:16px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2;
       stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px}
   .ic.lg{width:18px;height:18px}
   /* inputs */
-  label.fld{display:block;font-size:12.5px;font-weight:600;color:#374151;margin-bottom:5px}
+  label.fld{display:block;font-size:12.5px;font-weight:600;color:var(--label);margin-bottom:5px}
   label.fld .req{color:var(--danger)}
-  input,select,textarea{width:100%;font:inherit;color:var(--text);background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 10px;outline:none}
+  input,select,textarea{width:100%;font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-control);padding:8px 10px;outline:none}
   input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-50)}
   .searchbox{position:relative;display:inline-flex;align-items:center}
   .searchbox .ic{position:absolute;left:9px;color:var(--muted);pointer-events:none}
@@ -126,17 +164,20 @@
   .modal .body{padding:20px;overflow:auto}
   .modal footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px}
   .x{background:none;border:0;font-size:20px;line-height:1;cursor:pointer;color:var(--muted)}
-  form.form .form-row{margin-bottom:14px}
-  form.form.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px}
-  form.form.grid2 .form-row{margin-bottom:0}
-  form.form.grid2 .form-row.full{grid-column:1/-1}
+  /* El aire es de la fila, no de quien la envuelve: con `form.` adelante la
+     tarjeta de ingreso (form.login-card) no lo recibía y lo parchaba con un
+     margin inline. Mismo criterio que en la consola de tienda. */
+  .form-row{margin-bottom:14px}
+  .form.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px}
+  .form.grid2 .form-row{margin-bottom:0}
+  .form.grid2 .form-row.full{grid-column:1/-1}
   .fhelp{font-size:11.5px;color:var(--muted);margin-top:4px}
-  .switch{display:flex;align-items:center;gap:8px;font-size:13px;color:#374151;font-weight:500;cursor:pointer;user-select:none}
+  .switch{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--label);font-weight:500;cursor:pointer;user-select:none}
   .switch input{width:auto}
   [hidden]{display:none!important}
   .sect{font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);
     font-weight:700;margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--border)}
-  form.form.grid2 .sect{grid-column:1/-1}
+  .form.grid2 .sect{grid-column:1/-1}
   .kv{display:grid;grid-template-columns:150px 1fr;gap:8px 14px;font-size:13.5px}
   .kv dt{color:var(--muted);font-weight:600}
   .kv dd{margin:0}
@@ -157,7 +198,7 @@
     .sidebar{position:fixed;left:0;top:0;width:240px;z-index:40;transform:translateX(-100%);transition:transform .2s}
     .sidebar.open{transform:none}
     .menu-btn{display:block}
-    form.form.grid2{grid-template-columns:1fr}
+    .form.grid2{grid-template-columns:1fr}
   }
 </style>
 </head>
@@ -209,6 +250,29 @@ const $  = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = (v) => (v == null ? "" : String(v).replace(/[&<>"']/g, c =>
   ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])));
+/* Una <label> sin `for` no etiqueta nada: el clic no enfoca el campo y un
+   lector de pantalla anuncia el control sin nombre. Mismo criterio que en la
+   consola de tienda: en vez de repartir ids a mano, cada `.fld` toma el primer
+   control de su fila sobre lo que se va agregando al DOM. */
+let _fldSeq = 0;
+function linkFields(scope) {
+  const labels = scope.querySelectorAll ? scope.querySelectorAll("label.fld:not([for])") : [];
+  for (const lab of labels) {
+    if (lab.querySelector("input,select,textarea")) continue;
+    const row = lab.closest(".form-row") || lab.parentElement;
+    if (!row) continue;
+    const ctl = row.querySelector("input,select,textarea");
+    if (!ctl) continue;
+    if (!ctl.id) ctl.id = "f" + (++_fldSeq);
+    lab.setAttribute("for", ctl.id);
+  }
+}
+new MutationObserver(muts => {
+  for (const m of muts)
+    for (const n of m.addedNodes)
+      if (n.nodeType === 1) linkFields(n);
+}).observe(document.documentElement, { childList: true, subtree: true });
+
 const el = (html) => { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; };
 const badge = (text, cls) => `<span class="badge ${cls}">${esc(text)}</span>`;
 
@@ -263,17 +327,18 @@ function openModal({ title, body, onConfirm, confirmLabel = "Guardar", wide = fa
       <div class="modal ${wide ? "wide" : ""}">
         <header><h3>${esc(title)}</h3><button class="x" type="button">&times;</button></header>
         <div class="body"></div>
-        <footer>
+        ${onConfirm ? `<footer>
           <button class="btn" data-act="cancel" type="button">Cancelar</button>
-          ${onConfirm ? `<button class="btn ${danger ? "danger" : "primary"}" data-act="ok" type="button">${esc(confirmLabel)}</button>` : ""}
-        </footer>
+          <button class="btn ${danger ? "danger" : "primary"}" data-act="ok" type="button">${esc(confirmLabel)}</button>
+        </footer>` : ""}
       </div>
     </div>`);
   const bodyEl = $(".body", overlay);
   bodyEl.append(typeof body === "string" ? el(`<div>${body}</div>`) : body);
   const close = () => overlay.remove();
   $(".x", overlay).addEventListener("click", close);
-  $('[data-act=cancel]', overlay).addEventListener("click", close);
+  const cancelBtn = $('[data-act=cancel]', overlay);
+  if (cancelBtn) cancelBtn.addEventListener("click", close);
   overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) close(); });
   const ok = $('[data-act=ok]', overlay);
   if (ok) {
@@ -341,7 +406,7 @@ function renderLogin() {
           <label class="fld">Email</label>
           <input name="email" type="email" autocomplete="username" required>
         </div>
-        <div class="form-row" style="margin-top:14px">
+        <div class="form-row">
           <label class="fld">Contraseña</label>
           <input name="password" type="password" autocomplete="current-password" required>
         </div>
