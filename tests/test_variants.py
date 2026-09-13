@@ -51,6 +51,13 @@ def test_derived_codes_lengthen_before_they_number(client, auth_headers):
     assert codes == ["VER", "VERD", "VERDE"]
 
 
+def test_a_name_shorter_than_three_is_its_own_code(client, auth_headers):
+    """"C1" used to skip the length loop and number straight to C12."""
+    assert client.post(
+        "/api/colors", json={"name": "C1"}, headers=auth_headers
+    ).json()["code"] == "C1"
+
+
 def test_accents_are_folded(client, auth_headers):
     assert client.post(
         "/api/colors", json={"name": "Marrón"}, headers=auth_headers
@@ -86,6 +93,18 @@ def test_variants_are_coded_from_the_style_and_the_colour(
     assert all(v["parent_id"] == style["id"] for v in resp.json())
     assert [[c["name"] for c in v["colors"]] for v in resp.json()] \
         == [["Negro"], ["Havana"]]
+
+
+def test_a_short_colour_name_suffixes_the_code_as_is(client, auth_headers, style):
+    c1 = client.post(
+        "/api/colors", json={"name": "C1"}, headers=auth_headers
+    ).json()["id"]
+    resp = client.post(
+        f"/api/products/{style['id']}/variants",
+        json={"color_ids": [c1]}, headers=auth_headers,
+    )
+    assert resp.status_code == 201, resp.text
+    assert [v["code"] for v in resp.json()] == ["ARM-001-C1"]
 
 
 def test_a_variant_inherits_the_style(client, auth_headers, style, palette):

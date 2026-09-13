@@ -73,7 +73,9 @@ def derive_color_code(
 
     Three letters is the sweet spot for reading a code like ARM-001-HAV at a
     glance. Where three collide it lengthens before it starts numbering, so
-    "Negro"/"Negro mate" become NEG and NEGR rather than NEG and NEG2.
+    "Negro"/"Negro mate" become NEG and NEGR rather than NEG and NEG2. A name
+    already shorter than three ("C1") is its own code: starting the loop at 3
+    would skip it and number straight away, turning "C1" into C12.
     """
     base = _slug(name)
     if not base:
@@ -85,7 +87,7 @@ def derive_color_code(
         stmt = stmt.where(Color.id != exclude_id)
     taken = set(db.execute(stmt).scalars())
 
-    for size in range(3, min(len(base), 8) + 1):
+    for size in range(min(3, len(base)), min(len(base), 8) + 1):
         if (candidate := base[:size]) not in taken:
             return candidate
     stem = base[:6]
