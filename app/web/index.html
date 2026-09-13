@@ -1216,13 +1216,21 @@ function highlightNav(section) {
   const crumb = $("#crumb"); if (crumb) crumb.textContent = n ? n.label : "—";
 }
 
+/* Cada navegación pinta en un #view propio. Una sección lenta que todavía
+   espera sus datos (el inicio hace media docena de pedidos) termina escribiendo
+   en el suyo, que ya salió de la pantalla, en vez de pisar la sección que se
+   abrió después. El número de navegación frena lo que corre al final: el
+   cartel de error y el ajuste de grilla son de la última, no de la que tardó. */
+let navegacion = 0;
 async function route() {
   if (!state.user) return;
   const hash = location.hash.slice(1) || "/dashboard";
   const [section, arg] = hash.split("/").filter(Boolean);
   const sec = section || "dashboard";
   highlightNav(sec);
-  const view = $("#view");
+  const actual = ++navegacion;
+  const view = el(`<div id="view"></div>`);
+  $("#view").replaceWith(view);
   view.innerHTML = `<div class="loading">Cargando…</div>`;
   const nav = NAV.find(n => n.route === sec);
   if (nav && nav.perm && !can(nav.perm)) { view.innerHTML = `<div class="card error">No tenés permiso para ver esta sección.</div>`; return; }
@@ -1243,9 +1251,11 @@ async function route() {
       default: view.innerHTML = `<div class="card pad">Sección no encontrada.</div>`;
     }
   } catch (e) {
+    if (actual !== navegacion) return;   // ya se abrió otra sección
     view.innerHTML = `<div class="card error">${esc(e.message)}</div>`;
     toast(e.message, "err");
   }
+  if (actual !== navegacion) return;
   /* Una pantalla es "de grilla" cuando la tabla es su contenido, no cuando está
      metida adentro de una ficha o de una solapa. Se decide mirando el DOM ya
      pintado en vez de listar secciones a mano: una sección nueva que devuelva
