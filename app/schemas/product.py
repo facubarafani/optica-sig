@@ -151,6 +151,8 @@ class ProductBase(BaseModel):
     # A product comes in as many colours as the shop stocks it in; the ids are
     # the whole set, so sending [] clears it.
     color_ids: list[int] = []
+    # True: those colours are one article (a bicolour frame), not one per colour.
+    multicolor: bool = False
     product_type_id: int
     brand_id: int | None = None
     model_id: int | None = None
@@ -180,6 +182,8 @@ class ProductUpdate(BaseModel):
     parent_id: int | None = None
     # Omitted = leave the colours alone; [] = remove them all.
     color_ids: list[int] | None = None
+    # Unticking it turns the same colours into a range, split like a colour edit.
+    multicolor: bool | None = None
     product_type_id: int | None = None
     brand_id: int | None = None
     model_id: int | None = None

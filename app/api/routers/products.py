@@ -225,9 +225,12 @@ def update_product(
             products_service.assert_valid_parent(
                 db, obj, obj.parent_id, company_id=company_id
             )
-        if color_ids is not None:
-            products_service.set_colors(db, obj, color_ids, company_id=company_id)
+        if color_ids is not None or "multicolor" in payload:
+            if color_ids is not None:
+                products_service.set_colors(db, obj, color_ids, company_id=company_id)
             db.flush()
+            # Flipping "multicolor" changes what the same colours mean, so it
+            # re-runs the split exactly as a colour change does.
             products_service.sync_variants(
                 db, obj, company_id=company_id, user_id=current_user.id,
                 previous_color_ids=previous_color_ids,

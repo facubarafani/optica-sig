@@ -330,28 +330,118 @@ def test_import_links_a_variant_to_its_style(client, auth_headers):
     assert by_code["ARM-001-NEG"]["parent_code"] == "ARM-001"
 
 
+def _try_import(client, headers, rows):
+    """Preview a products file, then try to commit it anyway."""
+    up = upload(client, headers, "products", xlsx(rows)).json()
+    opts = {"mapping": up["suggested_mapping"], "decimal_format": "es",
+            "create_missing": True}
+    preview = client.post(f"/api/imports/batches/{up['batch_id']}/preview",
+                          json=opts, headers=headers).json()
+    commit = client.post(f"/api/imports/batches/{up['batch_id']}/commit",
+                         json=opts, headers=headers)
+    return preview, commit
+
+
+def _codes(client, headers):
+    return {p["code"] for p in client.get("/api/products", headers=headers).json()}
+
+
 def test_import_refuses_to_nest_variants(client, auth_headers):
-    """The ref resolves, so this can only be caught when the batch is applied."""
+    """Caught by the preview, not on confirm: a file that reads "ok" applies."""
     run_import(client, auth_headers, "products", [
         ["Código", "Tipo de producto", "Producto base"],
         ["ARM-001", "Armazones", ""],
         ["ARM-001-NEG", "Armazones", "ARM-001"],
     ])
-    up = upload(client, auth_headers, "products", xlsx([
+    preview, commit = _try_import(client, auth_headers, [
         ["Código", "Tipo de producto", "Producto base"],
         ["ARM-001-NEG-X", "Armazones", "ARM-001-NEG"],
-    ])).json()
-    opts = {"mapping": up["suggested_mapping"], "decimal_format": "es",
-            "create_missing": True}
-    assert client.post(f"/api/imports/batches/{up['batch_id']}/preview",
-                       json=opts, headers=auth_headers).json()["ok"]
-    resp = client.post(f"/api/imports/batches/{up['batch_id']}/commit",
-                       json=opts, headers=auth_headers)
-    assert resp.status_code == 400, resp.text
-    assert "no se anidan" in resp.json()["detail"]
+    ])
+    assert not preview["ok"]
+    assert "no se anidan" in preview["errors"][0]["message"]
+    assert commit.status_code == 400, commit.text
     # ...and the batch left nothing behind
-    assert not any(p["code"] == "ARM-001-NEG-X" for p in
-                   client.get("/api/products", headers=auth_headers).json())
+    assert "ARM-001-NEG-X" not in _codes(client, auth_headers)
+
+
+def test_import_refuses_to_nest_variants_within_one_file(client, auth_headers):
+    preview, commit = _try_import(client, auth_headers, [
+        ["Código", "Tipo de producto", "Producto base"],
+        ["ARM-001", "Armazones", ""],
+        ["ARM-001-NEG", "Armazones", "ARM-001"],
+        ["ARM-001-NEG-X", "Armazones", "ARM-001-NEG"],
+    ])
+    assert [(e["row"], e["field"]) for e in preview["errors"]] == [(4, "parent")]
+    assert "no se anidan" in preview["errors"][0]["message"]
+    assert commit.status_code == 400, commit.text
+    assert _codes(client, auth_headers) == set()
+
+
+def test_import_refuses_to_make_a_style_a_variant(
+    client, auth_headers, style, palette
+):
+    client.post(f"/api/products/{style['id']}/variants",
+                json={"color_ids": [palette["Negro"]]}, headers=auth_headers)
+    preview, commit = _try_import(client, auth_headers, [
+        ["Código", "Tipo de producto", "Producto base"],
+        ["ARM-002", "Armazones", ""],
+        ["ARM-001", "Armazones", "ARM-002"],
+    ])
+    assert "ya tiene variantes propias" in preview["errors"][0]["message"]
+    assert commit.status_code == 400, commit.text
+    fetched = client.get(f"/api/products/{style['id']}", headers=auth_headers).json()
+    assert fetched["parent_id"] is None and fetched["variant_count"] == 1
+
+
+def test_import_refuses_a_style_that_holds_stock(
+    client, auth_headers, product_type_id, branch_id
+):
+    """The API refuses this; a spreadsheet used to strand the stock instead."""
+    plain = client.post(
+        "/api/products",
+        json={"code": "ARM-001", "product_type_id": product_type_id},
+        headers=auth_headers,
+    ).json()
+    client.post("/api/stock/movements",
+                json={"product_id": plain["id"], "branch_id": branch_id,
+                      "movement_type": "inbound", "quantity": "5"},
+                headers=auth_headers)
+    preview, commit = _try_import(client, auth_headers, [
+        ["Código", "Tipo de producto", "Producto base"],
+        ["ARM-001-NEG", "Armazones", "ARM-001"],
+    ])
+    assert "de stock" in preview["errors"][0]["message"]
+    assert commit.status_code == 400, commit.text
+    assert _codes(client, auth_headers) == {"ARM-001"}
+
+
+def test_import_refuses_a_product_as_its_own_style(client, auth_headers):
+    preview, commit = _try_import(client, auth_headers, [
+        ["Código", "Tipo de producto", "Producto base"],
+        ["ARM-001", "Armazones", "ARM-001"],
+    ])
+    assert "su propio producto base" in preview["errors"][0]["message"]
+    assert commit.status_code == 400, commit.text
+
+
+def test_an_exported_family_reimports_cleanly(
+    client, auth_headers, style, palette, branch_id
+):
+    """The family checks must not trip over a file we wrote ourselves."""
+    variants = client.post(
+        f"/api/products/{style['id']}/variants",
+        json={"color_ids": [palette["Negro"], palette["Havana"]]},
+        headers=auth_headers,
+    ).json()
+    client.post("/api/stock/movements",
+                json={"product_id": variants[0]["id"], "branch_id": branch_id,
+                      "movement_type": "inbound", "quantity": "3"},
+                headers=auth_headers)
+    exported = client.get("/api/imports/products/export?format=xlsx",
+                          headers=auth_headers).content
+    _, result = run_import(client, auth_headers, "products", None,
+                           content=exported, filename="products.xlsx")
+    assert result == {**result, "created": 0, "updated": 3}
 
 
 def test_export_writes_the_style_so_the_file_round_trips(
@@ -642,3 +732,93 @@ def test_import_leaves_the_colour_column_empty_alone(client, auth_headers):
     assert result["created"] == 1
     product = client.get("/api/products", headers=auth_headers).json()[0]
     assert product["colors"] == [] and product["variant_count"] == 0
+
+
+# --- one article in several colours ------------------------------------------
+
+def _bicolour(client, headers, product_type_id, palette, **extra):
+    resp = client.post(
+        "/api/products",
+        json={"code": "ARM-BI", "product_type_id": product_type_id,
+              "color_ids": [palette["Negro"], palette["Dorado"]], "multicolor": True,
+              **extra},
+        headers=headers,
+    )
+    assert resp.status_code == 201, resp.text
+    return resp.json()
+
+
+def test_a_multicolor_product_is_one_sellable_article(
+    client, auth_headers, product_type_id, palette, branch_id
+):
+    bi = _bicolour(client, auth_headers, product_type_id, palette)
+    assert bi["multicolor"] and bi["variant_count"] == 0 and len(bi["colors"]) == 2
+    assert client.post(
+        "/api/stock/movements",
+        json={"product_id": bi["id"], "branch_id": branch_id,
+              "movement_type": "inbound", "quantity": "2"},
+        headers=auth_headers,
+    ).status_code == 201
+
+
+def test_unticking_multicolor_splits_like_a_colour_change(
+    client, auth_headers, product_type_id, palette
+):
+    bi = _bicolour(client, auth_headers, product_type_id, palette)
+    resp = client.put(f"/api/products/{bi['id']}", json={"multicolor": False},
+                      headers=auth_headers)
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["variant_count"] == 2
+
+
+def test_a_style_cannot_be_marked_multicolor(client, auth_headers, style, palette):
+    client.post(f"/api/products/{style['id']}/variants",
+                json={"color_ids": [palette["Negro"], palette["Havana"]]},
+                headers=auth_headers)
+    resp = client.put(f"/api/products/{style['id']}", json={"multicolor": True},
+                      headers=auth_headers)
+    assert resp.status_code == 400
+    assert "ya tiene variantes" in resp.json()["detail"]
+
+
+def test_a_multicolor_article_cannot_be_a_base(
+    client, auth_headers, product_type_id, palette
+):
+    bi = _bicolour(client, auth_headers, product_type_id, palette)
+    resp = client.post("/api/products",
+                       json={"code": "ARM-BI-X", "product_type_id": product_type_id,
+                             "parent_id": bi["id"]},
+                       headers=auth_headers)
+    assert resp.status_code == 400
+    assert "varios colores" in resp.json()["detail"]
+
+
+def test_import_reads_the_multicolor_column(client, auth_headers):
+    run_import(client, auth_headers, "products", [
+        ["Código", "Tipo de producto", "Colores", "Multicolor"],
+        ["ARM-BI", "Armazones", "Negro, Dorado", "Sí"],
+        ["ARM-100", "Armazones", "Negro, Havana", ""],
+    ])
+    by_code = {p["code"]: p
+               for p in client.get("/api/products", headers=auth_headers).json()}
+    assert by_code["ARM-BI"]["multicolor"] and by_code["ARM-BI"]["variant_count"] == 0
+    assert by_code["ARM-100"]["variant_count"] == 2      # unflagged: one per colour
+
+
+def test_import_refuses_a_nonsense_multicolor_value(client, auth_headers):
+    preview, _ = run_import(client, auth_headers, "products", [
+        ["Código", "Tipo de producto", "Multicolor"],
+        ["ARM-1", "Armazones", "tal vez"],
+    ], expect_preview_ok=False)
+    assert "sí o no" in preview["errors"][0]["message"]
+
+
+def test_import_refuses_multicolor_on_a_style(client, auth_headers, style, palette):
+    client.post(f"/api/products/{style['id']}/variants",
+                json={"color_ids": [palette["Negro"]]}, headers=auth_headers)
+    preview, commit = _try_import(client, auth_headers, [
+        ["Código", "Tipo de producto", "Multicolor"],
+        ["ARM-001", "Armazones", "sí"],
+    ])
+    assert "ya tiene variantes" in preview["errors"][0]["message"]
+    assert commit.status_code == 400, commit.text

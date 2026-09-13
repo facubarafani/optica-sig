@@ -1,7 +1,16 @@
 """Product catalogue: product types, brands, models and products."""
 from __future__ import annotations
 
-from sqlalchemy import Column, ForeignKey, Numeric, String, Table, UniqueConstraint
+from sqlalchemy import (
+    Boolean,
+    Column,
+    ForeignKey,
+    Numeric,
+    String,
+    Table,
+    UniqueConstraint,
+    false,
+)
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -116,6 +125,12 @@ class Product(IDMixin, CompanyMixin, TimestampMixin, SoftDeleteMixin, Base):
     # than refusing the delete.
     parent_id: Mapped[int | None] = mapped_column(
         ForeignKey("products.id", ondelete="RESTRICT"), index=True
+    )
+    # Its colours describe one article, not a range: a bicolour frame is sold
+    # and stocked as itself. Unflagged, two or more colours on a plain product
+    # make it a style (services.products.sync_variants splits it).
+    multicolor: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=false(), nullable=False
     )
 
     product_type_id: Mapped[int] = mapped_column(

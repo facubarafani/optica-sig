@@ -46,3 +46,8 @@ class CompanySettings(IDMixin, TimestampMixin, Base):
     low_stock_alerts_enabled: Mapped[bool] = mapped_column(
         Boolean, default=True, nullable=False
     )
+    # How this shop's product codes carry a colour: "01/1009 C1" is a space and
+    # up to two words. Remembered from the last import the shop confirmed, so
+    # the next one starts there; NULL until one has been.
+    code_color_separator: Mapped[str | None] = mapped_column(String(4))
+    code_color_max_words: Mapped[int | None] = mapped_column(Integer)

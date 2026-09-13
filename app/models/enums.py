@@ -14,6 +14,19 @@ class SupplierType(str, enum.Enum):
     WORKSHOP = "workshop"         # taller
 
 
+class ColorAliasKind(str, enum.Enum):
+    """What the tail of a product code turned out to mean.
+
+    Decided once per spelling in the import's "Colores" step and remembered
+    (services.importer.code_colors), so ``01/1009 C1`` and ``03/INDAH NERO``
+    need an answer the first time only.
+    """
+
+    COLOR = "color"                       # uno o más colores del catálogo
+    SUPPLIER_NUMBER = "supplier_number"   # número del proveedor: agrupa, sin color
+    NOT_COLOR = "not_color"               # parte del modelo, no es un color
+
+
 class PricingMode(str, enum.Enum):
     """How a product's selling price is determined."""
 

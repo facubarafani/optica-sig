@@ -9,11 +9,49 @@ the test suite runs on SQLite, so the schema must stay portable (CLAUDE.md).
 """
 from __future__ import annotations
 
-from sqlalchemy import ForeignKey, Integer, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Column, ForeignKey, Integer, String, Table, Text, UniqueConstraint
+from sqlalchemy import Enum as SAEnum
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 from app.models.base import CompanyMixin, IDMixin, TimestampMixin
+from app.models.enums import ColorAliasKind
+from app.models.product import Color
+
+# A tail can mean two colours at once ("BLACK BLUE"), hence N-N. Same shape and
+# rationale as ``product_colors``: no company_id, both sides already carry one.
+color_alias_colors = Table(
+    "color_alias_colors",
+    Base.metadata,
+    Column("alias_id", ForeignKey("color_aliases.id", ondelete="CASCADE"),
+           primary_key=True),
+    Column("color_id", ForeignKey("colors.id", ondelete="CASCADE"),
+           primary_key=True),
+)
+
+
+class ColorAlias(IDMixin, CompanyMixin, TimestampMixin, Base):
+    """What a shop decided one code tail means, so the next import knows.
+
+    ``phrase`` is the tail as services.importer.code_colors.norm keys it:
+    upper-cased, accents folded ("NERO MATE", "C1"). A shop's suppliers spell
+    colours their own way, so this table is where the importer learns that
+    shop's dialect rather than guessing it again every time. Overwritten, not
+    versioned: the latest confirmed answer is the one that counts.
+    """
+
+    __tablename__ = "color_aliases"
+    __table_args__ = (
+        UniqueConstraint("company_id", "phrase", name="uq_color_alias_phrase"),
+    )
+
+    phrase: Mapped[str] = mapped_column(String(40), nullable=False)
+    kind: Mapped[ColorAliasKind] = mapped_column(
+        SAEnum(ColorAliasKind, name="color_alias_kind"), nullable=False
+    )
+    colors: Mapped[list[Color]] = relationship(
+        secondary=color_alias_colors, lazy="selectin"
+    )
 
 
 class ImportBatch(IDMixin, CompanyMixin, TimestampMixin, Base):

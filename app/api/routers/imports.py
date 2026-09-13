@@ -17,7 +17,10 @@ from app.core.database import get_db
 from app.core.deps import get_company_id, get_current_user, require_permission
 from app.models.auth import User
 from app.models.imports import ImportBatch
+from app.models.enums import ColorAliasKind
 from app.schemas.imports import (
+    CodeColorsRead,
+    CodeColorsRequest,
     ImportBatchRead,
     ImportFieldRead,
     ImportOptions,
@@ -26,7 +29,7 @@ from app.schemas.imports import (
     ImportSpecRead,
     ImportUploadRead,
 )
-from app.services.importer import engine, exporters, readers, templates
+from app.services.importer import code_colors, engine, exporters, readers, templates
 from app.services.importer.specs import SPECS, ImportSpec, get_spec
 
 router = APIRouter(prefix="/imports", tags=["imports"])
@@ -167,6 +170,68 @@ def _load_batch(db: Session, batch_id: int, company_id: int) -> ImportBatch:
     return batch
 
 
+def _code_colors(options: ImportOptions) -> code_colors.Choices | None:
+    cc = options.code_colors
+    if cc is None:
+        return None
+    return code_colors.Choices(
+        rule=code_colors.CodeRule(cc.separator, cc.max_words),
+        decisions={
+            phrase: code_colors.Decision(
+                ColorAliasKind(d.kind),
+                list(dict.fromkeys(n.strip() for n in d.colors if n.strip())),
+            )
+            for phrase, d in cc.decisions.items()
+        },
+    )
+
+
+@router.post("/batches/{batch_id}/code-colors", response_model=CodeColorsRead)
+def code_colors_analysis(
+    batch_id: int,
+    body: CodeColorsRequest,
+    db: Session = Depends(get_db),
+    company_id: int = Depends(get_company_id),
+    current_user: User = Depends(get_current_user),
+):
+    """Read the colour out of the codes: the rule, and what each tail may mean.
+
+    Only proposes. Nothing is decided until the preview and the commit carry
+    the shop's answers in ``code_colors``.
+    """
+    batch = _load_batch(db, batch_id, company_id)
+    spec = _spec_or_404(batch.spec_key)
+    _authorize(spec, current_user)
+    if spec.key != "products":
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "Sólo la importación de productos lee el color del código.",
+        )
+    headers = json.loads(batch.headers)
+    code_header = body.mapping.get("code")
+    if not code_header or code_header not in headers:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, 'Asigná primero la columna "Código".'
+        )
+    idx = headers.index(code_header)
+    # A row that names its base in the file is already placed (plan leaves it
+    # alone), so its tail is not a question. Filtering rows rather than refusing
+    # a mapped "Producto base" column matters both ways: a shop's own sheet may
+    # carry that column nearly empty, and our exports, where every variant
+    # names its base, fall out of the step by themselves.
+    parent_header = body.mapping.get("parent")
+    pidx = headers.index(parent_header) if parent_header in headers else None
+    codes = [
+        str(r[idx]).strip() for r in json.loads(batch.rows)
+        if idx < len(r) and str(r[idx]).strip()
+        and not (pidx is not None and pidx < len(r) and str(r[pidx]).strip())
+    ]
+    return code_colors.analyze_codes(
+        db, codes, company_id=company_id,
+        separator=body.separator, max_words=body.max_words,
+    )
+
+
 @router.post("/batches/{batch_id}/preview", response_model=ImportPreviewRead)
 def preview(
     batch_id: int,
@@ -185,6 +250,7 @@ def preview(
             db, spec,
             json.loads(batch.headers), json.loads(batch.rows), options.mapping,
             company_id=company_id, decimal_format=options.decimal_format,
+            code_colors=_code_colors(options),
         )
     except engine.ImportError_ as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
@@ -200,6 +266,9 @@ def preview(
         errors=[e.__dict__ for e in result.errors],
         missing_refs=[m.__dict__ for m in result.missing_refs],
         ok=result.ok,
+        family_count=len(result.families),
+        # The review step shows a sample; the count says how many there are.
+        families=result.families[:200],
     )
 
 
@@ -227,6 +296,7 @@ def commit_batch(
             company_id=company_id, user_id=current_user.id,
             decimal_format=options.decimal_format,
             create_missing=options.create_missing,
+            code_colors=_code_colors(options),
         )
     except engine.ImportError_ as exc:
         db.rollback()

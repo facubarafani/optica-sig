@@ -33,7 +33,7 @@ REFS = {
 class Field:
     key: str                       # target attribute (or ref key)
     label: str                     # header used in the template
-    kind: str = "text"             # text | decimal | ref | enum
+    kind: str = "text"             # text | decimal | ref | enum | bool
     required: bool = False
     ref: str | None = None         # key into REFS when kind == "ref"
     # A ref that takes several values in one cell, comma-separated. The parsed
@@ -89,6 +89,10 @@ PRODUCTS = ImportSpec(
               help="Uno o varios, separados por coma. Cada uno se busca en el "
                    "catálogo de colores; si no existe, se crea (sin tono, se "
                    "le puede asignar después)."),
+        Field("multicolor", "Multicolor", kind="bool", example="no",
+              help="sí = un solo artículo con todos esos colores (un armazón "
+                   "bicolor). no = con dos o más colores se crea uno por color. "
+                   "Vacío: queda como está (no, si es nuevo)."),
         Field("parent", "Producto base", kind="ref", ref="product", deferred=True,
               example="ARM-001",
               help="Código del producto del que este es una variante de color. "

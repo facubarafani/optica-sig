@@ -15,8 +15,9 @@ from app.models.auth import (
 from app.models.branch import Branch
 from app.models.company import Company, CompanySettings
 from app.models.customer import Customer, Prescription, TreatmentHistory
-from app.models.imports import ImportBatch
+from app.models.imports import ColorAlias, ImportBatch, color_alias_colors
 from app.models.enums import (
+    ColorAliasKind,
     DiscountType,
     ExternalWorkStatus,
     ExternalWorkType,
@@ -59,6 +60,8 @@ __all__ = [
     "Prescription",
     "TreatmentHistory",
     "ImportBatch",
+    "ColorAlias",
+    "color_alias_colors",
     "PlatformAuditLog",
     "PlatformUser",
     "CostHistory",
@@ -80,6 +83,7 @@ __all__ = [
     "SaleItem",
     "SalePayment",
     # enums
+    "ColorAliasKind",
     "SupplierType",
     "StockMovementType",
     "TreatmentType",

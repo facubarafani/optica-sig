@@ -161,11 +161,63 @@ def assert_stock_free(db: Session, product: Product, *, company_id: int) -> None
     """
     on_hand = _stock_on_hand(db, product, company_id=company_id)
     if on_hand:
-        raise ProductError(
-            f'"{product.code}" tiene {on_hand:g} de stock. Un producto base no '
-            "lleva stock propio: ajustalo a cero y cargalo en la variante que "
-            "corresponda."
+        raise ProductError(_stocked_style(product.code, on_hand))
+
+
+def _stocked_style(code: str, on_hand) -> str:
+    return (
+        f'"{code}" tiene {on_hand:g} de stock. Un producto base no lleva stock '
+        "propio: ajustalo a cero y cargalo en la variante que corresponda."
+    )
+
+
+def multicolor_refusal(code: str) -> str:
+    return (
+        f'"{code}" ya tiene variantes, así que no puede ser un solo artículo '
+        "de varios colores."
+    )
+
+
+def parent_refusal(
+    code: str | None,
+    parent_code: str,
+    *,
+    is_self: bool,
+    parent_is_variant: bool,
+    has_own_variants: bool,
+    parent_is_multicolor: bool = False,
+    parent_on_hand=0,
+) -> str | None:
+    """Why a product may not hang under ``parent_code``; None when it may.
+
+    Families are exactly two levels deep. Anything else (a style demoted to a
+    variant, a variant of a variant, a product parented to itself) leaves rows
+    that no screen can render and no rule can reason about. And naming a parent
+    makes that row a style, which may not hold stock: assert_sellable would
+    strand whatever sits on it, unsellable and unmovable.
+
+    Only the rule, with the facts handed in. assert_valid_parent looks them up
+    for one product; the importer reads them for a whole file in three queries.
+    Both come through here, so a form and a spreadsheet are refused for the
+    same reasons in the same words.
+    """
+    if is_self:
+        return "Un producto no puede ser su propio producto base."
+    if parent_is_variant:
+        return f'"{parent_code}" ya es una variante; las variantes no se anidan.'
+    if parent_is_multicolor:
+        return (
+            f'"{parent_code}" es un solo artículo de varios colores, no un producto '
+            "base. Desmarcá multicolor para usarlo de base."
         )
+    if has_own_variants:
+        return (
+            f'"{code}" ya tiene variantes propias, así que no puede ser '
+            "variante de otro producto."
+        )
+    if parent_on_hand:
+        return _stocked_style(parent_code, parent_on_hand)
+    return None
 
 
 def assert_valid_parent(
@@ -173,32 +225,29 @@ def assert_valid_parent(
 ) -> None:
     """Vet a hand-set ``parent_id`` — the API and the console both allow one.
 
-    Families are exactly two levels deep. Anything else (a style demoted to a
-    variant, a variant of a variant, a product parented to itself) leaves rows
-    that no screen can render and no rule can reason about.
+    POST /{id}/variants refuses a stocked style too (assert_stock_free); the
+    hand-set parent_id on create and update has to refuse it the same way, or
+    the two ways of building a family disagree.
     """
     if parent_id is None:
         return
     parent = db.get(Product, parent_id)
     if parent is None or parent.company_id != company_id:
         raise ProductError(f"El producto base #{parent_id} no existe.")
-    if product is not None and parent.id == product.id:
-        raise ProductError("Un producto no puede ser su propio producto base.")
-    if parent.parent_id is not None:
-        raise ProductError(
-            f'"{parent.code}" ya es una variante; las variantes no se anidan.'
-        )
-    if product is not None and product.id is not None and has_variants(db, product):
-        raise ProductError(
-            f'"{product.code}" ya tiene variantes propias, así que no puede ser '
-            "variante de otro producto."
-        )
-    # Naming a parent makes that row a style, and a style may not hold stock —
-    # assert_sellable would strand whatever sits on it, unsellable and
-    # unmovable. POST /{id}/variants already refuses this; the hand-set
-    # parent_id on create and update has to refuse it the same way, or the two
-    # ways of building a family disagree.
-    assert_stock_free(db, parent, company_id=company_id)
+    refusal = parent_refusal(
+        product.code if product is not None else None,
+        parent.code,
+        is_self=product is not None and parent.id == product.id,
+        parent_is_variant=parent.parent_id is not None,
+        parent_is_multicolor=bool(parent.multicolor),
+        has_own_variants=(
+            product is not None and product.id is not None
+            and has_variants(db, product)
+        ),
+        parent_on_hand=_stock_on_hand(db, parent, company_id=company_id),
+    )
+    if refusal:
+        raise ProductError(refusal)
 
 
 def build_variant_code(
@@ -319,6 +368,12 @@ def sync_variants(
             Product.parent_id == product.id, Product.is_active.is_(True)
         )
     ).scalars().all()
+    if product.multicolor:
+        # One article in several colours (a bicolour frame): nothing to split.
+        # A style cannot be one as well, or its colours would mean two things.
+        if existing:
+            raise ProductError(multicolor_refusal(product.code))
+        return []
     if len(colors) <= 1 and not existing:
         return []                       # a plain article, and staying one
 

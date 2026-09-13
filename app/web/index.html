@@ -447,6 +447,29 @@
   .wizard table{margin-bottom:12px}
   .wizard input[type=file]{display:block;width:100%;padding:10px;border:1px dashed var(--border);border-radius:var(--radius-sm);background:var(--bg);font-size:13px}
   .wizard .stats{margin-bottom:16px}
+  /* Paso Colores: la regla arriba, las terminaciones agrupadas por lo que son. */
+  .ccrule{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px}
+  .ccrule select{width:auto}
+  .ccsplit{display:flex;gap:6px 16px;flex-wrap:wrap;margin:10px 0 6px;font-size:12.5px}
+  .ccsplit .tail,.ccphrase{background:var(--primary-50);color:var(--primary);border-radius:4px;padding:0 4px}
+  .ccgroup{margin-bottom:8px;overflow:hidden}
+  .ccgroup>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:9px;padding:10px 14px;font-size:13px}
+  .ccgroup>summary::-webkit-details-marker{display:none}
+  .ccgroup>summary .chev{transform:rotate(-90deg);transition:transform .15s;flex:0 0 auto}
+  .ccgroup[open]>summary .chev{transform:none}
+  .ccgroup>summary .swatch-cell{gap:0}
+  .ccgroup .phr{color:var(--muted);font-family:var(--mono);font-size:12px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ccgroup .n{color:var(--muted);font-size:12px;white-space:nowrap}
+  .ccgroup table{margin:0}
+  .ccgroup td select{max-width:230px}
+  .ccgroup .ccotro{display:block;margin-top:5px;max-width:230px}
+  .ccgroup .ccotro[hidden]{display:none}
+  .ccbulk{display:flex;gap:6px 8px;flex-wrap:wrap;align-items:center;padding:0 14px 10px}
+  .ccfam{padding:7px 0;border-top:1px solid var(--border);font-size:12.5px}
+  .ccfam:first-child{border-top:0}
+  .ccvars{display:flex;flex-wrap:wrap;gap:3px 16px;margin-top:3px}
+  .ccmuted{color:var(--muted)}
+  @media(prefers-reduced-motion:reduce){ .ccgroup>summary .chev{transition:none} }
   .errlist{max-height:220px;overflow:auto;font-size:12.5px;font-family:var(--mono);background:var(--danger-50);border:1px solid #fecaca;border-radius:var(--radius-sm);padding:10px;margin-top:8px}
   .errlist div{padding:2px 0}
   .req{color:var(--danger)}
@@ -1884,15 +1907,20 @@ async function openImportWizard(specKey, onDone) {
 
   const body = el(`<div class="wizard"></div>`);
   const close = openModal({ title: `Importar — ${spec.label}`, body, wide: true });
+  // Sólo los productos pueden traer el color escondido en el código.
+  const pasos = spec.key === "products"
+    ? ["Archivo", "Columnas", "Colores", "Revisión"] : ["Archivo", "Columnas", "Revisión"];
+  // Lo que ya se respondió en el paso Colores: sobrevive a ir y volver.
+  let colores = null;
   step1();
 
   // El mismo mapa que el alta de productos: un asistente se ve igual en toda la
   // app. Declaración y no `const`: step1() corre antes de llegar a esta línea.
-  function head(n) { return stepMap(["Archivo", "Columnas", "Revisión"], n - 1); }
+  function head(paso) { return stepMap(pasos, pasos.indexOf(paso)); }
 
   /* ---- 1. plantilla + archivo ---- */
   function step1() {
-    body.innerHTML = `${head(1)}
+    body.innerHTML = `${head("Archivo")}
       <p class="sub">${esc(spec.description)}</p>
       <div class="card pad" style="margin-bottom:14px">
         <b>¿No tenés el archivo armado?</b>
@@ -1916,10 +1944,12 @@ async function openImportWizard(specKey, onDone) {
   }
 
   /* ---- 2. mapeo de columnas ---- */
-  function step2(up) {
+  function step2(up, prev) {
+    // Al volver, lo que ya se había asignado; la primera vez, lo sugerido.
+    const mapeo = prev?.mapping || up.suggested_mapping;
     const opt = (sel) => `<option value="">— ignorar —</option>` + up.headers
       .map(h => `<option value="${esc(h)}" ${h === sel ? "selected" : ""}>${esc(h)}</option>`).join("");
-    body.innerHTML = `${head(2)}
+    body.innerHTML = `${head("Columnas")}
       <p class="sub"><b>${esc(up.filename)}</b> — ${up.row_count} fila(s). Confirmá a qué campo corresponde cada columna.</p>
       <div class="card pad" style="margin-bottom:12px">
         <label class="fld">Formato de números</label>
@@ -1933,11 +1963,11 @@ async function openImportWizard(specKey, onDone) {
         <tbody>${spec.fields.map(f => `<tr>
           <td>${esc(f.label)}${f.required ? ' <span class="req">*</span>' : ""}
               ${f.help ? `<div class="fhelp">${esc(f.help)}</div>` : ""}</td>
-          <td><select data-key="${esc(f.key)}">${opt(up.suggested_mapping[f.key])}</select></td>
+          <td><select data-key="${esc(f.key)}">${opt(mapeo[f.key])}</select></td>
         </tr>`).join("")}</tbody></table>
       <div id="err"></div>
       <div class="toolbar" style="justify-content:flex-end">
-        <button class="btn primary" id="next">Previsualizar<svg class="ic"><use href="#i-arrow-right"/></svg></button>
+        <button class="btn primary" id="next">${spec.key === "products" ? "Siguiente" : "Previsualizar"}<svg class="ic"><use href="#i-arrow-right"/></svg></button>
       </div>`;
     $("#next", body).addEventListener("click", async () => {
       const mapping = {};
@@ -1947,8 +1977,211 @@ async function openImportWizard(specKey, onDone) {
         decimal_format: body.querySelector('[name="decfmt"]:checked').value,
         create_missing: true,
       };
-      try { step3(up, opts, await api("POST", `/api/imports/batches/${up.batch_id}/preview`, opts)); }
-      catch (ex) { $("#err", body).innerHTML = `<div class="fwarn">${esc(ex.message)}</div>`; }
+      if (leeColores(opts)) {
+        // Otra columna como Código: lo respondido antes ya no aplica.
+        if (colores && colores.codeHeader !== mapping.code) colores = null;
+        if (!colores?.skipped) {
+          try {
+            const cc = colores?.analysis || await analizarCodigos(up, mapping);
+            if (cc.separator && (cc.likely || colores)) return stepColors(up, opts, cc);
+          } catch (ex) { /* el paso es una ayuda: si falla, se sigue sin él */ }
+        }
+      }
+      preview(up, opts);
+    });
+  }
+
+  function leeColores(opts) {
+    // Con "Producto base" asignado también: las filas que ya nombran su base
+    // quedan fuera del análisis, no el archivo entero.
+    return spec.key === "products" && !!opts.mapping.code;
+  }
+
+  function analizarCodigos(up, mapping, regla = {}) {
+    return api("POST", `/api/imports/batches/${up.batch_id}/code-colors`, { mapping, ...regla });
+  }
+
+  async function preview(up, opts) {
+    try { step3(up, opts, await api("POST", `/api/imports/batches/${up.batch_id}/preview`, opts)); }
+    catch (ex) { $("#err", body).innerHTML = `<div class="fwarn">${esc(ex.message)}</div>`; }
+  }
+
+  /* ---- 2b. el color escondido en el código ----
+     El servidor propone la regla (separador y palabras) y qué es cada
+     terminación; acá se confirma. Nada se aplica hasta que todas tengan
+     respuesta, y el servidor lo vuelve a exigir al previsualizar. */
+  function stepColors(up, opts, cc) {
+    if (!cc.separator) {
+      $("#err", body).innerHTML = `<div class="fwarn">Los códigos no tienen separadores, así que no hay un color que leer al final.</div>`;
+      return;
+    }
+    if (!colores) colores = { codeHeader: opts.mapping.code, decisions: {} };
+    colores.analysis = cc;
+    colores.skipped = false;
+    const dec = colores.decisions;
+    // Lo sugerido entra como respuesta; lo que ya se cambió a mano se respeta.
+    cc.tails.forEach(t => { if (!dec[t.phrase] && t.kind) dec[t.phrase] = { kind: t.kind, colors: t.colors }; });
+
+    const clave = (s) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toUpperCase();
+    const hex = Object.fromEntries(cc.colors.map(c => [clave(c.name), c.hex_code]));
+    const existe = new Set(cc.colors.map(c => clave(c.name)));
+    const nombres = [...new Map([...cc.colors.map(c => c.name), ...Object.values(dec).flatMap(d => d.colors)]
+      .map(n => [clave(n), n])).values()].sort((a, b) => a.localeCompare(b, "es"));
+
+    const pendiente = (t) => { const d = dec[t.phrase]; return !d || (d.kind === "color" && !d.colors.length); };
+    const faltan = () => cc.tails.filter(pendiente).length;
+    const filas = (ts) => ts.reduce((n, t) => n + t.rows, 0);
+    const grupos = new Map();
+    cc.tails.forEach(t => {
+      const g = pendiente(t) ? "pending" : dec[t.phrase].kind === "color" ? "c:" + dec[t.phrase].colors.join(" + ") : dec[t.phrase].kind;
+      if (!grupos.has(g)) grupos.set(g, []);
+      grupos.get(g).push(t);
+    });
+    const rank = (g) => g === "pending" ? 0 : g.startsWith("c:") ? 1 : g === "supplier_number" ? 2 : 3;
+    const orden = [...grupos.keys()].sort((a, b) => rank(a) - rank(b) || filas(grupos.get(b)) - filas(grupos.get(a)));
+
+    const SEP = { " ": "un espacio", "-": "un guion (-)", "/": "una barra (/)", ".": "un punto (.)", "_": "un guion bajo (_)" };
+    const score = Object.fromEntries(cc.candidates.map(c => [c.separator, c.score]));
+    const seps = [...new Set([cc.separator, ...cc.candidates.map(c => c.separator), " ", "-", "/", "."])];
+    const sepOpt = (s) => `<option value="${esc(s)}" ${s === cc.separator ? "selected" : ""}>${esc(SEP[s] || `"${s}"`)}${score[s] != null ? ` (${Math.round(score[s] * 100)}%)` : ""}</option>`;
+
+    function selector(t) {
+      const d = dec[t.phrase];
+      const actual = !d ? "" : d.kind !== "color" ? d.kind
+        : d.colors.length === 1 ? "c:" + d.colors[0] : d.colors.length ? "m:" + d.colors.join("|") : "other";
+      const o = (v, label) => `<option value="${esc(v)}" ${v === actual ? "selected" : ""}>${esc(label)}</option>`;
+      // Una pista (BLACK G15 → Negro) se ofrece primero, pero no se elige sola.
+      const pista = !d && t.source === "partial" && t.colors.length
+        ? o((t.colors.length === 1 ? "c:" : "m:") + t.colors.join("|"), `${t.colors.join(" + ")} (sugerido)`) : "";
+      return `<select data-phrase="${esc(t.phrase)}">
+        ${d ? "" : `<option value="" selected>(elegí)</option>`}${pista}
+        ${actual.startsWith("m:") ? o(actual, d.colors.join(" + ")) : ""}
+        <optgroup label="Colores">${nombres.map(n => o("c:" + n, existe.has(clave(n)) ? n : `${n} (nuevo)`)).join("")}</optgroup>
+        <optgroup label="Otra respuesta">
+          ${o("supplier_number", "Número del proveedor")}${o("not_color", "No es un color")}${o("other", "Otro color o varios…")}
+        </optgroup>
+      </select>
+      <input class="ccotro" data-phrase="${esc(t.phrase)}" placeholder="Ej.: Negro, Azul" value="${esc(actual === "other" ? "" : (d?.colors || []).join(", "))}" ${actual === "other" ? "" : "hidden"}>`;
+    }
+
+    function cabecera(g, ts) {
+      const muestra = ts.slice(0, 8).map(t => t.phrase).join(", ") + (ts.length > 8 ? "…" : "");
+      let titulo;
+      if (g === "pending") titulo = `<svg class="ic" style="color:var(--warn)"><use href="#i-alert"/></svg><b>Sin decidir</b>`;
+      else if (g === "supplier_number") titulo = `<b>Número del proveedor</b>`;
+      else if (g === "not_color") titulo = `<b>No es un color</b>`;
+      else {
+        const ns = g.slice(2).split(" + ");
+        titulo = ns.map(n => swatchCell(hex[clave(n)], "")).join("") + `<b>${esc(g.slice(2))}</b>`
+          + (ns.some(n => !existe.has(clave(n))) ? ` <span class="badge blue">nuevo</span>` : "");
+      }
+      return `<summary><svg class="ic chev"><use href="#i-chevron-down"/></svg>${titulo}<span class="phr">${esc(muestra)}</span><span class="n">${filas(ts)} fila(s)</span></summary>`;
+    }
+
+    const cuerpo = (g, ts) => `
+      ${g === "pending" ? `<div class="ccbulk"><span class="fhelp">Elegí una por una, o respondé todas juntas:</span>
+          ${ts.some(t => t.source === "partial" && t.colors.length) ? `<button class="btn sm" type="button" data-bulk="hints">Usar las sugeridas (${ts.filter(t => t.source === "partial" && t.colors.length).length})</button>` : ""}
+          <button class="btn sm" type="button" data-bulk="not_color">Ninguna es un color</button>
+          <button class="btn sm" type="button" data-bulk="supplier_number">Todas son números del proveedor</button></div>` : ""}
+      ${g === "supplier_number" ? `<div class="ccbulk fhelp">Agrupan los colores de un mismo modelo pero no dicen cuál es: el color queda vacío para completarlo después.</div>` : ""}
+      <table><thead><tr><th>Terminación</th><th class="num">Filas</th><th>Ejemplo</th><th>Es</th></tr></thead>
+      <tbody>${ts.map(t => `<tr>
+        <td class="mono">${esc(t.phrase)}${!dec[t.phrase] && t.source === "partial" && t.colors.length ? `<div class="fhelp">¿${esc(t.colors.join(" + "))}?</div>` : ""}</td>
+        <td class="num">${t.rows}</td>
+        <td class="mono trunc" title="${esc(t.examples.join(", "))}">${esc(t.examples[0] || "")}</td>
+        <td>${selector(t)}</td>
+      </tr>`).join("")}</tbody></table>`;
+
+    body.innerHTML = `${head("Colores")}
+      <p class="sub">Los códigos de <b>${esc(up.filename)}</b> parecen traer el color al final. Revisá cómo se leen y qué es cada terminación: las respuestas quedan guardadas para la próxima importación.</p>
+      <div class="card pad" style="margin-bottom:12px">
+        <label class="fld">Cómo se lee el código</label>
+        <div class="ccrule">El color va después de <select id="ccSep">${seps.map(sepOpt).join("")}</select>
+          y ocupa hasta <select id="ccWords">${[1, 2, 3].map(n => `<option ${n === cc.max_words ? "selected" : ""}>${n}</option>`).join("")}</select> palabra(s).</div>
+        <div class="ccsplit">${cc.examples.map(x => `<span class="mono">${esc(x.stem)} <span class="tail">${esc(x.tail)}</span></span>`).join("")}</div>
+        <div class="fhelp">${cc.remembered ? "Es la regla que usaste la última vez. " : ""}El ${Math.round(cc.score * 100)}% de las filas termina en algo que se comporta como un color.${cc.rows_without_tail ? ` ${cc.rows_without_tail} fila(s) no tienen terminación y entran como productos sueltos.` : ""}</div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="k">Terminaciones distintas</div><div class="v">${cc.tails.length}</div></div>
+        <div class="stat"><div class="k">Sin decidir</div><div class="v" id="ccFaltan">${faltan()}</div></div>
+      </div>
+      <div id="ccGroups">${orden.map(g => `<details class="card ccgroup" data-g="${esc(g)}" ${g === "pending" ? "open" : ""}>${cabecera(g, grupos.get(g))}<div class="ccbody"></div></details>`).join("")}</div>
+      <div id="err"></div>
+      <div class="toolbar" style="justify-content:space-between;margin-top:12px">
+        <button class="btn" id="back"><svg class="ic"><use href="#i-arrow-left"/></svg>Volver</button>
+        <div class="toolbar" style="margin:0">
+          <button class="btn" id="skip">Los códigos no traen color</button>
+          <button class="btn primary" id="next"></button>
+        </div>
+      </div>`;
+
+    // Cada grupo se dibuja al abrirlo: cientos de selectores de golpe pesan.
+    const abrir = (det) => {
+      const b = det.querySelector(".ccbody");
+      if (!b.innerHTML) b.innerHTML = cuerpo(det.dataset.g, grupos.get(det.dataset.g));
+    };
+    $$("details.ccgroup", body).forEach(det => {
+      if (det.open) abrir(det);
+      det.addEventListener("toggle", () => det.open && abrir(det));
+    });
+
+    const boton = $("#next", body);
+    const refrescar = () => {
+      const n = faltan();
+      $("#ccFaltan", body).textContent = n;
+      boton.disabled = n > 0;
+      boton.innerHTML = n ? `Faltan decidir ${n}` : `Previsualizar<svg class="ic"><use href="#i-arrow-right"/></svg>`;
+    };
+    refrescar();
+
+    const grupoEl = $("#ccGroups", body);
+    const responder = (e) => {
+      const phrase = e.target.dataset.phrase;
+      if (!phrase) return;
+      if (e.target.tagName === "SELECT") {
+        const v = e.target.value, otro = e.target.parentElement.querySelector(".ccotro");
+        otro.hidden = v !== "other";
+        if (v === "other") { dec[phrase] = { kind: "color", colors: [] }; otro.value = ""; otro.focus(); }
+        else if (v === "") delete dec[phrase];
+        else if (v.startsWith("c:")) dec[phrase] = { kind: "color", colors: [v.slice(2)] };
+        else if (v.startsWith("m:")) dec[phrase] = { kind: "color", colors: v.slice(2).split("|") };
+        else dec[phrase] = { kind: v, colors: [] };
+      } else {
+        dec[phrase] = { kind: "color", colors: [...new Set(e.target.value.split(",").map(s => s.trim()).filter(Boolean))] };
+      }
+      refrescar();
+    };
+    grupoEl.addEventListener("change", responder);
+    grupoEl.addEventListener("input", (e) => { if (e.target.tagName === "INPUT") responder(e); });
+    grupoEl.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-bulk]");
+      if (!b) return;
+      cc.tails.filter(pendiente).forEach(t => {
+        if (b.dataset.bulk !== "hints") dec[t.phrase] = { kind: b.dataset.bulk, colors: [] };
+        else if (t.source === "partial" && t.colors.length) dec[t.phrase] = { kind: "color", colors: t.colors };
+      });
+      stepColors(up, opts, cc);
+    });
+
+    const otraRegla = async () => {
+      try {
+        stepColors(up, opts, await analizarCodigos(up, opts.mapping, {
+          separator: $("#ccSep", body).value, max_words: Number($("#ccWords", body).value),
+        }));
+      } catch (ex) { $("#err", body).innerHTML = `<div class="fwarn">${esc(ex.message)}</div>`; }
+    };
+    $("#ccSep", body).addEventListener("change", otraRegla);
+    $("#ccWords", body).addEventListener("change", otraRegla);
+
+    $("#back", body).addEventListener("click", () => step2(up, opts));
+    $("#skip", body).addEventListener("click", () => { colores.skipped = true; delete opts.code_colors; preview(up, opts); });
+    boton.addEventListener("click", () => {
+      if (faltan()) return;
+      opts.code_colors = {
+        separator: cc.separator, max_words: cc.max_words,
+        decisions: Object.fromEntries(cc.tails.map(t => [t.phrase, dec[t.phrase]])),
+      };
+      preview(up, opts);
     });
   }
 
@@ -1971,20 +2204,42 @@ async function openImportWizard(specKey, onDone) {
           `<label><input type="checkbox" checked disabled> ${esc(m.label)}: <b>${esc(m.name)}</b></label>`).join("")}</div>
       </div>` : "";
 
-    body.innerHTML = `${head(3)}
+    // Las familias que salen de leer el color en los códigos: se ven antes de
+    // escribir nada, con lo que ya existía marcado aparte.
+    const familias = pv.families?.length ? `
+      <div class="card pad" style="margin-bottom:12px">
+        <b>Familias por color (${pv.family_count})</b>
+        <div class="fhelp" style="margin:4px 0 8px">Cada base agrupa los colores de un modelo. Las bases nuevas se crean al confirmar.</div>
+        <div>${pv.families.slice(0, 30).map(f => `<div class="ccfam">
+          <div><span class="mono">${esc(f.base)}</span>${f.new ? ` <span class="badge blue">base nueva</span>` : ""}</div>
+          <div class="ccvars">${f.variants.map(v => `<span><span class="mono">${esc(v.code)}</span> ${v.colors.length ? esc(v.colors.join(" + ")) : `<span class="ccmuted">sin color</span>`}${v.status === "moved" ? ` <span class="badge amber">ya existía</span>` : v.status === "existing" ? ` <span class="badge gray">ya estaba</span>` : ""}</span>`).join("")}</div>
+        </div>`).join("")}</div>
+        ${pv.family_count > 30 ? `<div class="fhelp">…y ${pv.family_count - 30} más.</div>` : ""}
+      </div>` : "";
+    const revisar = leeColores(opts) && !opts.code_colors ? `
+      <div class="fhelp" style="margin-bottom:12px">¿Los códigos traen el color al final? <a href="#" id="ccOpen">Revisarlos</a></div>` : "";
+
+    body.innerHTML = `${head("Revisión")}
       <div class="stats">
         <div class="stat"><div class="k">Se crean</div><div class="v">${pv.to_create}</div></div>
         <div class="stat"><div class="k">Se actualizan</div><div class="v">${pv.to_update}</div></div>
         <div class="stat"><div class="k">Con error</div><div class="v" style="color:${pv.errors.length ? "var(--danger)" : "inherit"}">${pv.errors.length}</div></div>
       </div>
-      ${errRows}${missing}
+      ${errRows}${familias}${missing}${revisar}
       <div id="err"></div>
       <div class="toolbar" style="justify-content:space-between">
         <button class="btn" id="back"><svg class="ic"><use href="#i-arrow-left"/></svg>Volver</button>
         <button class="btn primary" id="go" ${pv.ok ? "" : "disabled"}>
           ${pv.ok ? `Confirmar ${pv.to_create + pv.to_update} fila(s)` : "Corregí los errores para continuar"}</button>
       </div>`;
-    $("#back", body).addEventListener("click", () => step2(up));
+    $("#back", body).addEventListener("click", () =>
+      opts.code_colors && colores ? stepColors(up, opts, colores.analysis) : step2(up, opts));
+    const ccOpen = $("#ccOpen", body);
+    if (ccOpen) ccOpen.addEventListener("click", async (e) => {
+      e.preventDefault();
+      try { colores = null; stepColors(up, opts, await analizarCodigos(up, opts.mapping)); }
+      catch (ex) { $("#err", body).innerHTML = `<div class="fwarn">${esc(ex.message)}</div>`; }
+    });
     const go = $("#go", body);
     if (go && pv.ok) go.addEventListener("click", async () => {
       go.disabled = true;
@@ -2087,8 +2342,11 @@ async function productsView(view) {
       optionsFrom:{ endpoint:"/api/colors", metaFn: c => c.hex_code }, quickCreate:"colors",
       help:"Dejalo vacío si el producto no viene en colores (unos lentes de "
          + "contacto, por ejemplo). Con uno queda un producto suelto; con dos o "
-         + "más se crea uno por color, cada uno con su código y su stock. "
+         + "más se crea uno por color, cada uno con su código y su stock, salvo "
+         + "que marques que es un solo artículo bicolor. "
          + "Desmarcar no borra nada: el producto de ese color sigue existiendo." },
+    { key:"multicolor", label:"Es un solo artículo de varios colores (bicolor, tricolor…)", type:"checkbox", full:true,
+      showIf:(v) => (v.color_ids || []).length > 1 },
     { key:"min_stock", label:"Stock mínimo", type:"decimal", step:"0.01" },
     { key:"parent_id", label:"Producto base", type:"select", valueType:"int",
       optionsFrom:{ endpoint:"/api/products?only_base=true",
@@ -2224,7 +2482,7 @@ async function productsView(view) {
      concreto y un asistente sería un estorbo. */
   const PASOS = [
     { label:"Qué es",         keys:["code","product_type_id","brand_id","model_id","supplier_id","description"] },
-    { label:"Colores",        keys:["color_ids"] },
+    { label:"Colores",        keys:["color_ids","multicolor"] },
     { label:"Precio y costo", keys:["pricing_mode","sale_price","price_list_id","price_category_code","current_cost","min_stock"] },
   ];
 
@@ -2306,6 +2564,8 @@ async function productsView(view) {
         return `<div class="fhelp">Se crea <b>un solo producto</b>: <code>${esc(code)}</code>. Se vende y se stockea él mismo.</div>`;
       if (ids.length === 1)
         return `<div class="fhelp">Se crea <b>un solo producto</b>: <code>${esc(code)}</code>, en ese color. Se vende y se stockea él mismo.</div>`;
+      if (form.read({ all:true }).multicolor)
+        return `<div class="fhelp">Se crea <b>un solo producto</b>: <code>${esc(code)}</code>, con esos ${ids.length} colores juntos. Se vende y se stockea él mismo.</div>`;
       const hijos = ids.map(id => `${code}-${codigoDeColor[id] || "?"}`);
       return `<div class="fhelp">Se crean <b>${hijos.length} productos</b>, uno por color:
         ${hijos.map(h => `<code>${esc(h)}</code>`).join(" ")}.<br>
@@ -2524,7 +2784,8 @@ async function productsView(view) {
         { key:"product_type_id", label:"Tipo", render:(v)=>esc(typeMap[v]||"—") },
         { key:"brand_id", label:"Marca", render:(v)=>esc(brandMap[v]||"—") },
         { key:"model_id", label:"Modelo", priority:2, render:(v)=>esc(modelMap[v]||"—") },
-        { key:"colors", label:"Colores", priority:2, render:(v)=> swatchList(v) },
+        { key:"colors", label:"Colores", priority:2, render:(v, r)=> swatchList(v)
+            + (r.multicolor && v && v.length > 1 ? " " + badge(v.length > 2 ? "multicolor" : "bicolor", "gray") : "") },
         { key:"variant_count", label:"Variantes", priority:2, render:(v, r) => v
             ? badge(`${v} colores`, "blue")
             : (r.parent_code ? `<span class="fhelp">de ${esc(r.parent_code)}</span>` : "—") },
