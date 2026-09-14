@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -13,6 +13,7 @@ from app.core.security import SCOPE_PLATFORM, SCOPE_TENANT, decode_access_token
 from app.models.auth import User
 from app.models.company import Company
 from app.models.platform import PlatformUser
+from app.services import journal
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
 platform_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/admin/token")
@@ -45,7 +46,9 @@ def _subject(token: str, expected_scope: str) -> int:
 
 
 def get_current_user(
-    token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
+    request: Request,
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
 ) -> User:
     user_id = _subject(token, SCOPE_TENANT)
     user = db.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
@@ -60,6 +63,9 @@ def get_current_user(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="This account is suspended. Please contact support.",
         )
+    # Every shop write passes through here, so this is where it gets its
+    # journal entry (undo / redo); services.journal decides which ones count.
+    journal.attach(db, method=request.method, path=request.url.path, user=user)
     return user
 
 

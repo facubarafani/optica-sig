@@ -84,7 +84,12 @@ not built yet.
     key instead of duplicating. Keep it that way — if you add a column to a
     spec, both directions get it. `.xlsx` writes real numeric cells (immune to
     locale parsing); `.csv` uses `;` + comma decimals + a UTF-8 BOM, which is
-    what Spanish Excel reads and what the importer defaults to.
+    what Spanish Excel reads and what the importer defaults to. The products
+    file's "Activo" column is the one way a file takes things out: `no`
+    deactivates (never deletes), needs `products:bulk_delete` on top of the
+    import's permission, obeys `products.deactivation_refusal` (the same rule
+    as the single delete: a base goes only with its active variants) and the
+    console makes the user swipe to confirm.
 13. **Two identities, two front doors.** A shop's staff are `users` rows
     (always company-scoped); we, the provider, are `platform_users` rows (no
     company at all). They are separate tables so the two JWT scopes
@@ -119,6 +124,17 @@ not built yet.
     on `company_settings`. One colourway of a model stays a plain article, a
     bicolour one included (flagged `multicolor`). The vocabulary is a table,
     not code: add a spelling there.
+18. **Undo goes through the journal, never around it.** Every shop write in
+    `services/journal.py::AREAS` (catalogue, prices, stock, imports) becomes an
+    `Operation` with each touched row's columns before and after. Session
+    events capture it, switched on by `core/deps.get_current_user`, so a new
+    endpoint in those areas is journaled by construction and a new table joins
+    by adding it to `TRACKED`. `journal.revert` replays the snapshots through
+    the services (cost via `change_cost`, prices via `apply_pricing_update` /
+    `set_price`, stock via a compensating ADJUSTMENT, created rows
+    deactivated), skips any row that moved on and says why. Redo is undoing the
+    undo. The author or an admin (`users:write`) may undo, for 90 days. `AREAS`
+    is an allowlist on purpose: sales, payments, users and auth stay out.
 
 ## Web console (`app/web/index.html`)
 

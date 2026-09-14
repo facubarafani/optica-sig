@@ -56,6 +56,9 @@ PERMISSIONS: list[tuple[str, str]] = [
     ("suppliers:write", "Administrar proveedores"),
     ("products:read", "Ver productos y catálogo"),
     ("products:write", "Administrar productos y costos"),
+    # Separate from products:write on purpose: a spreadsheet reaches hundreds
+    # of products at once (services/importer, the "Activo" column).
+    ("products:bulk_delete", "Eliminar productos en masa"),
     ("pricing:read", "Ver precios y listas"),
     ("pricing:write", "Administrar precios y listas"),
     ("stock:read", "Ver stock y movimientos"),

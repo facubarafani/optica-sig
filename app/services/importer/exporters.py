@@ -82,6 +82,7 @@ def _products(db: Session, company_id: int, opts: dict) -> list[dict]:
             # Comma-separated, which is exactly what the importer splits on.
             "color": ", ".join(c.name for c in p.colors),
             "multicolor": "sí" if p.multicolor else "no",
+            "is_active": "sí" if p.is_active else "no",
             "current_cost": p.current_cost,
             "min_stock": p.min_stock,
             # The enum *value*, which is what the import spec accepts.

@@ -318,6 +318,10 @@ def delete_product(
     _: object = Depends(require_permission("products:write")),
 ):
     obj = _get(db, product_id, company_id)
+    try:
+        products_service.assert_deactivatable(db, obj)
+    except products_service.ProductError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
     crud.remove(db, obj)
     return None
 

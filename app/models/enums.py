@@ -14,6 +14,13 @@ class SupplierType(str, enum.Enum):
     WORKSHOP = "workshop"         # taller
 
 
+class ChangeAction(str, enum.Enum):
+    """What an operation did to one row (services.journal)."""
+
+    CREATE = "create"   # the row did not exist before: undo deactivates it
+    UPDATE = "update"   # columns changed: undo puts the old values back
+
+
 class ColorAliasKind(str, enum.Enum):
     """What the tail of a product code turned out to mean.
 

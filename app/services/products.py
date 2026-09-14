@@ -171,6 +171,33 @@ def _stocked_style(code: str, on_hand) -> str:
     )
 
 
+def deactivation_refusal(code: str, *, active_variants: int) -> str | None:
+    """Why a product may not be switched off; None when it may.
+
+    A base whose variants stay active would leave them hanging off a product
+    nobody can see or pick. Stock is deliberately not a refusal: a product
+    taken out of the catalogue may still have units on the shelf, and the
+    stock screen shows inactive products on request.
+    """
+    if active_variants:
+        return (
+            f'"{code}" es un producto base con {active_variants} variante(s) '
+            "activa(s): desactivalas también, o dejalo activo."
+        )
+    return None
+
+
+def assert_deactivatable(db: Session, product: Product) -> None:
+    """The single delete's side of deactivation_refusal."""
+    active = db.execute(
+        select(func.count()).select_from(Product).where(
+            Product.parent_id == product.id, Product.is_active.is_(True))
+    ).scalar_one()
+    refusal = deactivation_refusal(product.code, active_variants=active)
+    if refusal:
+        raise ProductError(refusal)
+
+
 def multicolor_refusal(code: str) -> str:
     return (
         f'"{code}" ya tiene variantes, así que no puede ser un solo artículo '

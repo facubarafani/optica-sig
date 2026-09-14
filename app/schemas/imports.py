@@ -162,6 +162,12 @@ class ImportPreviewRead(BaseModel):
     ok: bool
     family_count: int = 0
     families: list[FamilyRead] = []
+    # "Activo" in a products file. The console asks for a swipe to confirm
+    # whenever to_deactivate is not zero.
+    to_deactivate: int = 0
+    to_reactivate: int = 0
+    deactivate_with_stock: int = 0
+    deactivate_sample: list[str] = []
 
 
 class ImportResultRead(BaseModel):

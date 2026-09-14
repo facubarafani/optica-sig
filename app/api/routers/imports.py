@@ -30,7 +30,12 @@ from app.schemas.imports import (
     ImportUploadRead,
 )
 from app.services.importer import code_colors, engine, exporters, readers, templates
-from app.services.importer.specs import SPECS, ImportSpec, get_spec
+from app.services.importer.specs import (
+    BULK_DELETE_PERMISSION,
+    SPECS,
+    ImportSpec,
+    get_spec,
+)
 
 router = APIRouter(prefix="/imports", tags=["imports"])
 
@@ -170,6 +175,11 @@ def _load_batch(db: Session, batch_id: int, company_id: int) -> ImportBatch:
     return batch
 
 
+def _can_bulk_delete(user: User) -> bool:
+    codes = user.permission_codes
+    return "*" in codes or BULK_DELETE_PERMISSION in codes
+
+
 def _code_colors(options: ImportOptions) -> code_colors.Choices | None:
     cc = options.code_colors
     if cc is None:
@@ -251,6 +261,7 @@ def preview(
             json.loads(batch.headers), json.loads(batch.rows), options.mapping,
             company_id=company_id, decimal_format=options.decimal_format,
             code_colors=_code_colors(options),
+            allow_deactivate=_can_bulk_delete(current_user),
         )
     except engine.ImportError_ as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
@@ -266,6 +277,10 @@ def preview(
         errors=[e.__dict__ for e in result.errors],
         missing_refs=[m.__dict__ for m in result.missing_refs],
         ok=result.ok,
+        to_deactivate=result.to_deactivate,
+        to_reactivate=result.to_reactivate,
+        deactivate_with_stock=result.deactivate_with_stock,
+        deactivate_sample=result.deactivate_sample,
         family_count=len(result.families),
         # The review step shows a sample; the count says how many there are.
         families=result.families[:200],
@@ -297,6 +312,7 @@ def commit_batch(
             decimal_format=options.decimal_format,
             create_missing=options.create_missing,
             code_colors=_code_colors(options),
+            allow_deactivate=_can_bulk_delete(current_user),
         )
     except engine.ImportError_ as exc:
         db.rollback()

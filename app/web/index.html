@@ -523,6 +523,42 @@
   .toast{background:#0f172a;color:#fff;padding:11px 15px;border-radius:9px;box-shadow:var(--shadow-lg);font-size:13px;max-width:360px;animation:slide .16s ease}
   .toast.err{background:var(--danger)}
   .toast.ok{background:var(--ok)}
+  /* Confirmar deslizando: lo que no conviene hacer con un clic distraído. */
+  .swipeconf-msg{display:flex;gap:12px;align-items:flex-start;font-size:14px;line-height:1.45;margin-bottom:10px}
+  .swipeconf-msg .ic{color:var(--danger);flex:0 0 auto;margin-top:1px}
+  .swipe{position:relative;height:52px;border-radius:999px;background:var(--danger-50);border:1px solid #fecaca;
+    margin-top:16px;overflow:hidden;user-select:none;touch-action:none;outline:none}
+  .swipe:focus-visible{box-shadow:0 0 0 3px rgba(220,38,38,.25)}
+  .swipe-fill{position:absolute;left:0;top:0;bottom:0;width:0;background:rgba(220,38,38,.14)}
+  .swipe-label{position:absolute;inset:0;display:grid;place-items:center;font-weight:600;font-size:13px;
+    color:var(--danger);pointer-events:none;padding:0 56px;text-align:center}
+  .swipe-knob{position:absolute;left:4px;top:4px;width:44px;height:44px;border-radius:50%;background:var(--danger);
+    color:#fff;display:grid;place-items:center;cursor:grab;box-shadow:var(--shadow)}
+  .swipe-knob:active{cursor:grabbing}
+  .swipe.ok{border-color:var(--ok);background:var(--ok-50)}
+  .swipe.ok .swipe-knob{background:var(--ok)}
+  @media(prefers-reduced-motion:reduce){ .swipe-knob,.swipe-fill{transition:none!important} }
+  /* Deshacer / Rehacer / Historial, fijos arriba como en un programa de escritorio. */
+  .undobar{display:flex;align-items:center;gap:2px;margin-left:6px;padding-left:10px;border-left:1px solid var(--border)}
+  .undobar .btn:disabled{opacity:.4}
+  @media(max-width:900px){ .undobar .btn span{display:none} }
+  .rowmenu{max-width:min(480px,calc(100vw - 16px))}
+  .rowmenu .lbl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
+  .rowmenu .hint{color:var(--muted);font-size:11.5px;white-space:nowrap;padding-left:14px}
+  .rowmenu button:has(.hint){flex-wrap:nowrap}
+  .rowmenu button:disabled,.rowmenu button:disabled:hover{opacity:.5;cursor:default;background:none;color:inherit}
+  /* Un aviso que se puede deshacer lleva su botón adentro. */
+  .toast:has(.toast-act){display:flex;align-items:center;gap:14px}
+  .toast-act{margin-left:auto;background:transparent;border:1px solid rgba(255,255,255,.55);color:#fff;
+    border-radius:6px;padding:3px 10px;font:inherit;font-weight:600;cursor:pointer;white-space:nowrap}
+  .toast-act:hover{background:rgba(255,255,255,.14)}
+  /* Actividad: el detalle de una operación, fila por fila. */
+  .actent{padding:9px 0;border-top:1px solid var(--border);font-size:13px}
+  .actent:first-child{border-top:0}
+  .actfields{margin:6px 0 0;width:auto;background:transparent;font-size:12.5px}
+  .actfields td{padding:2px 12px 2px 0;border:0;vertical-align:top}
+  .actfields td:first-child{color:var(--muted)}
+  .actfields td.antes{color:var(--muted);text-decoration:line-through}
   @keyframes slide{from{transform:translateX(16px);opacity:0}to{transform:none;opacity:1}}
   .kv{display:grid;grid-template-columns:140px 1fr;gap:8px 14px;font-size:13.5px}
   .kv dt{color:var(--muted);font-weight:600}
@@ -561,6 +597,9 @@
 <symbol id="i-dollar" viewBox="0 0 24 24"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></symbol>
 <symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></symbol>
 <symbol id="i-rotate" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol>
+<symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11"/></symbol>
+<symbol id="i-redo" viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5A5.5 5.5 0 0 0 9.5 20H13"/></symbol>
+<symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></symbol>
 <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></symbol>
 <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></symbol>
 <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
@@ -778,10 +817,23 @@ function swatchList(colors, max = 4) {
   return `<span class="swatch-row" title="${esc(names)}"><span class="chips">${chips}</span>${label}</span>`;
 }
 
-function toast(msg, type = "") {
-  const t = el(`<div class="toast ${type}">${esc(msg)}</div>`);
+function toast(msg, type = "", action = null) {
+  /* Un guardado recién hecho ofrece deshacerse desde su mismo aviso: api()
+     anota cuándo fue la última escritura que queda en Actividad. */
+  const desde = ultimaEscritura;
+  if (!action && type === "ok" && Date.now() - desde < 4000) {
+    ultimaEscritura = 0;
+    action = { label: "Deshacer", onClick: () => atajoDeshacer("undo", { desde }) };
+  }
+  const t = el(`<div class="toast ${type}"><span>${esc(msg)}</span></div>`);
+  if (action) {
+    const b = el(`<button type="button" class="toast-act">${esc(action.label)}</button>`);
+    b.addEventListener("click", () => { t.remove(); action.onClick(); });
+    t.appendChild(b);
+  }
   $("#toasts").appendChild(t);
-  setTimeout(() => { t.style.opacity = "0"; t.style.transition = "opacity .3s"; setTimeout(() => t.remove(), 300); }, type === "err" ? 5200 : 3000);
+  setTimeout(() => { t.style.opacity = "0"; t.style.transition = "opacity .3s"; setTimeout(() => t.remove(), 300); },
+    action ? 6500 : type === "err" ? 5200 : 3000);
 }
 
 /* `currency` overrides the company's — a price list carries its own (ARS/USD)
@@ -812,6 +864,12 @@ function errMsg(data, status) {
   return JSON.stringify(data);
 }
 
+/* Las escrituras que el servidor guarda en Actividad (services/journal.py,
+   AREAS). Sólo sirve para ofrecer "Deshacer" en el aviso: qué se deshace lo
+   decide siempre el servidor. */
+let ultimaEscritura = 0;
+const ESCRITURA_DESHACIBLE = /^\/api\/(products|colors|brands|product-types|product-models|suppliers|branches|price-lists|stock)(\/|\?|$)|^\/api\/imports\/batches\/\d+\/commit$/;
+
 async function api(method, path, body) {
   const headers = {};
   if (state.token) headers["Authorization"] = "Bearer " + state.token;
@@ -819,6 +877,10 @@ async function api(method, path, body) {
   if (body !== undefined) { headers["Content-Type"] = "application/json"; opts.body = JSON.stringify(body); }
   const res = await fetch(path, opts);
   if (res.status === 401) { logout(); throw new Error("La sesión expiró. Iniciá sesión de nuevo."); }
+  if (res.ok && method !== "GET" && ESCRITURA_DESHACIBLE.test(path)) {
+    ultimaEscritura = Date.now();
+    refrescarDeshacer();
+  }
   if (res.status === 204) return null;
   const txt = await res.text();
   let data = null;
@@ -1163,6 +1225,7 @@ const NAV = [
   { route:"customers", label:"Clientes",         icon:"i-users", perm:"customers:read" },
   { route:"suppliers", label:"Proveedores",      icon:"i-truck", perm:"suppliers:read" },
   { route:"branches",  label:"Sucursales",       icon:"i-store", perm:"branches:read" },
+  { route:"activity",  label:"Actividad",        icon:"i-rotate", perm:null },
   { route:"users",     label:"Usuarios y Roles", icon:"i-shield", perm:"users:read" },
   { route:"company",   label:"Empresa",          icon:"i-settings", perm:"company:read" },
 ];
@@ -1191,6 +1254,11 @@ function renderApp() {
           <div style="display:flex;align-items:center;gap:10px">
             <button class="menu-btn" id="menuBtn"><svg class="ic lg"><use href="#i-menu"/></svg></button>
             <span class="crumb" id="crumb">Inicio</span>
+            <div class="undobar" role="toolbar" aria-label="Deshacer y rehacer">
+              <button class="btn sm ghost" id="ubUndo" type="button" disabled title="Nada para deshacer"><svg class="ic"><use href="#i-undo"/></svg><span>Deshacer</span></button>
+              <button class="btn sm ghost" id="ubRedo" type="button" disabled title="Nada para rehacer"><svg class="ic"><use href="#i-redo"/></svg><span>Rehacer</span></button>
+              <button class="btn sm ghost" id="ubHist" type="button" title="Historial de cambios"><svg class="ic"><use href="#i-history"/></svg><svg class="ic"><use href="#i-chevron-down"/></svg></button>
+            </div>
           </div>
           <div class="who">
             <span>${esc(u.full_name || u.email)} ${u.is_superuser ? badge("admin","blue") : ""}</span>
@@ -1202,6 +1270,12 @@ function renderApp() {
       </div>
     </div>`;
   $("#logoutBtn").addEventListener("click", logout);
+  $("#ubUndo").addEventListener("click", (e) => { const op = e.currentTarget._op; if (op) revertir(op, "undo", { rapido: true }); });
+  $("#ubRedo").addEventListener("click", (e) => { const op = e.currentTarget._op; if (op) revertir(op, "redo", { rapido: true }); });
+  $("#ubHist").addEventListener("click", (e) => abrirHistorial(e.currentTarget));
+  // Otra pestaña o el celular pudieron cambiar algo: al volver, la barra se pone al día.
+  window.addEventListener("focus", refrescarDeshacer);
+  refrescarDeshacer();
   const endImp = $("#endImp");
   if (endImp) endImp.addEventListener("click", () => { logout(); window.close(); });
   $("#menuBtn").addEventListener("click", () => $("#sidebar").classList.toggle("open"));
@@ -1248,6 +1322,7 @@ async function route() {
       case "branches":  await resourceView(view, CONFIG.branches); break;
       case "users":     await usersView(view); break;
       case "company":   await companyView(view); break;
+      case "activity":  await activityView(view); break;
       default: view.innerHTML = `<div class="card pad">Sección no encontrada.</div>`;
     }
   } catch (e) {
@@ -1601,8 +1676,8 @@ function openRowMenu(anchor, items) {
   for (const it of items) {
     if (!it) continue;
     if (it.sep) { menu.appendChild(el(`<div class="sep"></div>`)); continue; }
-    const b = el(`<button type="button" class="${it.danger ? "danger" : ""}">
-      <svg class="ic"><use href="#${it.icon}"/></svg>${esc(it.label)}</button>`);
+    const b = el(`<button type="button" class="${it.danger ? "danger" : ""}" ${it.disabled ? "disabled" : ""}>
+      <svg class="ic"><use href="#${it.icon}"/></svg><span class="lbl">${esc(it.label)}</span>${it.hint ? `<span class="hint">${esc(it.hint)}</span>` : ""}</button>`);
     b.addEventListener("click", () => { close(); it.onClick(); });
     menu.appendChild(b);
   }
@@ -1631,6 +1706,83 @@ function openRowMenu(anchor, items) {
     window.addEventListener("scroll", close, true);
   }, 0);
   return close;
+}
+
+/* Confirmar deslizando. Para lo que un clic distraído no debería poder hacer
+   (desactivar productos en masa): no hay botón, hay que llevar la perilla
+   hasta el final. Soltarla antes la devuelve al principio. Con teclado, la
+   flecha derecha la avanza de a un quinto. Resuelve true al confirmar y false
+   si el aviso se cierra de cualquier otra forma. `message` y `detail` son
+   HTML armado por quien llama, con sus valores ya escapados. */
+function confirmarDeslizando({ title, message, detail = "", label = "Deslizá para confirmar" }) {
+  return new Promise((resolve) => {
+    let hecho = false;
+    const body = el(`<div>
+      <div class="swipeconf-msg"><svg class="ic lg"><use href="#i-alert"/></svg><div>${message}</div></div>
+      ${detail}
+      <div class="swipe" role="slider" tabindex="0" aria-label="${esc(label)}"
+           aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div class="swipe-fill"></div>
+        <span class="swipe-label">${esc(label)}</span>
+        <div class="swipe-knob"><svg class="ic"><use href="#i-arrow-right"/></svg></div>
+      </div>
+    </div>`);
+    const close = openModal({ title, body });
+    const seCerro = new MutationObserver(() => {
+      if (document.body.contains(body)) return;
+      seCerro.disconnect();
+      if (!hecho) resolve(false);
+    });
+    seCerro.observe(document.body, { childList: true });
+
+    const track = body.querySelector(".swipe");
+    const knob = track.querySelector(".swipe-knob");
+    const fill = track.querySelector(".swipe-fill");
+    let inicio = null, pos = 0, max = 0;
+    const medir = () => { max = Math.max(0, track.clientWidth - knob.offsetWidth - 8); };
+    const mover = (x, animar) => {
+      pos = Math.max(0, Math.min(max, x));
+      const t = animar ? "transform .2s ease, width .2s ease" : "none";
+      knob.style.transition = t; fill.style.transition = t;
+      knob.style.transform = `translateX(${pos}px)`;
+      fill.style.width = `${pos + knob.offsetWidth + 4}px`;
+      track.setAttribute("aria-valuenow", String(max ? Math.round(pos / max * 100) : 0));
+    };
+    const confirmar = () => {
+      hecho = true;
+      track.classList.add("ok");
+      mover(max, true);
+      setTimeout(() => { resolve(true); close(); }, 240);
+    };
+    knob.addEventListener("pointerdown", (e) => {
+      if (hecho) return;
+      medir();
+      inicio = e.clientX - pos;
+      knob.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    knob.addEventListener("pointermove", (e) => { if (inicio !== null && !hecho) mover(e.clientX - inicio, false); });
+    const soltar = () => {
+      if (inicio === null || hecho) return;
+      inicio = null;
+      if (max && pos >= max * 0.92) confirmar(); else mover(0, true);
+    };
+    knob.addEventListener("pointerup", soltar);
+    knob.addEventListener("pointercancel", soltar);
+    track.addEventListener("keydown", (e) => {
+      if (hecho) return;
+      medir();
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        mover(pos + max / 5, true);
+        if (pos >= max) confirmar();
+      } else if (e.key === "ArrowLeft" || e.key === "Home") {
+        e.preventDefault();
+        mover(0, true);
+      }
+    });
+    requestAnimationFrame(() => { medir(); mover(0, false); track.focus(); });
+  });
 }
 
 function confirmDanger({ title, message, confirmLabel = "Eliminar", onConfirm }) {
@@ -2226,6 +2378,11 @@ async function openImportWizard(specKey, onDone) {
         </div>`).join("")}</div>
         ${pv.family_count > 30 ? `<div class="fhelp">…y ${pv.family_count - 30} más.</div>` : ""}
       </div>` : "";
+    const bajas = pv.to_deactivate ? `
+      <div class="card pad" style="margin-bottom:12px;border-color:#fecaca;background:var(--danger-50)">
+        <b style="color:var(--danger)">Se desactivan ${pv.to_deactivate} producto(s)</b>
+        <div class="fhelp" style="margin-top:4px">No se borran: dejan de aparecer en listas, ventas y exportaciones. Se pueden reactivar con "sí" en Activo, o deshacer desde Actividad.${pv.deactivate_with_stock ? ` ${pv.deactivate_with_stock} todavía ${pv.deactivate_with_stock === 1 ? "tiene" : "tienen"} stock.` : ""} Al confirmar se pide deslizar.</div>
+      </div>` : "";
     const revisar = leeColores(opts) && !opts.code_colors ? `
       <div class="fhelp" style="margin-bottom:12px">¿Los códigos traen el color al final? <a href="#" id="ccOpen">Revisarlos</a></div>` : "";
 
@@ -2233,9 +2390,10 @@ async function openImportWizard(specKey, onDone) {
       <div class="stats">
         <div class="stat"><div class="k">Se crean</div><div class="v">${pv.to_create}</div></div>
         <div class="stat"><div class="k">Se actualizan</div><div class="v">${pv.to_update}</div></div>
+        ${pv.to_deactivate ? `<div class="stat"><div class="k">Se desactivan</div><div class="v" style="color:var(--danger)">${pv.to_deactivate}</div></div>` : ""}
         <div class="stat"><div class="k">Con error</div><div class="v" style="color:${pv.errors.length ? "var(--danger)" : "inherit"}">${pv.errors.length}</div></div>
       </div>
-      ${errRows}${familias}${missing}${revisar}
+      ${errRows}${bajas}${familias}${missing}${revisar}
       <div id="err"></div>
       <div class="toolbar" style="justify-content:space-between">
         <button class="btn" id="back"><svg class="ic"><use href="#i-arrow-left"/></svg>Volver</button>
@@ -2252,6 +2410,16 @@ async function openImportWizard(specKey, onDone) {
     });
     const go = $("#go", body);
     if (go && pv.ok) go.addEventListener("click", async () => {
+      if (pv.to_deactivate) {
+        const resto = pv.to_deactivate - pv.deactivate_sample.length;
+        const ok = await confirmarDeslizando({
+          title: "Desactivar productos",
+          message: `Vas a desactivar <b>${pv.to_deactivate}</b> producto(s). Dejan de aparecer en listas, ventas y exportaciones.`,
+          detail: `<div class="fhelp">${pv.deactivate_sample.map(c => `<code>${esc(c)}</code>`).join(" ")}${resto > 0 ? ` y ${resto} más` : ""}.${pv.deactivate_with_stock ? ` <b>${pv.deactivate_with_stock}</b> todavía ${pv.deactivate_with_stock === 1 ? "tiene" : "tienen"} stock.` : ""} Se puede deshacer desde Actividad.</div>`,
+          label: `Deslizá para desactivar ${pv.to_deactivate}`,
+        });
+        if (!ok) return;
+      }
       go.disabled = true;
       try {
         const res = await api("POST", `/api/imports/batches/${up.batch_id}/commit`, opts);
@@ -2268,6 +2436,220 @@ async function openImportWizard(specKey, onDone) {
     });
   }
 }
+
+/* =======================================================================
+   ACTIVIDAD  (qué se cambió, y deshacer / rehacer)
+   El historial vive en el servidor (services/journal.py): sobrevive a recargar
+   la página y es el mismo para toda la óptica. Acá sólo se muestra y se pide.
+   ======================================================================= */
+async function activityView(view) {
+  const admin = can("*") || can("users:write");
+  let soloMias = !admin;
+  let items = [];
+  let hayMas = false;
+  const PAGINA = 50;
+
+  view.addEventListener("click", async (e) => {
+    const b = e.target.closest("[data-act]");
+    if (!b) return;
+    const op = items.find(o => String(o.id) === b.dataset.id);
+    if (b.dataset.act === "ver") verOperacion(op.id);
+    else if (b.dataset.act === "undo" || b.dataset.act === "redo") revertir(op, b.dataset.act);
+    else if (b.dataset.act === "mas") cargar(false);
+  });
+  view.addEventListener("change", (e) => {
+    if (e.target.id === "soloMias") { soloMias = e.target.checked; cargar(true); }
+  });
+  await cargar(true);
+
+  async function cargar(desdeCero) {
+    const qs = new URLSearchParams({ limit: String(PAGINA) });
+    if (soloMias) qs.set("mine", "true");
+    if (!desdeCero && items.length) qs.set("before_id", items[items.length - 1].id);
+    const nuevos = await api("GET", "/api/activity?" + qs);
+    items = desdeCero ? nuevos : items.concat(nuevos);
+    hayMas = nuevos.length === PAGINA;
+    pintar();
+  }
+
+  function pintar() {
+    const cols = [
+      { key:"created_at", label:"Cuándo", type:"datetime" },
+      { key:"label", label:"Qué", render:(v, r) => esc(v) + (r.undone ? " " + badge("deshecho", "gray") : "") },
+      { key:"user_name", label:"Quién", render:(v) => esc(v || "-") },
+      { key:"change_count", label:"Filas", type:"num", align:"right", priority:3 },
+      { key:"id", label:"", align:"right", render:(v, r) => `<div style="display:flex;gap:6px;justify-content:flex-end">
+          <button class="btn sm" data-act="ver" data-id="${v}"><svg class="ic"><use href="#i-eye"/></svg>Ver</button>
+          ${r.can_undo ? `<button class="btn sm" data-act="undo" data-id="${v}"><svg class="ic"><use href="#i-rotate"/></svg>Deshacer</button>` : ""}
+          ${r.can_redo ? `<button class="btn sm" data-act="redo" data-id="${v}"><svg class="ic"><use href="#i-rotate"/></svg>Rehacer</button>` : ""}
+          ${!r.can_undo && !r.can_redo && r.blocked_reason ? `<span class="fhelp" title="${esc(r.blocked_reason)}">no disponible</span>` : ""}
+        </div>` },
+    ];
+    view.innerHTML = `
+      <div class="page-head"><div><h2>Actividad</h2>
+        <div class="sub">Los cambios de los últimos 90 días en catálogo, precios, stock e importaciones. Ctrl+Z deshace el último tuyo y Ctrl+Shift+Z lo rehace.</div></div>
+        <div class="toolbar" style="margin:0">
+          ${admin ? `<label class="switch"><input type="checkbox" id="soloMias" ${soloMias ? "checked" : ""}> Sólo lo mío</label>` : ""}
+        </div></div>
+      ${items.length ? renderTable(cols, items) : `<div class="card"><div class="empty">Todavía no hay cambios para mostrar.</div></div>`}
+      ${hayMas ? `<div class="toolbar" style="justify-content:center;margin-top:12px"><button class="btn" data-act="mas">Ver más</button></div>` : ""}`;
+  }
+}
+
+/* La barra de arriba: Deshacer, Rehacer e Historial. Cada botón dice qué va a
+   hacer antes de hacerlo (en su title) y se apaga cuando no hay nada. El
+   estado lo sabe el servidor, así que se le pregunta después de cada guardado,
+   de cada deshacer y al volver a la pestaña; un pedido seguido de otro se
+   junta en uno solo. */
+let _barraTimer = null;
+function refrescarDeshacer() {
+  clearTimeout(_barraTimer);
+  _barraTimer = setTimeout(async () => {
+    if (!state.user || !$("#ubUndo")) return;
+    const [undo, redo] = await Promise.all(["undo", "redo"].map(a =>
+      api("GET", `/api/activity/latest?action=${a}`).catch(() => null)));
+    pintarBotonDeshacer($("#ubUndo"), undo, "Deshacer", "Ctrl+Z");
+    pintarBotonDeshacer($("#ubRedo"), redo, "Rehacer", "Ctrl+Shift+Z");
+  }, 150);
+}
+
+function pintarBotonDeshacer(boton, op, verbo, atajo) {
+  if (!boton) return;
+  boton._op = op;
+  boton.disabled = !op;
+  boton.title = op ? `${verbo}: ${op.label} (${atajo})` : `Nada para ${verbo.toLowerCase()}`;
+}
+
+function haceCuanto(iso) {
+  const min = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  if (min < 1) return "recién";
+  if (min < 60) return `hace ${min} min`;
+  if (min < 1440) return `hace ${Math.round(min / 60)} h`;
+  return `hace ${Math.round(min / 1440)} d`;
+}
+
+/* El desplegable del reloj: tus últimos diez cambios, cada uno con lo que
+   se puede hacer con él. Desde acá siempre se muestra la vista previa, porque
+   puede no ser el último. */
+async function abrirHistorial(anchor) {
+  let ops;
+  try { ops = await api("GET", "/api/activity?mine=true&limit=10"); }
+  catch (ex) { return toast(ex.message, "err"); }
+  const filas = ops.length ? ops.map(op => ({
+    icon: op.undone ? "i-redo" : "i-undo",
+    label: `${op.undone ? "Rehacer" : "Deshacer"}: ${op.label}`,
+    hint: haceCuanto(op.created_at),
+    disabled: !(op.undone ? op.can_redo : op.can_undo),
+    onClick: () => revertir(op, op.undone ? "redo" : "undo"),
+  })) : [{ icon: "i-history", label: "Todavía no hay cambios tuyos", disabled: true, onClick: () => {} }];
+  openRowMenu(anchor, [
+    ...filas,
+    { sep: true },
+    { icon: "i-history", label: "Ver toda la actividad", onClick: () => { location.hash = "#/activity"; } },
+  ]);
+}
+
+async function verOperacion(id) {
+  let op;
+  try { op = await api("GET", `/api/activity/${id}`); }
+  catch (ex) { return toast(ex.message, "err"); }
+  const accion = { create: "Alta", update: "Cambios", deactivate: "Baja", reactivate: "Reactivación" };
+  const body = el(`<div>
+    <div class="fhelp" style="margin-bottom:10px">${esc(fmtDateTime(op.created_at))} · ${esc(op.user_name || "-")} · ${op.change_count} cambio(s)${op.undone ? " · deshecho" : ""}</div>
+    <div>${op.entities.map(e => `<div class="actent">
+      <div><b>${esc(accion[e.action] || e.action)}</b> ${esc(e.noun)} <code>${esc(e.name)}</code></div>
+      ${e.fields.length ? `<table class="actfields">${e.fields.map(f => `<tr>
+        <td>${esc(f.label)}</td>
+        ${e.action === "create" ? "" : `<td class="antes">${esc(f.before ?? "-")}</td>`}
+        <td>${esc(f.after ?? "-")}</td></tr>`).join("")}</table>` : ""}
+    </div>`).join("")}</div>
+    ${op.entity_count > op.entities.length ? `<div class="fhelp" style="margin-top:8px">…y ${op.entity_count - op.entities.length} más.</div>` : ""}
+    ${op.blocked_reason ? `<div class="fwarn" style="margin-top:12px">${esc(op.blocked_reason)}</div>` : ""}
+    <div class="toolbar" style="justify-content:flex-end;margin:14px 0 0"></div>
+  </div>`);
+  const close = openModal({ title: op.label, body, wide: true });
+  const barra = body.querySelector(".toolbar");
+  for (const action of ["undo", "redo"]) {
+    if (!(action === "undo" ? op.can_undo : op.can_redo)) continue;
+    const b = el(`<button class="btn primary" type="button"><svg class="ic"><use href="#i-rotate"/></svg>${action === "undo" ? "Deshacer" : "Rehacer"}</button>`);
+    b.addEventListener("click", () => { close(); revertir(op, action); });
+    barra.appendChild(b);
+  }
+}
+
+/* Deshacer o rehacer una operación. Primero se pide al servidor que lo pruebe
+   sin guardar (dry_run): lo que muestra el aviso es exactamente lo que va a
+   pasar, incluidas las filas que cambiaron después y quedan como están.
+   `rapido`: si no hay nada que avisar y es chico, se aplica sin preguntar,
+   como el Ctrl+Z de un programa de escritorio; el aviso ofrece volver atrás. */
+async function revertir(op, action, { rapido = false } = {}) {
+  const deshacer = action === "undo";
+  let pv;
+  try { pv = await api("POST", `/api/activity/${op.id}/${action}`, { dry_run: true }); }
+  catch (ex) { return toast(ex.message, "err"); }
+
+  const aplicar = async () => {
+    const res = await api("POST", `/api/activity/${op.id}/${action}`, { dry_run: false });
+    clearOptions();
+    refrescarDeshacer();
+    const aparte = res.skipped.length ? ` (${res.skipped.length} quedaron como estaban)` : "";
+    toast(`${deshacer ? "Deshecho" : "Rehecho"}: ${op.label}${aparte}`, "ok", {
+      label: deshacer ? "Rehacer" : "Deshacer",
+      onClick: () => revertir(op, deshacer ? "redo" : "undo", { rapido: true }),
+    });
+    route();
+  };
+
+  if (rapido && pv.applied && !pv.skipped.length && pv.applied <= 20) {
+    try { await aplicar(); } catch (ex) { toast(ex.message, "err"); }
+    return;
+  }
+  const verbo = deshacer ? "deshacen" : "rehacen";
+  const body = el(`<div>
+    <p style="margin:0 0 10px">${pv.applied
+      ? `Se ${verbo} <b>${pv.applied}</b> cambio(s) de <b>${esc(op.label)}</b>.`
+      : `No queda nada que se pueda ${deshacer ? "deshacer" : "rehacer"}: todo cambió después o se sigue usando.`}</p>
+    ${pv.skipped.length ? `<div class="card pad">
+      <b>No se ${verbo} (${pv.skipped.length})</b>
+      <div class="fhelp" style="margin:4px 0 8px">Cambiaron después o todavía se usan, así que quedan como están.</div>
+      <div class="errlist">${pv.skipped.slice(0, 100).map(s => `<div>${esc(s.entity)}: ${esc(s.reason)}</div>`).join("")}
+        ${pv.skipped.length > 100 ? `<div>…y ${pv.skipped.length - 100} más.</div>` : ""}</div>
+    </div>` : ""}
+  </div>`);
+  openModal({
+    title: `${deshacer ? "Deshacer" : "Rehacer"}: ${op.label}`, body,
+    confirmLabel: deshacer ? "Deshacer" : "Rehacer",
+    onConfirm: pv.applied ? async (close) => {
+      try { await aplicar(); close(); } catch (ex) { toast(ex.message, "err"); }
+    } : undefined,
+  });
+}
+
+/* Ctrl+Z / Ctrl+Shift+Z (y el botón del aviso): el último cambio propio que
+   sigue en pie, o el último deshecho. `desde`: el aviso de un guardado sólo
+   deshace sin preguntar si la operación es de ese momento; si no, muestra
+   qué va a deshacer antes de hacerlo. */
+async function atajoDeshacer(action, { desde = null } = {}) {
+  let op;
+  try { op = await api("GET", `/api/activity/latest?action=${action}`); }
+  catch (ex) { return toast(ex.message, "err"); }
+  if (!op) return toast(action === "undo" ? "No hay nada para deshacer." : "No hay nada para rehacer.");
+  const reciente = desde == null || Math.abs(new Date(op.created_at).getTime() - desde) < 60000;
+  revertir(op, action, { rapido: reciente });
+}
+
+document.addEventListener("keydown", (e) => {
+  if (!state.user || !(e.metaKey || e.ctrlKey) || e.altKey) return;
+  const k = e.key.toLowerCase();
+  const rehacer = (k === "z" && e.shiftKey) || (k === "y" && !e.shiftKey);
+  if (k !== "z" && !rehacer) return;
+  const t = e.target;
+  // Escribiendo en un campo, el atajo es del texto; con un formulario abierto, de él.
+  if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+  if (document.querySelector(".overlay")) return;
+  e.preventDefault();
+  atajoDeshacer(rehacer ? "redo" : "undo");
+});
 
 /* =======================================================================
    DASHBOARD

@@ -12,6 +12,7 @@ a ``stock_movement`` row is written.
 from __future__ import annotations
 
 import unicodedata
+from collections import defaultdict
 from dataclasses import dataclass, field
 from decimal import Decimal
 
@@ -111,6 +112,11 @@ class Preview:
     missing_refs: list[MissingRef] = field(default_factory=list)
     # Families read out of the codes (code_colors.plan), for the review step.
     families: list[dict] = field(default_factory=list)
+    # "Activo" in a products file: what the confirmation must spell out.
+    to_deactivate: int = 0
+    to_reactivate: int = 0
+    deactivate_with_stock: int = 0
+    deactivate_sample: list[str] = field(default_factory=list)
 
     @property
     def ok(self) -> bool:
@@ -229,6 +235,7 @@ def _collect(
     company_id: int,
     decimal_format: str,
     code_colors: code_colors_service.Choices | None = None,
+    allow_deactivate: bool = True,
 ) -> tuple[list[tuple[int, dict]], list[RowError], _Resolver, list[dict]]:
     """Parse every row and validate structure. No writes."""
     errors: list[RowError] = []
@@ -275,6 +282,8 @@ def _collect(
                 db, parsed, code_colors, company_id=company_id)
             errors.extend(RowError(*e) for e in plan_errors)
         errors.extend(_family_errors(db, parsed, company_id=company_id))
+        errors.extend(_deactivation_errors(db, parsed, company_id=company_id,
+                                           allow=allow_deactivate))
 
     return parsed, errors, _Resolver(db, company_id), families
 
@@ -347,6 +356,54 @@ def _family_errors(
     return errors
 
 
+def _deactivation_errors(
+    db: Session, parsed: list[tuple[int, dict]], *, company_id: int, allow: bool
+) -> list[RowError]:
+    """Rows whose "Activo" says no: who may, and what may not be switched off.
+
+    A spreadsheet reaches hundreds of products at once, so it needs its own
+    permission ("Eliminar productos en masa"), not just the import's. What is
+    refused is the single delete's rule (products.deactivation_refusal), with
+    one allowance a file needs: a base goes if its active variants go in the
+    same file. Stock is not refused; the review step reports it.
+    """
+    off = [(n, v) for n, v in parsed if v.get("is_active") is False]
+    if not off:
+        return []
+    if not allow:
+        return [RowError(
+            off[0][0], "is_active",
+            'Desactivar productos desde una planilla requiere el permiso '
+            '"Eliminar productos en masa".')]
+    ids = {
+        _norm(code): pid for pid, code in db.execute(
+            select(Product.id, Product.code).where(Product.company_id == company_id)
+        ).all()
+    }
+    active_kids: dict[int, set[str]] = defaultdict(set)
+    for parent_id, code in db.execute(
+        select(Product.parent_id, Product.code).where(
+            Product.company_id == company_id, Product.parent_id.is_not(None),
+            Product.is_active.is_(True))
+    ).all():
+        active_kids[parent_id].add(_norm(code))
+    going = {_norm(v["code"]) for _, v in off}
+
+    errors: list[RowError] = []
+    for row_no, v in off:
+        pid = ids.get(_norm(v["code"]))
+        if pid is None:
+            errors.append(RowError(
+                row_no, "is_active",
+                f'"{v["code"]}" no existe, así que no hay nada que desactivar.'))
+            continue
+        refusal = products_service.deactivation_refusal(
+            v["code"], active_variants=len(active_kids.get(pid, set()) - going))
+        if refusal:
+            errors.append(RowError(row_no, "is_active", refusal))
+    return errors
+
+
 def _dedupe_key(spec: ImportSpec) -> list[str]:
     return {
         "products": ["code"],
@@ -368,12 +425,13 @@ def analyze(
     company_id: int,
     decimal_format: str = "es",
     code_colors: code_colors_service.Choices | None = None,
+    allow_deactivate: bool = True,
 ) -> Preview:
     """Report what a commit would do. Never writes."""
     parsed, errors, resolver, families = _collect(
         db, spec, headers, rows, mapping,
         company_id=company_id, decimal_format=decimal_format,
-        code_colors=code_colors,
+        code_colors=code_colors, allow_deactivate=allow_deactivate,
     )
     preview = Preview(total=len(rows), errors=errors, families=families)
 
@@ -412,15 +470,32 @@ def analyze(
 
     if spec.key == "products":
         existing = {
-            _norm(c) for c in db.execute(
-                select(Product.code).where(Product.company_id == company_id)
-            ).scalars()
+            _norm(code): (pid, active)
+            for pid, code, active in db.execute(
+                select(Product.id, Product.code, Product.is_active)
+                .where(Product.company_id == company_id)
+            ).all()
         }
+        switched_off: list[int] = []
         for _, values in good:
-            if _norm(values.get("code", "")) in existing:
-                preview.to_update += 1
-            else:
+            hit = existing.get(_norm(values.get("code", "")))
+            if hit is None:
                 preview.to_create += 1
+                continue
+            preview.to_update += 1
+            pid, active = hit
+            if active and values.get("is_active") is False:
+                preview.to_deactivate += 1
+                switched_off.append(pid)
+                if len(preview.deactivate_sample) < 12:
+                    preview.deactivate_sample.append(values["code"])
+            elif not active and values.get("is_active") is True:
+                preview.to_reactivate += 1
+        if switched_off:
+            preview.deactivate_with_stock = db.execute(
+                select(func.count(func.distinct(StockLevel.product_id))).where(
+                    StockLevel.product_id.in_(switched_off), StockLevel.quantity != 0)
+            ).scalar_one()
     elif spec.key == "price_list_items":
         # A (list, code) pair the list already has is an update; anything else
         # gets appended to that list's ladder.
@@ -460,13 +535,14 @@ def commit(
     decimal_format: str = "es",
     create_missing: bool = True,
     code_colors: code_colors_service.Choices | None = None,
+    allow_deactivate: bool = True,
 ) -> dict:
     """Apply the batch. All rows or none — the caller's transaction is rolled
     back on any error."""
     parsed, errors, resolver, families = _collect(
         db, spec, headers, rows, mapping,
         company_id=company_id, decimal_format=decimal_format,
-        code_colors=code_colors,
+        code_colors=code_colors, allow_deactivate=allow_deactivate,
     )
     if errors:
         raise ImportError_(
@@ -536,6 +612,7 @@ def _apply_products(db, parsed, *, company_id, user_id) -> dict:
             ("model", "model_id"), ("supplier", "supplier_id"),
             ("min_stock", "min_stock"), ("sale_price", "sale_price"),
             ("price_list", "price_list_id"), ("multicolor", "multicolor"),
+            ("is_active", "is_active"),
         ):
             if src in v:
                 setattr(product, dst, v[src])
@@ -589,6 +666,8 @@ def _apply_products(db, parsed, *, company_id, user_id) -> dict:
     db.flush()
     for row_no, v in parsed:
         product = by_code[_norm(v["code"])]
+        if not product.is_active:
+            continue            # taken out of the catalogue: nothing to split
         try:
             products_service.sync_variants(
                 db, product, company_id=company_id, user_id=user_id,

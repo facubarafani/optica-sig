@@ -68,6 +68,10 @@ class ImportSpec:
         return [f.key for f in self.fields if f.required]
 
 
+# Switching products off from a file ("Activo" = no) needs this on top of the
+# spec's own permission. See services.provisioning.PERMISSIONS.
+BULK_DELETE_PERMISSION = "products:bulk_delete"
+
 PRODUCTS = ImportSpec(
     key="products",
     label="Productos",
@@ -93,6 +97,10 @@ PRODUCTS = ImportSpec(
               help="sí = un solo artículo con todos esos colores (un armazón "
                    "bicolor). no = con dos o más colores se crea uno por color. "
                    "Vacío: queda como está (no, si es nuevo)."),
+        Field("is_active", "Activo", kind="bool", example="sí",
+              help="no = se desactiva: no se borra, deja de aparecer en listas, "
+                   "ventas y exportaciones. Requiere el permiso Eliminar productos "
+                   "en masa. sí = vuelve a activarlo. Vacío: queda como está."),
         Field("parent", "Producto base", kind="ref", ref="product", deferred=True,
               example="ARM-001",
               help="Código del producto del que este es una variante de color. "
