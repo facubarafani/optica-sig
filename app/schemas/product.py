@@ -213,6 +213,9 @@ class ProductRead(SoftDeleteRead, ProductBase):
     # ``variant_count`` > 0 means this is a style: not sellable, not stockable.
     variant_count: int = 0
     parent_code: str | None = None
+    # Units on hand across every branch; a style reports its colours' sum.
+    # None when the viewer lacks stock:read — the product list must not leak it.
+    stock_on_hand: Decimal | None = None
     # Resolved by services.pricing.resolve_prices — not stored on the row.
     resolved_sale_price: Decimal | None = None
     price_source: str | None = None

@@ -314,6 +314,47 @@ def test_a_variant_reports_the_style_it_belongs_to(
     assert fetched["parent_code"] == "ARM-001"
 
 
+def test_the_list_reports_stock_and_a_style_sums_its_colours(
+    client, auth_headers, style, palette, product_type_id, branch_id
+):
+    plain = client.post("/api/products",
+                        json={"code": "LC-001", "product_type_id": product_type_id},
+                        headers=auth_headers).json()
+    variants = client.post(f"/api/products/{style['id']}/variants",
+                           json={"color_ids": [palette["Negro"], palette["Havana"]]},
+                           headers=auth_headers).json()
+    for product_id, qty in ((variants[0]["id"], "3"), (variants[1]["id"], "2"),
+                            (plain["id"], "4")):
+        client.post("/api/stock/movements", json={
+            "product_id": product_id, "branch_id": branch_id,
+            "movement_type": "inbound", "quantity": qty,
+        }, headers=auth_headers)
+
+    def stock(qs, headers=auth_headers):
+        listed = client.get(f"/api/products{qs}", headers=headers).json()
+        return {p["code"]: p["stock_on_hand"] for p in listed}
+
+    grid = stock("?only_base=true")
+    assert float(grid["ARM-001"]) == 5 and float(grid["LC-001"]) == 4
+    family = stock(f"?parent_id={style['id']}")
+    assert sorted(float(v) for v in family.values()) == [2, 3]
+
+    # Seeing the catalogue is not seeing the shelves.
+    perms = {p["code"]: p["id"] for p in
+             client.get("/api/permissions", headers=auth_headers).json()}
+    role = client.post("/api/roles", json={
+        "name": "Catálogo", "permission_ids": [perms["products:read"]],
+    }, headers=auth_headers).json()
+    client.post("/api/users", json={
+        "email": "catalogo@test.com", "full_name": "Catálogo",
+        "password": "catalogo1234", "role_ids": [role["id"]],
+    }, headers=auth_headers)
+    tok = client.post("/api/auth/login", json={
+        "email": "catalogo@test.com", "password": "catalogo1234"}).json()
+    viewer = {"Authorization": f"Bearer {tok['access_token']}"}
+    assert set(stock("?only_base=true", viewer).values()) == {None}
+
+
 # --- bulk import / export --------------------------------------------------
 
 def test_import_links_a_variant_to_its_style(client, auth_headers):

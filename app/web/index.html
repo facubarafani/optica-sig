@@ -2680,7 +2680,7 @@ async function dashboardView(view) {
           [ { key:"product_id", label:"Producto", render:(v)=>esc(pmap[v] || ("#"+v)) },
             { key:"branch_id", label:"Sucursal", render:(v)=>esc(bmap[v] || ("#"+v)) },
             { key:"quantity", label:"Cant.", type:"num", align:"right" },
-            { key:"effective_min_stock", label:"Mín", type:"num", align:"right" } ], low)
+            { key:"effective_min_stock", label:"Stock mínimo", type:"num", align:"right" } ], low)
         : `<div class="empty" style="padding:14px">Todo por encima del mínimo 👍</div>`) + `</div>`;
     } catch {}
   }
@@ -3076,7 +3076,7 @@ async function productsView(view) {
     const body = el(`<div>${renderTable(
       [ { key:"branch_id", label:"Sucursal", render:(v)=>esc(bmap[v] || ("#"+v)) },
         { key:"quantity", label:"Cant.", type:"num", align:"right" },
-        { key:"min_stock", label:"Mín", type:"num", align:"right" } ], levels)}</div>`);
+        { key:"min_stock", label:"Stock mínimo", type:"num", align:"right" } ], levels)}</div>`);
     openModal({ title:`Stock — ${row.code}${row.description ? " · " + row.description : ""}`, body });
   }
 
@@ -3188,7 +3188,12 @@ async function productsView(view) {
               ? `<span class="fhelp" title="Se vende por color">por color</span>`
               : `<span class="badge gray" title="${esc(r.price_reason || "")}">sin precio</span>` },
         { key:"current_cost", label:"Costo", type:"money", align:"right", priority:2 },
-        { key:"min_stock", label:"Mín", type:"num", align:"right", priority:3 },
+        /* Lo que se busca al recorrer el catálogo es cuánto hay; el mínimo vive
+           en el formulario y en Stock. Un estilo muestra la suma de sus colores. */
+        ...(can("stock:read") ? [{ key:"stock_on_hand", label:"Stock", align:"right",
+            render:(v, r) => v == null ? "-"
+              : r.variant_count ? `<span title="Suma de sus colores">${fmtNum(v)}</span>`
+              : fmtNum(v) }] : []),
         { key:"is_active", label:"Estado", type:"bool", priority:3 },
   ];
 
@@ -4278,7 +4283,7 @@ async function stockView(view) {
         // almost always unset, so the product default is what applies.
         render:(v,r)=>{ const min = r.effective_min_stock; const low = min!=null && Number(v)<=Number(min);
                         return `${fmtNum(v)} ${low?badge("bajo","amber"):""}`; } },
-      { key:"effective_min_stock", label:"Mín", type:"num", align:"right",
+      { key:"effective_min_stock", label:"Stock mínimo", type:"num", align:"right",
         render:(v,r)=>`${fmtNum(v)}${r.min_stock!=null?' <span class="fhelp">(sucursal)</span>':""}` },
     ], "Ningún producto coincide con la búsqueda.");
     wireFilters(n, lf, reload);

@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from decimal import Decimal
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -114,6 +115,36 @@ def variant_counts(db: Session, parent_ids: list[int]) -> dict[int, int]:
         .group_by(Product.parent_id)
     ).all()
     return {pid: n for pid, n in rows}
+
+
+def stock_totals(
+    db: Session, products: list[Product], *, company_id: int
+) -> dict[int, Decimal]:
+    """{product_id: units on hand across every branch} — one query for a page.
+
+    A style holds no stock of its own, so its figure is the sum of its active
+    variants: the number a grid wants on the line that stands for the family.
+    """
+    from app.models.stock import StockLevel
+
+    ids = {p.id for p in products}
+    totals = {pid: Decimal("0") for pid in ids}
+    if not ids:
+        return totals
+    rows = db.execute(
+        select(Product.id, Product.parent_id, Product.is_active,
+               func.sum(StockLevel.quantity))
+        .join(StockLevel, StockLevel.product_id == Product.id)
+        .where(StockLevel.company_id == company_id,
+               Product.id.in_(ids) | Product.parent_id.in_(ids))
+        .group_by(Product.id, Product.parent_id, Product.is_active)
+    ).all()
+    for pid, parent_id, is_active, qty in rows:
+        if pid in ids:
+            totals[pid] += qty
+        if parent_id in ids and is_active:
+            totals[parent_id] += qty
+    return totals
 
 
 def has_variants(db: Session, product: Product) -> bool:

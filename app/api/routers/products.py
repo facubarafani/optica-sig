@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.core import search
 from app.core.crud import CRUDBase
 from app.core.database import get_db
-from app.core.deps import get_company_id, require_permission
+from app.core.deps import get_company_id, has_permission, require_permission
 from app.models.auth import User
 from app.models.product import Color, Product
 from app.schemas.pricing import CostHistoryRead
@@ -26,15 +26,22 @@ router = APIRouter(prefix="/products", tags=["products"])
 crud = CRUDBase(Product)
 
 
-def _decorate(db: Session, products: list[Product], company_id: int) -> list[dict]:
-    """Attach the resolved price and the family facts to each product.
+def _decorate(
+    db: Session, products: list[Product], company_id: int, viewer: User
+) -> list[dict]:
+    """Attach the resolved price, the family facts and the stock to each product.
 
-    Both are batched — one extra query for the whole page rather than one per
+    All batched — one extra query for the whole page rather than one per
     row — because a products grid is the one place where an N+1 is felt.
     """
     resolved = pricing_service.resolve_prices(db, products, company_id=company_id)
     counts = products_service.variant_counts(db, [p.id for p in products])
     parent_codes = _parent_codes(db, products, company_id)
+    # Stock is its own permission: a products:read role must not learn it here.
+    stock = (
+        products_service.stock_totals(db, products, company_id=company_id)
+        if has_permission(viewer, "stock:read") else None
+    )
     out = []
     for p in products:
         data = ProductRead.model_validate(p, from_attributes=True).model_dump()
@@ -45,6 +52,8 @@ def _decorate(db: Session, products: list[Product], company_id: int) -> list[dic
         data["price_currency"] = r.currency
         data["variant_count"] = counts.get(p.id, 0)
         data["parent_code"] = parent_codes.get(p.parent_id)
+        if stock is not None:
+            data["stock_on_hand"] = stock[p.id]
         out.append(data)
     return out
 
@@ -87,7 +96,7 @@ def list_products(
     q: str | None = None,
     db: Session = Depends(get_db),
     company_id: int = Depends(get_company_id),
-    _: object = Depends(require_permission("products:read")),
+    current_user: User = Depends(require_permission("products:read")),
 ):
     """``q`` matches the code or the description, ignoring case and accents.
 
@@ -127,7 +136,7 @@ def list_products(
         },
         extra_where=where or None,
     )
-    return _decorate(db, products, company_id)
+    return _decorate(db, products, company_id, current_user)
 
 
 @router.post("", response_model=ProductRead, status_code=status.HTTP_201_CREATED)
@@ -164,7 +173,7 @@ def create_product(
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
     db.commit()
     db.refresh(obj)
-    return _decorate(db, [obj], company_id)[0]
+    return _decorate(db, [obj], company_id, current_user)[0]
 
 
 @router.get("/{product_id}", response_model=ProductRead)
@@ -172,9 +181,11 @@ def get_product(
     product_id: int,
     db: Session = Depends(get_db),
     company_id: int = Depends(get_company_id),
-    _: object = Depends(require_permission("products:read")),
+    current_user: User = Depends(require_permission("products:read")),
 ):
-    return _decorate(db, [_get(db, product_id, company_id)], company_id)[0]
+    return _decorate(
+        db, [_get(db, product_id, company_id)], company_id, current_user
+    )[0]
 
 
 @router.get("/{product_id}/price", response_model=ProductPriceRead)
@@ -250,7 +261,7 @@ def update_product(
     db.add(obj)
     db.commit()
     db.refresh(obj)
-    return _decorate(db, [obj], company_id)[0]
+    return _decorate(db, [obj], company_id, current_user)[0]
 
 
 @router.get("/{product_id}/variants", response_model=list[ProductRead])
@@ -259,7 +270,7 @@ def list_variants(
     include_inactive: bool = False,
     db: Session = Depends(get_db),
     company_id: int = Depends(get_company_id),
-    _: object = Depends(require_permission("products:read")),
+    current_user: User = Depends(require_permission("products:read")),
 ):
     """The colours this style is stocked in."""
     _get(db, product_id, company_id)
@@ -271,7 +282,7 @@ def list_variants(
         # colours, not as the order somebody happened to add them.
         order_by=Product.code,
     )
-    return _decorate(db, variants, company_id)
+    return _decorate(db, variants, company_id, current_user)
 
 
 @router.post(
@@ -284,7 +295,7 @@ def create_variants(
     data: VariantsCreate,
     db: Session = Depends(get_db),
     company_id: int = Depends(get_company_id),
-    _: object = Depends(require_permission("products:write")),
+    current_user: User = Depends(require_permission("products:write")),
 ):
     """Turn a style into one article per colour.
 
@@ -307,7 +318,7 @@ def create_variants(
     db.commit()
     for v in created:
         db.refresh(v)
-    return _decorate(db, created, company_id)
+    return _decorate(db, created, company_id, current_user)
 
 
 @router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -342,7 +353,7 @@ def change_cost(
         )
     except pricing_service.PricingError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
-    return _decorate(db, [obj], company_id)[0]
+    return _decorate(db, [obj], company_id, current_user)[0]
 
 
 @router.get("/{product_id}/cost-history", response_model=list[CostHistoryRead])

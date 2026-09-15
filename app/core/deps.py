@@ -74,12 +74,17 @@ def get_company_id(current_user: User = Depends(get_current_user)) -> int:
     return current_user.company_id
 
 
+def has_permission(user: User, code: str) -> bool:
+    """For a response that shows more to whoever may see more (superusers pass)."""
+    codes = user.permission_codes
+    return "*" in codes or code in codes
+
+
 def require_permission(code: str) -> Callable[..., User]:
     """Dependency factory enforcing a permission code (superusers bypass)."""
 
     def checker(current_user: User = Depends(get_current_user)) -> User:
-        codes = current_user.permission_codes
-        if "*" in codes or code in codes:
+        if has_permission(current_user, code):
             return current_user
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
