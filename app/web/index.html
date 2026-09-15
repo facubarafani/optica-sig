@@ -279,6 +279,19 @@
   /* Sin borde, así que le toca el tinte fuerte: es lo único que lo señala. */
   .btn.ghost{border-color:transparent;background:transparent}
   .btn.ghost:hover:not(:disabled){background:var(--press)}
+  /* A quantity with an info icon beside it. Rows without the icon keep an empty
+     slot of the same width, so every number sits on the same edge. */
+  .qty-cell{display:inline-flex;align-items:center;gap:2px;margin-right:-4px;font-variant-numeric:tabular-nums}
+  .qty-info{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;color:var(--muted)}
+  .qty-info .ic{width:15px;height:15px}
+  /* The whole cell is the button: an empty one laid over it, so the target is
+     the full row height rather than a 15px icon, and the number underneath
+     still sizes the column. */
+  td:has(> .qty-hit){position:relative}
+  .qty-hit{position:absolute;inset:0;width:100%;margin:0;padding:0;border:0;background:transparent;cursor:pointer}
+  .qty-hit:focus-visible{outline:2px solid var(--primary);outline-offset:-2px}
+  td:has(> .qty-hit:hover){background:var(--press)}
+  td:has(> .qty-hit:hover) .qty-info{color:var(--text)}
   /* inputs */
   label.fld{display:block;font-size:12.5px;font-weight:600;color:var(--label);margin-bottom:5px}
   label.fld .req{color:var(--danger)}
@@ -351,6 +364,17 @@
   .rowmenu button.danger{color:var(--danger)}
   .rowmenu button.danger:hover{background:var(--danger-50)}
   .rowmenu .sep{height:1px;background:var(--border);margin:5px 2px}
+  /* stock detail: the same panel as the row menu, holding a small table */
+  .stockpop{position:absolute;z-index:60;background:var(--panel);border:1px solid var(--border);
+    border-radius:10px;box-shadow:var(--shadow-lg);padding:6px 0;min-width:180px;animation:pop .12s ease}
+  .stockpop .sp-head{padding:4px 12px 6px;font-size:11px;font-weight:600;letter-spacing:.04em;
+    text-transform:uppercase;color:var(--muted)}
+  .stockpop .sp-row{display:grid;grid-template-columns:1fr auto minmax(52px,auto);gap:14px;
+    align-items:center;padding:6px 12px;font-size:13px}
+  .stockpop .sp-row + .sp-row{border-top:1px solid #f1f5f9}
+  .stockpop .sp-qty{font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+  .stockpop .sp-min{color:var(--muted);font-size:12px;white-space:nowrap}
+  .stockpop .sp-empty{padding:6px 12px 8px;color:var(--muted);font-size:13px}
   td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
   .mono{font-family:var(--mono);font-size:12.5px}
   /* badges */
@@ -610,6 +634,7 @@
 <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
 <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
 <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></symbol>
 <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></symbol>
 <symbol id="i-sheet" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h2"/><path d="M14 13h2"/><path d="M8 17h2"/><path d="M14 17h2"/></symbol>
 <symbol id="i-transfer" viewBox="0 0 24 24"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></symbol>
@@ -1670,9 +1695,8 @@ async function formModal({ title, fields, values = {}, confirmLabel = "Guardar",
 /* Overflow menu for secondary row actions. Keeps the grid narrow without
    hiding anything: every action stays reachable, just one click deeper. */
 function openRowMenu(anchor, items) {
-  const existing = document.querySelector(".rowmenu");
-  if (existing) existing.remove();
   const menu = el(`<div class="rowmenu"></div>`);
+  let close = () => {};
   for (const it of items) {
     if (!it) continue;
     if (it.sep) { menu.appendChild(el(`<div class="sep"></div>`)); continue; }
@@ -1681,25 +1705,53 @@ function openRowMenu(anchor, items) {
     b.addEventListener("click", () => { close(); it.onClick(); });
     menu.appendChild(b);
   }
-  document.body.appendChild(menu);
+  close = openPopover(anchor, menu) || close;
+  return close;
+}
 
-  // Anchor below-right of the trigger, flipping up / clamping when it would
-  // fall outside the viewport.
+/* A panel anchored to the element that opened it: the "⋯" menu and the stock
+   detail. Only one is open at a time, and it goes on an outside click, Escape
+   or scroll. Opening it again from the same trigger just closes it, so the
+   trigger toggles instead of flickering shut and back open. Returns the close
+   function, or null when the call was that closing toggle.
+   `side` opens it beside the trigger instead of below, for triggers stacked in
+   a column: below, it would cover the next row's trigger. */
+function openPopover(anchor, node, { side = false } = {}) {
+  const existing = document.querySelector(".popover");
+  if (existing) {
+    existing._close();
+    if (existing._anchor === anchor) return null;
+  }
+  node.classList.add("popover");
+  node._anchor = anchor;
+  document.body.appendChild(node);
+
+  // Below-right of the trigger (or beside it, top-aligned), flipping and
+  // clamping when it would fall outside the viewport.
   const r = anchor.getBoundingClientRect();
-  const below = r.bottom + 6;
-  const flip = below + menu.offsetHeight > window.innerHeight - 8;
-  menu.style.top = ((flip ? r.top - menu.offsetHeight - 6 : below) + window.scrollY) + "px";
-  menu.style.left = (Math.max(8, Math.min(
-    r.right - menu.offsetWidth, window.innerWidth - menu.offsetWidth - 8)) + window.scrollX) + "px";
+  const w = node.offsetWidth, h = node.offsetHeight;
+  let top, left;
+  if (side) {
+    left = r.right + 6 + w > window.innerWidth - 8 ? r.left - w - 6 : r.right + 6;
+    top = Math.min(r.top, window.innerHeight - h - 8);
+  } else {
+    const below = r.bottom + 6;
+    top = below + h > window.innerHeight - 8 ? r.top - h - 6 : below;
+    left = Math.min(r.right - w, window.innerWidth - w - 8);
+  }
+  node.style.top = (Math.max(8, top) + window.scrollY) + "px";
+  node.style.left = (Math.max(8, left) + window.scrollX) + "px";
 
-  const onOut = (e) => { if (!menu.contains(e.target)) close(); };
+  // A press on the trigger is left to its own click handler, which toggles.
+  const onOut = (e) => { if (!node.contains(e.target) && !anchor.contains(e.target)) close(); };
   const onKey = (e) => { if (e.key === "Escape") close(); };
   const close = () => {
-    menu.remove();
+    node.remove();
     document.removeEventListener("mousedown", onOut, true);
     document.removeEventListener("keydown", onKey, true);
     window.removeEventListener("scroll", close, true);
   };
+  node._close = close;
   setTimeout(() => {
     document.addEventListener("mousedown", onOut, true);
     document.addEventListener("keydown", onKey, true);
@@ -3070,14 +3122,27 @@ async function productsView(view) {
     openModal({ title:`Historial de costos — ${row.code}`, body, wide:true });
   }
 
-  async function stockModal(row) {
-    const levels = await api("GET", `/api/stock/levels?product_id=${row.id}`).catch(() => []);
-    const bmap = can("branches:read") ? await idMap("/api/branches") : {};
-    const body = el(`<div>${renderTable(
-      [ { key:"branch_id", label:"Sucursal", render:(v)=>esc(bmap[v] || ("#"+v)) },
-        { key:"quantity", label:"Cant.", type:"num", align:"right" },
-        { key:"min_stock", label:"Stock mínimo", type:"num", align:"right" } ], levels)}</div>`);
-    openModal({ title:`Stock — ${row.code}${row.description ? " · " + row.description : ""}`, body });
+  /* Stock por sucursal, anclado a la celda que se tocó: un vistazo, no una
+     ventana. El mínimo es el efectivo (el de la sucursal o, si no tiene, el del
+     producto), el mismo que usa la sección Stock para marcar "bajo". */
+  async function stockPopover(anchor, row) {
+    const [levels, bmap] = await Promise.all([
+      api("GET", `/api/stock/levels?product_id=${row.id}`).catch(() => []),
+      can("branches:read") ? idMap("/api/branches") : Promise.resolve({}),
+    ]);
+    const lines = levels.map(l => {
+      const min = Number(l.effective_min_stock) || 0;
+      const low = min > 0 && Number(l.quantity) <= min;
+      return `<div class="sp-row">
+        <span class="sp-branch">${esc(bmap[l.branch_id] || ("#" + l.branch_id))}</span>
+        <span class="sp-qty">${fmtNum(l.quantity)}</span>
+        <span class="sp-min">${min ? "mín " + fmtNum(min) : ""}${low ? " " + badge("bajo", "amber") : ""}</span>
+      </div>`;
+    }).join("");
+    openPopover(anchor, el(`<div class="stockpop" role="dialog" aria-label="Stock por sucursal de ${esc(row.code)}">
+      <div class="sp-head">Stock por sucursal</div>
+      ${lines || `<div class="sp-empty">Sin stock cargado.</div>`}
+    </div>`), { side: true });
   }
 
   /* Turn a product into a style: one article per colour, each with its own
@@ -3124,12 +3189,10 @@ async function productsView(view) {
      into a horizontal scroll. */
   function actions(r) {
     let h = "";
-    // A style holds no stock of its own, so that button would lie. It gets the
-    // way into its colours instead.
+    // Stock has no button here: the amount in its column opens the detail. A
+    // style gets the way into its colours instead.
     if (r.variant_count)
       h += `<button class="btn sm" data-act="family" data-id="${r.id}"><svg class="ic"><use href="#i-tags"/></svg>${r.variant_count} colores</button>`;
-    else if (can("stock:read"))
-      h += `<button class="btn sm" data-act="stock" data-id="${r.id}"><svg class="ic"><use href="#i-box"/></svg>Stock</button>`;
     if (writable)
       h += `<button class="btn sm" data-act="edit" data-id="${r.id}"><svg class="ic"><use href="#i-pencil"/></svg>Editar</button>`;
     h += `<button class="btn sm ico" title="Más acciones" data-act="more" data-id="${r.id}"><svg class="ic"><use href="#i-more"/></svg></button>`;
@@ -3189,11 +3252,15 @@ async function productsView(view) {
               : `<span class="badge gray" title="${esc(r.price_reason || "")}">sin precio</span>` },
         { key:"current_cost", label:"Costo", type:"money", align:"right", priority:2 },
         /* Lo que se busca al recorrer el catálogo es cuánto hay; el mínimo vive
-           en el formulario y en Stock. Un estilo muestra la suma de sus colores. */
+           en el formulario y en Stock. El ícono de información abre el detalle
+           por sucursal. Un estilo muestra la suma de sus colores, sin ícono: al
+           abrirlo, cada color trae el suyo. */
         ...(can("stock:read") ? [{ key:"stock_on_hand", label:"Stock", align:"right",
             render:(v, r) => v == null ? "-"
-              : r.variant_count ? `<span title="Suma de sus colores">${fmtNum(v)}</span>`
-              : fmtNum(v) }] : []),
+              : r.variant_count
+                ? `<span class="qty-cell" title="Suma de sus colores">${fmtNum(v)}<span class="qty-info"></span></span>`
+                : `<span class="qty-cell">${fmtNum(v)}<span class="qty-info"><svg class="ic"><use href="#i-info"/></svg></span></span>`
+                  + `<button class="qty-hit" data-act="stock" data-id="${r.id}" title="Ver stock por sucursal" aria-label="Ver stock por sucursal"></button>` }] : []),
         { key:"is_active", label:"Estado", type:"bool", priority:3 },
   ];
 
@@ -3277,7 +3344,7 @@ async function productsView(view) {
         ev.stopPropagation();
         const act = btn.dataset.act;
         if (act === "edit") openForm("edit", hijo);
-        else if (act === "stock") stockModal(hijo);
+        else if (act === "stock") stockPopover(btn, hijo);
         else if (act === "more") rowMenu(btn, hijo);
       });
     }));
@@ -3326,7 +3393,7 @@ async function productsView(view) {
       ev.stopPropagation();                       // no abrir la fila al apretar un botón
       const row = list.find(x => String(x.id) === b.dataset.id), act = b.dataset.act;
       if (act === "edit") openForm("edit", row);
-      else if (act === "stock") stockModal(row);
+      else if (act === "stock") stockPopover(b, row);
       else if (act === "family") toggleFamilyRow(b.closest("tr"), row);
       else if (act === "more") rowMenu(b, row);
     }));
