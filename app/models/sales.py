@@ -139,6 +139,15 @@ class SaleItem(IDMixin, CompanyMixin, Base):
     sale: Mapped["Sale"] = relationship(back_populates="items")
     product: Mapped["Product"] = relationship(lazy="joined")
 
+    # Named on the line itself, so a receipt never depends on a catalogue page.
+    @property
+    def product_code(self) -> str | None:
+        return self.product.code if self.product else None
+
+    @property
+    def product_description(self) -> str | None:
+        return self.product.description if self.product else None
+
 
 class SalePayment(IDMixin, CompanyMixin, Base):
     """Money received against a sale. A sale can collect many over time — that

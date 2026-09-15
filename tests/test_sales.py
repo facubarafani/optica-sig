@@ -103,6 +103,19 @@ def test_price_comes_from_the_pricing_service(client, auth_headers, shop):
     assert sale["number"].startswith("V-")
 
 
+def test_a_sale_line_names_its_product(client, auth_headers, shop):
+    """The sale detail labels lines from these, not from a product list that
+    stops at one API page."""
+    resp = make_sale(client, auth_headers, shop, payments=[
+        {"amount": "50000", "method": "cash"}])
+    assert resp.status_code == 201, resp.text
+    sale = resp.json()
+    fetched = client.get(f"/api/sales/{sale['id']}", headers=auth_headers).json()
+    for line in (sale["items"][0], fetched["items"][0]):
+        assert line["product_code"] == "ARM-001"
+        assert line["product_description"] == "Producto ARM-001"
+
+
 def test_manual_price_overrides_the_resolved_one(client, auth_headers, shop):
     resp = make_sale(client, auth_headers, shop, items=[
         {"product_id": shop["products"]["ARM-001"], "quantity": "1",

@@ -78,6 +78,9 @@ class SaleItemRead(ORMBase):
     discount_value: Decimal | None = None
     discount_amount: Decimal
     line_total: Decimal
+    # The product as it reads today, so a sale's detail needs no catalogue page.
+    product_code: str | None = None
+    product_description: str | None = None
 
 
 # --- sales -----------------------------------------------------------------

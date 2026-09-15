@@ -279,6 +279,9 @@
   /* Sin borde, así que le toca el tinte fuerte: es lo único que lo señala. */
   .btn.ghost{border-color:transparent;background:transparent}
   .btn.ghost:hover:not(:disabled){background:var(--press)}
+  /* a form field that opens the product search: reads as the field it fills */
+  .btn.pickbtn{width:100%;justify-content:flex-start;font-weight:400}
+  .btn.pickbtn .lbl{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   /* A quantity with an info icon beside it. Rows without the icon keep an empty
      slot of the same width, so every number sits on the same edge. */
   .qty-cell{display:inline-flex;align-items:center;gap:2px;margin-right:-4px;font-variant-numeric:tabular-nums}
@@ -875,6 +878,13 @@ const fmtNum  = (v) => (v == null || v === "" ? "—" : String(Number(v)));
 const fmtDate = (v) => (v ? new Date(v).toLocaleDateString("es-AR") : "—");
 const fmtDateTime = (v) => (v ? new Date(v).toLocaleString("es-AR", { dateStyle:"short", timeStyle:"short" }) : "—");
 function badge(text, cls) { return `<span class="badge ${cls}">${esc(text)}</span>`; }
+/* "ARM-001 · Armazón clásico" from a row that names its product (stock levels,
+   movements, sale lines). Never from a product map: that is one API page, and a
+   real catalogue is longer. Returns plain text; escape it where it is drawn. */
+function productLabel(r) {
+  if (!r.product_code) return "#" + r.product_id;
+  return r.product_description ? `${r.product_code} · ${r.product_description}` : r.product_code;
+}
 const boolBadge = (v) => v ? badge("Activo","green") : badge("Inactivo","gray");
 
 const TITLECASE = (s) => String(s||"").replace(/_/g," ").replace(/\b\w/g, c => c.toUpperCase());
@@ -1480,6 +1490,23 @@ async function buildForm(fields, values = {}, grid = false) {
           });
         });
       }
+    } else if (f.type === "product") {
+      // A product is found by searching, not by scrolling a <select>: a shop's
+      // catalogue runs to hundreds of codes, past what one API page returns.
+      // The hidden input is what read() and validate() see, like any field.
+      row.innerHTML = `<label class="fld">${esc(f.label)}${reqMark}</label>
+        <input type="hidden" name="${f.key}" value="${v != null ? esc(v) : ""}">
+        <button type="button" class="btn pickbtn"><svg class="ic"><use href="#i-search"/></svg><span class="lbl">Buscar producto…</span></button>`;
+      const hidden = row.querySelector('input[type="hidden"]');
+      const lbl = row.querySelector(".pickbtn .lbl");
+      row.querySelector(".pickbtn").addEventListener("click", () => {
+        const branch = f.branchField ? form.querySelector(`[name="${f.branchField}"]`)?.value : "";
+        pickProduct(branch ? Number(branch) : null, (p) => {
+          hidden.value = p.id;
+          lbl.textContent = p.description ? `${p.code} · ${p.description}` : p.code;
+          form.dispatchEvent(new Event("change", { bubbles: true }));
+        });
+      });
     } else if (f.type === "color") {
       // A tone is optional ("sin tono" is a real state), so the field cannot
       // just be an <input type="color"> — that always holds a colour. The hex
@@ -2725,11 +2752,10 @@ async function dashboardView(view) {
       // override *or* the product default, which the old client-side filter on
       // min_stock alone could not see (it is almost always null).
       const low = await api("GET", "/api/stock/levels?low_only=true");
-      const pmap = can("products:read") ? await idMap("/api/products", "code", p => p.description ? `${p.code} · ${p.description}` : p.code) : {};
       const bmap = can("branches:read") ? await idMap("/api/branches") : {};
       lowStockHtml = `<div class="card pad"><h3 style="margin-bottom:12px">Stock bajo / agotado ${low.length ? badge(low.length, "amber") : badge("0","green")}</h3>` +
         (low.length ? renderTable(
-          [ { key:"product_id", label:"Producto", render:(v)=>esc(pmap[v] || ("#"+v)) },
+          [ { key:"product_id", label:"Producto", render:(v, r)=>esc(productLabel(r)) },
             { key:"branch_id", label:"Sucursal", render:(v)=>esc(bmap[v] || ("#"+v)) },
             { key:"quantity", label:"Cant.", type:"num", align:"right" },
             { key:"effective_min_stock", label:"Stock mínimo", type:"num", align:"right" } ], low)
@@ -2793,7 +2819,8 @@ async function productsView(view) {
       showIf:(v) => (v.color_ids || []).length > 1 },
     { key:"min_stock", label:"Stock mínimo", type:"decimal", step:"0.01" },
     { key:"parent_id", label:"Producto base", type:"select", valueType:"int",
-      optionsFrom:{ endpoint:"/api/products?only_base=true",
+      // Past the API's default page of 100: every base must be choosable.
+      optionsFrom:{ endpoint:"/api/products?only_base=true&limit=10000",
                     labelFn: p => p.description ? `${p.code} · ${p.description}` : p.code },
       help:"Para un producto que ya existe y es el mismo modelo en otro color. "
          + "Lo normal es generarlas con ⋯ → Generar variantes." },
@@ -3755,9 +3782,8 @@ async function newSaleModal(onDone) {
 
 /* Sale detail: what was sold, what was paid, what is still owed. */
 async function saleDetailModal(id, onDone) {
-  const [sale, pmap, cmap, bmap, accounts] = await Promise.all([
+  const [sale, cmap, bmap, accounts] = await Promise.all([
     api("GET", `/api/sales/${id}`),
-    idMap("/api/products", "code", p => p.description ? `${p.code} · ${p.description}` : p.code),
     idMap("/api/customers", "id", customerLabel),
     idMap("/api/branches"),
     api("GET", "/api/payment-accounts").catch(() => []),
@@ -3778,7 +3804,7 @@ async function saleDetailModal(id, onDone) {
       <th>Producto</th><th class="num">Cant.</th><th class="num">Precio</th><th class="num">Desc.</th><th class="num">Total</th>
     </tr></thead><tbody>
       ${sale.items.map(i => `<tr>
-        <td>${esc(pmap[i.product_id] || ("#" + i.product_id))}${i.price_overridden ? ` ${badge("precio manual","amber")}` : ""}</td>
+        <td>${esc(productLabel(i))}${i.price_overridden ? ` ${badge("precio manual","amber")}` : ""}</td>
         <td class="num">${fmtNum(i.quantity)}</td>
         <td class="num">${fmtMoney(i.unit_price)}</td>
         <td class="num">${Number(i.discount_amount) > 0 ? "− " + fmtMoney(i.discount_amount) : "—"}</td>
@@ -4294,13 +4320,11 @@ async function pricingView(view) {
    ======================================================================= */
 async function stockView(view) {
   const writable = can("stock:write");
-  const [pmap, bmap, typeMap, brandMap, colorMap, prodOpts, branchOpts] = await Promise.all([
-    idMap("/api/products", "code", p => p.description ? `${p.code} · ${p.description}` : p.code),
+  const [bmap, typeMap, brandMap, colorMap, branchOpts] = await Promise.all([
     idMap("/api/branches"),
     can("products:read") ? idMap("/api/product-types") : Promise.resolve({}),
     can("products:read") ? idMap("/api/brands") : Promise.resolve({}),
     can("products:read") ? idMap("/api/colors") : Promise.resolve({}),
-    options({ endpoint:"/api/products", labelFn:p => p.description ? `${p.code} · ${p.description}` : p.code }),
     options({ endpoint:"/api/branches" }),
   ]);
   // Filters live out here so they survive tab switches and reloads. The API
@@ -4309,11 +4333,13 @@ async function stockView(view) {
   const mf = { q:"", branch_id:"", movement_type:"" };
   let tab = 0;
   const branchSel = (key, required) => ({ key, label: key==="from_branch_id"?"Desde sucursal":key==="to_branch_id"?"Hacia sucursal":"Sucursal", type:"select", required, valueType:"int", options: branchOpts });
-  const prodSel = { key:"product_id", label:"Producto", type:"select", required:true, valueType:"int", options: prodOpts };
+  // Searched, not scrolled: the catalogue is too long for a <select>. The branch
+  // field lets the search show what that branch holds.
+  const prodSel = (branchField) => ({ key:"product_id", label:"Producto", type:"product", required:true, valueType:"int", branchField });
 
   function newMovement() {
     formModal({ title:"Nuevo movimiento de stock", grid:true, confirmLabel:"Registrar",
-      fields:[ prodSel, branchSel("branch_id", true),
+      fields:[ prodSel("branch_id"), branchSel("branch_id", true),
         { key:"movement_type", label:"Tipo", type:"select", required:true, options:[
           { value:"inbound", label:"Ingreso (+)" }, { value:"outbound", label:"Egreso (−)" }, { value:"adjustment", label:"Ajuste (=)" } ] },
         { key:"quantity", label:"Cantidad", type:"decimal", step:"0.01", required:true, help:"Magnitud positiva. El ajuste fija el nivel a este valor." },
@@ -4322,7 +4348,7 @@ async function stockView(view) {
   }
   function newTransfer() {
     formModal({ title:"Transferencia entre sucursales", grid:true, confirmLabel:"Transferir",
-      fields:[ prodSel, branchSel("from_branch_id", true), branchSel("to_branch_id", true),
+      fields:[ prodSel("from_branch_id"), branchSel("from_branch_id", true), branchSel("to_branch_id", true),
         { key:"quantity", label:"Cantidad", type:"decimal", step:"0.01", required:true },
         { key:"reference", label:"Referencia" }, { key:"note", label:"Nota", type:"textarea", full:true } ],
       onSubmit: async (p) => {
@@ -4343,7 +4369,7 @@ async function stockView(view) {
       <div id="lbody"></div>`;
     const body = $("#lbody", n);
     const reload = () => resultsInto(body, "/api/stock/levels", lf, [
-      { key:"product_id", label:"Producto", render:(v)=>esc(pmap[v]||("#"+v)) },
+      { key:"product_id", label:"Producto", render:(v, r)=>esc(productLabel(r)) },
       { key:"branch_id", label:"Sucursal", render:(v)=>esc(bmap[v]||("#"+v)) },
       { key:"quantity", label:"Cantidad", type:"num", align:"right",
         // effective_min_stock, not min_stock: the per-branch override is
@@ -4368,7 +4394,7 @@ async function stockView(view) {
     const body = $("#mbody", n);
     const reload = () => resultsInto(body, "/api/stock/movements", { ...mf, limit:100 }, [
       { key:"created_at", label:"Fecha", type:"datetime" },
-      { key:"product_id", label:"Producto", render:(v)=>esc(pmap[v]||("#"+v)) },
+      { key:"product_id", label:"Producto", render:(v, r)=>esc(productLabel(r)) },
       { key:"branch_id", label:"Sucursal", render:(v)=>esc(bmap[v]||("#"+v)) },
       { key:"movement_type", label:"Tipo", type:"badge", cls:"blue", map: ENUM_ES.movement_type },
       { key:"quantity", label:"Cant.", type:"num", align:"right" },

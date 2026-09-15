@@ -83,6 +83,20 @@ def test_movement_ledger_records_each_change(client, auth_headers, product_id, b
     assert len(movements) == 2
 
 
+def test_levels_and_movements_name_their_product(client, auth_headers, product_id, branch_id):
+    """Screens label stock rows from these fields. A product map built from one
+    API page cannot name the 101st product of a real catalogue."""
+    _inbound(client, auth_headers, product_id, branch_id, 3)
+    product = client.get(f"/api/products/{product_id}", headers=auth_headers).json()
+    level = client.get(f"/api/stock/levels?product_id={product_id}",
+                       headers=auth_headers).json()[0]
+    movement = client.get(f"/api/stock/movements?product_id={product_id}",
+                          headers=auth_headers).json()[0]
+    for row in (level, movement):
+        assert row["product_code"] == product["code"]
+        assert row["product_description"] == product["description"]
+
+
 def test_stock_service_unit(db, product_id, branch_id):
     """Direct service test: apply_movement keeps level + ledger in sync."""
     from app.schemas.stock import StockMovementCreate

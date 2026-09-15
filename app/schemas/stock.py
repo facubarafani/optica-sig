@@ -19,6 +19,9 @@ class StockLevelRead(ORMBase):
     # What actually applies: the override if there is one, else the product's
     # default. Use this to decide whether a row is low, not min_stock.
     effective_min_stock: Decimal | None = None
+    # Named here so a screen never needs the whole catalogue to label a row.
+    product_code: str | None = None
+    product_description: str | None = None
 
 
 class StockMovementCreate(BaseModel):
@@ -56,3 +59,5 @@ class StockMovementRead(ORMBase):
     note: str | None = None
     created_by_user_id: int | None = None
     created_at: datetime
+    product_code: str | None = None
+    product_description: str | None = None

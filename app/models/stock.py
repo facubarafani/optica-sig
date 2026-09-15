@@ -58,6 +58,16 @@ class StockLevel(IDMixin, CompanyMixin, Base):
             return Decimal(self.min_stock)
         return Decimal(self.product.min_stock if self.product else 0)
 
+    # Carried on the row so a screen can name the product without fetching the
+    # catalogue, which a shop's size easily pushes past one page.
+    @property
+    def product_code(self) -> str | None:
+        return self.product.code if self.product else None
+
+    @property
+    def product_description(self) -> str | None:
+        return self.product.description if self.product else None
+
 
 class StockMovement(IDMixin, CompanyMixin, Base):
     __tablename__ = "stock_movements"
@@ -87,3 +97,13 @@ class StockMovement(IDMixin, CompanyMixin, Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+
+    product: Mapped["Product"] = relationship(lazy="joined")
+
+    @property
+    def product_code(self) -> str | None:
+        return self.product.code if self.product else None
+
+    @property
+    def product_description(self) -> str | None:
+        return self.product.description if self.product else None
