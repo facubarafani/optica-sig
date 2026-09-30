@@ -2793,11 +2793,60 @@ async function dashboardView(view) {
     } catch {}
   }
 
+  const overdueHtml = can("sales:read") ? await vencidosHtml() : "";
+
   view.innerHTML = `
     <div class="page-head"><div><h2>Hola, ${esc((state.user.full_name||"").split(" ")[0] || state.user.email)}</h2>
       <div class="sub">${esc(state.company?.name || "Mi Óptica")} · ${esc(state.currency)}</div></div></div>
     <div class="stats">${stats || '<div class="stat"><div class="k">Sin permisos de lectura</div></div>'}</div>
+    ${overdueHtml}
     ${lowStockHtml}`;
+  view.addEventListener("click", (e) => {
+    const b = e.target.closest('[data-act="venta"]');
+    if (b) saleDetailModal(Number(b.dataset.id), () => route());
+  });
+}
+
+/* Los pagos prometidos que ya vencieron, del más atrasado al más reciente. Sólo
+   aparece si hay alguno: es un aviso, no una sección. Los clientes se piden de
+   a uno porque son pocos y la lista entera viene en páginas de cien. */
+const VENCIDOS_MAX = 8;
+async function vencidosHtml() {
+  let rows;
+  try { rows = await api("GET", "/api/sales?pending_only=true&overdue_only=true"); }
+  catch { return ""; }
+  if (!rows.length) return "";
+  const hoy = todayISO();
+  rows.sort((a, b) => a.promised_payment_date.localeCompare(b.promised_payment_date) || a.id - b.id);
+  const total = rows.reduce((t, r) => t + Number(r.balance), 0);
+  const shown = rows.slice(0, VENCIDOS_MAX);
+  const ids = [...new Set(shown.map(r => r.customer_id).filter(Boolean))];
+  const clientes = can("customers:read")
+    ? Object.fromEntries(await Promise.all(ids.map(id =>
+        api("GET", `/api/customers/${id}`).then(c => [id, c]).catch(() => [id, null]))))
+    : {};
+  const dias = (iso) => Math.round((new Date(hoy) - new Date(iso)) / 86400000);
+  const table = renderTable([
+    { key:"customer_id", label:"Cliente", render:(v) => {
+        if (!v) return "Consumidor final";
+        const c = clientes[v];
+        if (!c) return esc("#" + v);
+        return `${esc(`${c.last_name}, ${c.first_name}`)}${c.phone ? `<div class="fhelp">${esc(c.phone)}</div>` : ""}`; } },
+    { key:"number", label:"Venta", mono:true, priority:2 },
+    { key:"promised_payment_date", label:"Prometió pagar", render:(v) => {
+        const d = dias(v);
+        return `${fmtDate(v)} ${badge(d === 1 ? "hace 1 día" : `hace ${d} días`, "red")}`; } },
+    { key:"reminder_note", label:"Recordatorio", trunc:true,
+      render:(v) => v ? `<span title="${esc(v)}">${esc(v)}</span>` : "-" },
+    { key:"balance", label:"Debe", align:"right", render:(v) => `<b style="color:var(--danger)">${fmtMoney(v)}</b>` },
+  ], shown, (r) => `<button class="btn sm" data-act="venta" data-id="${r.id}"><svg class="ic"><use href="#i-eye"/></svg>Ver</button>`);
+  const mas = rows.length > shown.length
+    ? `<a href="#/pending" class="btn sm ghost" style="margin-top:10px">Ver las ${rows.length} en Cuentas pendientes</a>`
+    : `<a href="#/pending" class="btn sm ghost" style="margin-top:10px">Ir a Cuentas pendientes</a>`;
+  return `<div class="card pad" style="margin-bottom:16px">
+    <h3 style="margin-bottom:12px">Pagos vencidos ${badge(rows.length, "red")}
+      <span class="fhelp" style="font-weight:400;margin-left:6px">${fmtMoney(total)} sin cobrar</span></h3>
+    ${table}${mas}</div>`;
 }
 
 /* =======================================================================
@@ -3482,7 +3531,8 @@ async function productsView(view) {
    /api/sales/preview for the totals, so what is on screen and what gets
    saved are computed by the same code.
    ======================================================================= */
-const todayISO = () => new Date().toISOString().slice(0, 10);
+// El día de quien mira, no el de Greenwich: toISOString() pasa a mañana a las 21 h.
+const todayISO = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
 const customerLabel = (c) => `${c.last_name}, ${c.first_name}` +
   (c.document_number ? ` · ${c.document_number}` : "");
 
