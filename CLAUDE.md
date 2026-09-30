@@ -135,6 +135,10 @@ not built yet.
     deactivated), skips any row that moved on and says why. Redo is undoing the
     undo. The author or an admin (`users:write`) may undo, for 90 days. `AREAS`
     is an allowlist on purpose: sales, payments, users and auth stay out.
+    The console's Ctrl+Z bar is scoped to the session: it passes the
+    `/api/activity/cursor` id it read when the tab opened as `after_id`, so
+    it only walks what was done since; older changes are undone from
+    Actividad.
 
 ## Web console (`app/web/index.html`)
 

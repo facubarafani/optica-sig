@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -46,6 +46,7 @@ def list_operations(
     mine: bool = False,
     limit: int = Query(50, ge=1, le=200),
     before_id: int | None = None,
+    after_id: int | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -53,24 +54,43 @@ def list_operations(
     stmt = _originals(current_user, mine=mine)
     if before_id is not None:
         stmt = stmt.where(Operation.id < before_id)
+    if after_id is not None:
+        stmt = stmt.where(Operation.id > after_id)
     ops = db.execute(stmt.order_by(Operation.id.desc()).limit(limit)).scalars().all()
     return journal.summaries(db, ops, current_user)
+
+
+@router.get("/cursor")
+def cursor(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict[str, int]:
+    """Where the journal stands now. The console keeps it as the start of its
+    session and passes it back as ``after_id``: Ctrl+Z walks what was done
+    since, and anything older is undone from Actividad. An id rather than a
+    time, so the browser's clock cannot move the line."""
+    last = db.execute(select(func.max(Operation.id))
+                      .where(Operation.company_id == current_user.company_id)).scalar()
+    return {"last_id": last or 0}
 
 
 @router.get("/latest", response_model=OperationRead | None)
 def latest(
     action: Literal["undo", "redo"],
+    after_id: int = 0,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Your next Ctrl+Z (the newest change still in effect) or Ctrl+Shift+Z
-    (the newest undo still in effect).
+    (the newest undo still in effect), among what happened after ``after_id``:
+    both the change and, for a redo, the undo itself.
 
     ``null`` when there is none. Not a 404: the console's top bar asks after
     every save, and a browser logs each 404 as an error.
     """
     if action == "undo":
         ops = db.execute(_originals(current_user, mine=True)
+                         .where(Operation.id > after_id)
                          .order_by(Operation.id.desc()).limit(50)).scalars()
         for op in ops:
             if not journal.is_undone(db, op) and journal.refusal(db, current_user, op) is None:
@@ -81,6 +101,7 @@ def latest(
         select(Operation).where(
             Operation.company_id == current_user.company_id,
             Operation.user_id == current_user.id, Operation.reverts_id.is_not(None),
+            Operation.reverts_id > after_id,
         ).order_by(Operation.id.desc()).limit(50)
     ).scalars()
     for undo in undos:

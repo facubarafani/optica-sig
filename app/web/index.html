@@ -568,6 +568,7 @@
   /* Deshacer / Rehacer / Historial, fijos arriba como en un programa de escritorio. */
   .undobar{display:flex;align-items:center;gap:2px;margin-left:6px;padding-left:10px;border-left:1px solid var(--border)}
   .undobar .btn:disabled{opacity:.4}
+  .undobar[hidden]{display:none}
   @media(max-width:900px){ .undobar .btn span{display:none} }
   .rowmenu{max-width:min(480px,calc(100vw - 16px))}
   .rowmenu .lbl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
@@ -995,6 +996,8 @@ async function loadSession() {
 function logout() {
   state.token = null; state.user = null; state.perms = new Set(); state.company = null;
   localStorage.removeItem(TOKEN_KEY);
+  try { sessionStorage.removeItem(INICIO_KEY); } catch {}
+  _inicio = null;
   clearOptions();
   renderLogin();
 }
@@ -1251,15 +1254,15 @@ function tokenClaims() {
 /* ----------------------------- app shell ------------------------------- */
 const NAV = [
   { route:"dashboard", label:"Inicio",          icon:"i-dashboard", perm:null },
-  { route:"products",  label:"Productos",        icon:"i-package", perm:"products:read" },
-  { route:"catalog",   label:"Catálogo",         icon:"i-tags", perm:"products:read" },
-  { route:"pricing",   label:"Precios",          icon:"i-banknote", perm:"pricing:read" },
-  { route:"stock",     label:"Stock",            icon:"i-layers", perm:"stock:read" },
+  { route:"products",  label:"Productos",        icon:"i-package", perm:"products:read", undo:true },
+  { route:"catalog",   label:"Catálogo",         icon:"i-tags", perm:"products:read", undo:true },
+  { route:"pricing",   label:"Precios",          icon:"i-banknote", perm:"pricing:read", undo:true },
+  { route:"stock",     label:"Stock",            icon:"i-layers", perm:"stock:read", undo:true },
   { route:"sales",     label:"Ventas",           icon:"i-receipt", perm:"sales:read" },
   { route:"pending",   label:"Cuentas pendientes", icon:"i-clock", perm:"sales:read" },
   { route:"customers", label:"Clientes",         icon:"i-users", perm:"customers:read" },
-  { route:"suppliers", label:"Proveedores",      icon:"i-truck", perm:"suppliers:read" },
-  { route:"branches",  label:"Sucursales",       icon:"i-store", perm:"branches:read" },
+  { route:"suppliers", label:"Proveedores",      icon:"i-truck", perm:"suppliers:read", undo:true },
+  { route:"branches",  label:"Sucursales",       icon:"i-store", perm:"branches:read", undo:true },
   { route:"activity",  label:"Actividad",        icon:"i-rotate", perm:null },
   { route:"users",     label:"Usuarios y Roles", icon:"i-shield", perm:"users:read" },
   { route:"company",   label:"Empresa",          icon:"i-settings", perm:"company:read" },
@@ -1323,6 +1326,8 @@ function highlightNav(section) {
   $$("#sidebar .nav a").forEach(a => a.classList.toggle("active", a.dataset.route === section));
   const n = NAV.find(x => x.route === section);
   const crumb = $("#crumb"); if (crumb) crumb.textContent = n ? n.label : "—";
+  // Deshacer sólo tiene sentido donde se edita lo que el historial registra.
+  const bar = $(".undobar"); if (bar) bar.hidden = !(n && n.undo);
 }
 
 /* Cada navegación pinta en un #view propio. Una sección lenta que todavía
@@ -2575,6 +2580,27 @@ async function activityView(view) {
   }
 }
 
+/* Ctrl+Z es de la sesión, como en un programa de escritorio: deshace lo que se
+   hizo desde que se abrió esta pestaña. Lo anterior se deshace desde
+   Actividad. El comienzo es la última operación que había entonces
+   (/api/activity/cursor), guardado por pestaña y atado al token: recargar lo
+   conserva, y otro ingreso o una sesión de soporte empiezan de cero. */
+const INICIO_KEY = "sgi_undo_desde";
+let _inicio = null;
+function inicioSesion() {
+  const firma = (state.token || "").slice(-24);
+  if (_inicio && _inicio.firma === firma) return _inicio.id;
+  let guardado = null;
+  try { guardado = JSON.parse(sessionStorage.getItem(INICIO_KEY) || "null"); } catch {}
+  if (guardado && guardado.firma === firma) { _inicio = { firma, id: Promise.resolve(guardado.id) }; return _inicio.id; }
+  const id = api("GET", "/api/activity/cursor").then(r => {
+    try { sessionStorage.setItem(INICIO_KEY, JSON.stringify({ firma, id: r.last_id })); } catch {}
+    return r.last_id;
+  }).catch(() => { _inicio = null; return Number.MAX_SAFE_INTEGER; });   // sin comienzo, nada que deshacer
+  _inicio = { firma, id };
+  return id;
+}
+
 /* La barra de arriba: Deshacer, Rehacer e Historial. Cada botón dice qué va a
    hacer antes de hacerlo (en su title) y se apaga cuando no hay nada. El
    estado lo sabe el servidor, así que se le pregunta después de cada guardado,
@@ -2585,8 +2611,9 @@ function refrescarDeshacer() {
   clearTimeout(_barraTimer);
   _barraTimer = setTimeout(async () => {
     if (!state.user || !$("#ubUndo")) return;
+    const desde = await inicioSesion();
     const [undo, redo] = await Promise.all(["undo", "redo"].map(a =>
-      api("GET", `/api/activity/latest?action=${a}`).catch(() => null)));
+      api("GET", `/api/activity/latest?action=${a}&after_id=${desde}`).catch(() => null)));
     pintarBotonDeshacer($("#ubUndo"), undo, "Deshacer", "Ctrl+Z");
     pintarBotonDeshacer($("#ubRedo"), redo, "Rehacer", "Ctrl+Shift+Z");
   }, 150);
@@ -2596,7 +2623,7 @@ function pintarBotonDeshacer(boton, op, verbo, atajo) {
   if (!boton) return;
   boton._op = op;
   boton.disabled = !op;
-  boton.title = op ? `${verbo}: ${op.label} (${atajo})` : `Nada para ${verbo.toLowerCase()}`;
+  boton.title = op ? `${verbo}: ${op.label} (${atajo})` : `Nada para ${verbo.toLowerCase()} en esta sesión`;
 }
 
 function haceCuanto(iso) {
@@ -2607,12 +2634,12 @@ function haceCuanto(iso) {
   return `hace ${Math.round(min / 1440)} d`;
 }
 
-/* El desplegable del reloj: tus últimos diez cambios, cada uno con lo que
-   se puede hacer con él. Desde acá siempre se muestra la vista previa, porque
-   puede no ser el último. */
+/* El desplegable del reloj: tus últimos diez cambios de esta sesión, cada uno
+   con lo que se puede hacer con él. Desde acá siempre se muestra la vista
+   previa, porque puede no ser el último. Lo anterior está en Actividad. */
 async function abrirHistorial(anchor) {
   let ops;
-  try { ops = await api("GET", "/api/activity?mine=true&limit=10"); }
+  try { ops = await api("GET", `/api/activity?mine=true&limit=10&after_id=${await inicioSesion()}`); }
   catch (ex) { return toast(ex.message, "err"); }
   const filas = ops.length ? ops.map(op => ({
     icon: op.undone ? "i-redo" : "i-undo",
@@ -2620,11 +2647,11 @@ async function abrirHistorial(anchor) {
     hint: haceCuanto(op.created_at),
     disabled: !(op.undone ? op.can_redo : op.can_undo),
     onClick: () => revertir(op, op.undone ? "redo" : "undo"),
-  })) : [{ icon: "i-history", label: "Todavía no hay cambios tuyos", disabled: true, onClick: () => {} }];
+  })) : [{ icon: "i-history", label: "No hiciste cambios en esta sesión", disabled: true, onClick: () => {} }];
   openRowMenu(anchor, [
     ...filas,
     { sep: true },
-    { icon: "i-history", label: "Ver toda la actividad", onClick: () => { location.hash = "#/activity"; } },
+    { icon: "i-history", label: "Cambios anteriores (Actividad)", onClick: () => { location.hash = "#/activity"; } },
   ]);
 }
 
@@ -2710,9 +2737,11 @@ async function revertir(op, action, { rapido = false } = {}) {
    qué va a deshacer antes de hacerlo. */
 async function atajoDeshacer(action, { desde = null } = {}) {
   let op;
-  try { op = await api("GET", `/api/activity/latest?action=${action}`); }
+  try { op = await api("GET", `/api/activity/latest?action=${action}&after_id=${await inicioSesion()}`); }
   catch (ex) { return toast(ex.message, "err"); }
-  if (!op) return toast(action === "undo" ? "No hay nada para deshacer." : "No hay nada para rehacer.");
+  if (!op) return toast(action === "undo"
+    ? "No hay nada para deshacer en esta sesión. Los cambios anteriores están en Actividad."
+    : "No hay nada para rehacer en esta sesión.");
   const reciente = desde == null || Math.abs(new Date(op.created_at).getTime() - desde) < 60000;
   revertir(op, action, { rapido: reciente });
 }
@@ -2726,6 +2755,7 @@ document.addEventListener("keydown", (e) => {
   // Escribiendo en un campo, el atajo es del texto; con un formulario abierto, de él.
   if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
   if (document.querySelector(".overlay")) return;
+  if ($(".undobar")?.hidden) return;   // en esta sección no hay nada que deshacer
   e.preventDefault();
   atajoDeshacer(rehacer ? "redo" : "undo");
 });

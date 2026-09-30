@@ -181,6 +181,32 @@ def test_latest_follows_the_undo_stack(client, auth_headers, product_type_id):
     assert _product(client, auth_headers, p["id"])["description"] == "Dos"
 
 
+def test_latest_stops_at_the_session_start(client, auth_headers, product_type_id):
+    p = _create(client, auth_headers, product_type_id)
+    _edit(client, auth_headers, p["id"], description="Antes")
+    start = client.get("/api/activity/cursor", headers=auth_headers).json()["last_id"]
+    assert start > 0
+
+    def latest(action):
+        return client.get("/api/activity/latest", params={"action": action, "after_id": start},
+                          headers=auth_headers).json()
+
+    assert latest("undo") is None                         # older work is not Ctrl+Z's
+    _edit(client, auth_headers, p["id"], description="Ahora")
+    mine = latest("undo")
+    assert mine is not None and mine["id"] > start
+    _revert(client, auth_headers, mine["id"])
+    assert latest("redo")["id"] == mine["id"]
+    assert latest("undo") is None                         # the old edit stays out of reach
+
+    # Undoing an old change from Actividad does not pull it into the session.
+    old = _ops(client, auth_headers)[1]
+    assert old["id"] <= start
+    _revert(client, auth_headers, old["id"])
+    assert latest("redo")["id"] == mine["id"]
+    assert [o["id"] for o in _ops(client, auth_headers, mine=True, after_id=start)] == [mine["id"]]
+
+
 # --- imports -----------------------------------------------------------------
 
 def test_an_import_can_be_undone_and_redone(client, auth_headers):
