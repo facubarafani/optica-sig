@@ -13,10 +13,10 @@ behind.
 """
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core import search
@@ -33,7 +33,7 @@ from app.schemas.sales import (
     SalePreviewItem,
 )
 from app.schemas.stock import StockMovementCreate
-from app.services import numbering, pricing
+from app.services import clock, numbering, pricing
 from app.services import products as products_service
 from app.services import stock as stock_service
 
@@ -445,16 +445,20 @@ def list_sales(
             Sale.balance > 0,
             Sale.status.not_in(NON_DEBT_STATUSES),
             Sale.promised_payment_date.is_not(None),
-            Sale.promised_payment_date < date.today(),
+            Sale.promised_payment_date < clock.today(db, company_id),
         )
     if due_from is not None:
         stmt = stmt.where(Sale.promised_payment_date >= due_from)
     if due_to is not None:
         stmt = stmt.where(Sale.promised_payment_date <= due_to)
-    if sold_from is not None:
-        stmt = stmt.where(Sale.sold_at >= sold_from)
-    if sold_to is not None:
-        stmt = stmt.where(func.date(Sale.sold_at) <= sold_to)
+    # Calendar days are the shop's: "hasta el 16" includes a sale rung up at
+    # 22:00 on the 16th, which UTC already files under the 17th.
+    if sold_from is not None or sold_to is not None:
+        tz = clock.company_zone(db, company_id)
+        if sold_from is not None:
+            stmt = stmt.where(Sale.sold_at >= clock.day_start(sold_from, tz))
+        if sold_to is not None:
+            stmt = stmt.where(Sale.sold_at < clock.day_start(sold_to + timedelta(days=1), tz))
 
     if terms := _customer_name_match(q):
         stmt = stmt.outerjoin(Customer, Customer.id == Sale.customer_id)
@@ -481,7 +485,7 @@ def get_sale(db: Session, sale_id: int, *, company_id: int) -> Sale | None:
 
 def pending_summary(db: Session, *, company_id: int) -> dict:
     """Headline numbers for the "cuentas pendientes" screen."""
-    today = date.today()
+    today = clock.today(db, company_id)
     rows = db.execute(
         select(Sale.balance, Sale.promised_payment_date).where(
             Sale.company_id == company_id,

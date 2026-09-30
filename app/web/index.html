@@ -4682,6 +4682,35 @@ async function rolesTab(container) {
 /* =======================================================================
    COMPANY + SETTINGS
    ======================================================================= */
+/* La zona se guarda con su nombre IANA (America/Argentina/Buenos_Aires), que
+   nadie lee así. La lista muestra un nombre y el desfase actual, calculado por
+   el navegador para que el horario de verano (Chile) salga bien. Un valor que
+   no está en la lista se conserva tal cual, para no pisarlo al guardar. */
+const ZONAS = [
+  ["America/Argentina/Buenos_Aires", "Argentina"],
+  ["America/Montevideo", "Uruguay"],
+  ["America/Asuncion", "Paraguay"],
+  ["America/Santiago", "Chile"],
+  ["America/La_Paz", "Bolivia"],
+  ["America/Sao_Paulo", "Brasil (Brasilia)"],
+  ["America/Lima", "Perú"],
+  ["America/Bogota", "Colombia"],
+  ["America/Mexico_City", "México (Ciudad de México)"],
+  ["Europe/Madrid", "España (península)"],
+];
+function desfase(tz) {
+  try {
+    const p = new Intl.DateTimeFormat("es-AR", { timeZone: tz, timeZoneName: "shortOffset" })
+      .formatToParts(new Date()).find(x => x.type === "timeZoneName");
+    return p ? p.value.replace("GMT", "UTC").replace(/^UTC$/, "UTC+0") : "";
+  } catch { return ""; }
+}
+function zonasHorarias(actual) {
+  const opts = ZONAS.map(([value, nombre]) => ({ value, label: `${nombre} (${desfase(value)})` }));
+  if (actual && !ZONAS.some(([v]) => v === actual)) opts.push({ value: actual, label: `${actual} (${desfase(actual)})` });
+  return opts;
+}
+
 async function companyView(view) {
   const writable = can("company:write");
   const company = await api("GET", "/api/company");
@@ -4696,7 +4725,9 @@ async function companyView(view) {
     { key:"address", label:"Dirección", full:true },
   ];
   const settingsFields = [
-    { key:"currency", label:"Moneda" }, { key:"timezone", label:"Zona horaria" },
+    { key:"currency", label:"Moneda" },
+    { key:"timezone", label:"Zona horaria", type:"select", options: zonasHorarias(settings && settings.timezone),
+      help:"Marca cuándo empieza y termina el día de la óptica: qué pagos vencieron y qué entra en un filtro por fecha." },
     { key:"default_branch_id", label:"Sucursal predeterminada", type:"select", valueType:"int", options: branchOpts },
     { key:"default_price_list_id", label:"Lista de precios predeterminada", type:"select", valueType:"int", options: listOpts },
     { key:"allow_negative_stock", label:"Permitir stock negativo", type:"checkbox" },

@@ -1,10 +1,13 @@
 """Ventas: pricing, discounts, stock discharge, payments and pending accounts."""
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 from decimal import Decimal
 
 import pytest
 
 from app.models.enums import DiscountType
+from app.models.sales import Sale
+from app.services import clock
 from app.services import sales as sales_service
 
 
@@ -375,8 +378,14 @@ def test_search_by_number_customer_and_reminder_note(
     assert found("?q=nada-de-esto") == []
 
 
+def _shop_today():
+    """Today in the shop's zone, which is what the server compares against. The
+    machine's own date disagrees with it for three hours every night."""
+    return datetime.now(timezone.utc).astimezone(ZoneInfo(clock.DEFAULT_TIMEZONE)).date()
+
+
 def test_pending_filters(client, auth_headers, shop, customer_id):
-    yesterday = date.today() - timedelta(days=1)
+    yesterday = _shop_today() - timedelta(days=1)
     overdue = make_sale(
         client, auth_headers, shop, customer_id=customer_id,
         payments=[{"amount": "10000", "method": "cash"}],
@@ -385,7 +394,7 @@ def test_pending_filters(client, auth_headers, shop, customer_id):
     future = make_sale(
         client, auth_headers, shop, customer_id=customer_id,
         payments=[{"amount": "10000", "method": "cash"}],
-        promised_payment_date=str(date.today() + timedelta(days=5)),
+        promised_payment_date=str(_shop_today() + timedelta(days=5)),
     ).json()
     settled = make_sale(client, auth_headers, shop, customer_id=customer_id,
                         payments=[{"amount": "50000", "method": "cash"}]).json()
@@ -405,6 +414,60 @@ def test_pending_filters(client, auth_headers, shop, customer_id):
     assert summary["total_pending"] == "80000.00"
     assert summary["overdue_count"] == 1
     assert summary["overdue_amount"] == "40000.00"
+
+
+# --- the shop's calendar ---------------------------------------------------
+# 01:00 UTC on the 17th is 22:00 on the 16th in Buenos Aires: the hours in
+# which a UTC server used to think the shop's day was already over.
+EVENING = datetime(2026, 8, 17, 1, 0, tzinfo=timezone.utc)
+
+
+def test_the_shop_day_is_not_the_servers(db, auth_headers, monkeypatch):
+    monkeypatch.setattr(clock, "_now", lambda: EVENING)
+    assert clock.today(db, 1) == date(2026, 8, 16)
+    tz = clock.zone("America/Argentina/Buenos_Aires")
+    assert clock.day_start(date(2026, 8, 16), tz) == datetime(2026, 8, 16, 3, 0, tzinfo=timezone.utc)
+    assert clock.zone("Marte/Olympus") == tz                # a bad name falls back
+
+
+def test_a_promise_for_today_is_not_overdue_in_the_evening(
+    client, auth_headers, shop, customer_id, monkeypatch
+):
+    monkeypatch.setattr(clock, "_now", lambda: EVENING)
+    today = make_sale(client, auth_headers, shop, customer_id=customer_id,
+                      payments=[{"amount": "10000", "method": "cash"}],
+                      promised_payment_date="2026-08-16").json()
+    late = make_sale(client, auth_headers, shop, customer_id=customer_id,
+                     payments=[{"amount": "10000", "method": "cash"}],
+                     promised_payment_date="2026-08-15").json()
+    overdue = client.get("/api/sales?overdue_only=true", headers=auth_headers).json()
+    assert [s["number"] for s in overdue] == [late["number"]]
+    summary = client.get("/api/sales/pending/summary", headers=auth_headers).json()
+    assert (summary["overdue_count"], summary["due_today_count"]) == (1, 1)
+    assert today["number"] not in [s["number"] for s in overdue]
+
+
+def test_sale_date_filters_use_the_shop_day(client, auth_headers, shop, db):
+    sale = make_sale(client, auth_headers, shop,
+                     payments=[{"amount": "50000", "method": "cash"}]).json()
+    db.get(Sale, sale["id"]).sold_at = EVENING           # 22:00 on the 16th, locally
+    db.commit()
+
+    def numbers(query):
+        return [s["number"] for s in client.get(f"/api/sales{query}", headers=auth_headers).json()]
+
+    assert numbers("?sold_from=2026-08-16&sold_to=2026-08-16") == [sale["number"]]
+    assert numbers("?sold_from=2026-08-17") == []
+    assert numbers("?sold_to=2026-08-15") == []
+
+
+def test_settings_refuse_an_unknown_zone(client, auth_headers):
+    bad = client.put("/api/company/settings", json={"timezone": "America/Springfield"},
+                     headers=auth_headers)
+    assert bad.status_code == 422
+    ok = client.put("/api/company/settings", json={"timezone": "America/Santiago"},
+                    headers=auth_headers)
+    assert ok.status_code == 200 and ok.json()["timezone"] == "America/Santiago"
 
 
 def test_cancelled_sales_never_count_as_pending(

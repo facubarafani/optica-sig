@@ -270,6 +270,11 @@ anywhere else it refuses a default password and prints the CLI command instead.
 ## Gotchas
 
 - `passlib[bcrypt]` is pinned with `bcrypt==4.0.1` to avoid the 4.1+ warning noise.
+- **"Today" is the shop's, never the server's.** Render runs on UTC, three
+  hours ahead of Argentina, so `date.today()` flips to tomorrow at 21:00 local
+  time. Anything that asks what day it is, or filters by calendar day, goes
+  through `services/clock.py` (`today()`, `day_start()`), which reads
+  `company_settings.timezone`. Timestamps stay stored in UTC.
 - Stock is **never** mutated directly. Go through `services.stock.apply_movement()`,
   which writes a `stock_movement` row and updates the matching `stock_level`
   atomically.

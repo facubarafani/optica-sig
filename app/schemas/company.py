@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 
 from app.schemas.common import ORMBase, SoftDeleteRead
+from app.services.clock import is_valid_zone
 
 
 class CompanyBase(BaseModel):
@@ -34,6 +35,14 @@ class CompanyRead(SoftDeleteRead, CompanyBase):
     pass
 
 
+def _known_zone(value: str | None) -> str | None:
+    """A zone the server can resolve: a typo would silently fall back to
+    Buenos Aires in services.clock, and the shop would never know."""
+    if value is not None and not is_valid_zone(value):
+        raise ValueError(f"Zona horaria desconocida: {value}.")
+    return value
+
+
 class CompanySettingsBase(BaseModel):
     currency: str = "ARS"
     timezone: str = "America/Argentina/Buenos_Aires"
@@ -50,6 +59,8 @@ class CompanySettingsUpdate(BaseModel):
     default_branch_id: int | None = None
     default_price_list_id: int | None = None
     low_stock_alerts_enabled: bool | None = None
+
+    _zone = field_validator("timezone")(_known_zone)
 
 
 class CompanySettingsRead(ORMBase, CompanySettingsBase):
