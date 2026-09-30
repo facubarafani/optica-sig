@@ -4712,15 +4712,15 @@ async function companyView(view) {
   const wrap = $("#cwrap", view);
   const card1 = el(`<div class="card pad"><h3 style="margin-bottom:14px">Perfil</h3></div>`);
   card1.appendChild(cForm);
-  if (writable) { const b = el(`<button class="btn primary">Guardar perfil</button>`); b.addEventListener("click", async () => {
-    try { const p = cForm.read(); const e = validate(companyFields, p); if (e) return toast(e,"err"); await api("PUT","/api/company",p); state.currency = p.currency || state.currency; toast("Guardado","ok"); } catch(err){ toast(err.message,"err"); } }); card1.appendChild(b); }
+  if (writable) { const row = el(`<div class="toolbar" style="margin:18px 0 0"><button class="btn primary">Guardar perfil</button></div>`); const b = row.firstElementChild; b.addEventListener("click", async () => {
+    try { const p = cForm.read(); const e = validate(companyFields, p); if (e) return toast(e,"err"); await api("PUT","/api/company",p); state.currency = p.currency || state.currency; toast("Guardado","ok"); } catch(err){ toast(err.message,"err"); } }); card1.appendChild(row); }
   wrap.appendChild(card1);
 
   if (sForm) {
     const card2 = el(`<div class="card pad"><h3 style="margin-bottom:14px">Configuración</h3></div>`);
     card2.appendChild(sForm);
-    if (writable) { const b = el(`<button class="btn primary">Guardar configuración</button>`); b.addEventListener("click", async () => {
-      try { await api("PUT","/api/company/settings", sForm.read()); toast("Guardado","ok"); } catch(err){ toast(err.message,"err"); } }); card2.appendChild(b); }
+    if (writable) { const row = el(`<div class="toolbar" style="margin:18px 0 0"><button class="btn primary">Guardar configuración</button></div>`); const b = row.firstElementChild; b.addEventListener("click", async () => {
+      try { await api("PUT","/api/company/settings", sForm.read()); toast("Guardado","ok"); } catch(err){ toast(err.message,"err"); } }); card2.appendChild(row); }
     wrap.appendChild(card2);
   }
 }
