@@ -4526,16 +4526,22 @@ const CUSTOMER_FIELDS = [
   { key:"notes", label:"Notas", type:"textarea", full:true },
 ];
 
+/* Alta y edición de un cliente: el mismo formulario desde la lista y desde la
+   ficha. Sin `row` es un alta. */
+function customerFormModal(row, onSaved) {
+  const fields = row ? CUSTOMER_FIELDS.concat([{ key:"is_active", label:"Activo", type:"checkbox" }]) : CUSTOMER_FIELDS;
+  formModal({ title: row ? "Editar cliente" : "Nuevo cliente", grid:true, fields, values: row || {},
+    onSubmit: async (p) => {
+      if (row) await api("PUT", "/api/customers/" + row.id, p); else await api("POST", "/api/customers", p);
+      toast("Guardado", "ok"); onSaved();
+    } });
+}
+
 async function customersView(view) {
   const writable = can("customers:write");
   let showInactive = false;
   async function load() { paint(await api("GET", "/api/customers" + (showInactive ? "?include_inactive=true" : ""))); }
-  function openForm(mode, row) {
-    let fields = CUSTOMER_FIELDS.slice();
-    if (mode === "edit") fields = fields.concat([{ key:"is_active", label:"Activo", type:"checkbox" }]);
-    formModal({ title: mode==="edit"?"Editar cliente":"Nuevo cliente", grid:true, fields, values: row || {},
-      onSubmit: async (p) => { if (mode==="edit") await api("PUT","/api/customers/"+row.id,p); else await api("POST","/api/customers",p); toast("Guardado","ok"); load(); } });
-  }
+  const openForm = (mode, row) => customerFormModal(mode === "edit" ? row : null, load);
   function actions(r) {
     let h = `<button class="btn sm" onclick="location.hash='#/customers/${r.id}'"><svg class="ic"><use href="#i-eye"/></svg>Abrir</button>`;
     if (writable) h += `<button class="btn sm" data-act="edit" data-id="${r.id}"><svg class="ic"><use href="#i-pencil"/></svg>Editar</button>
@@ -4575,6 +4581,8 @@ async function customerDetailView(view, id) {
     api("GET", `/api/customers/${id}/treatments`).catch(() => []),
   ]);
   const dim = (v) => v == null ? "—" : v;
+  // Un dato que falta se dice en voz baja, sin raya: la ficha se lee entera.
+  const dato = (v) => v ? esc(v) : `<span style="color:var(--muted)">Sin cargar</span>`;
   view.innerHTML = `
     <div class="page-head">
       <div><h2>${esc(c.first_name)} ${esc(c.last_name)} ${boolBadge(c.is_active)}</h2>
@@ -4582,14 +4590,14 @@ async function customerDetailView(view, id) {
     </div>
     <div class="grid2">
       <div class="card pad">
-        <h3 style="margin-bottom:12px">Datos</h3>
+        <h3 style="margin-bottom:12px">Datos ${writable?`<button class="btn sm" id="editCust" style="float:right"><svg class="ic"><use href="#i-pencil"/></svg>Editar</button>`:""}</h3>
         <dl class="kv">
-          <dt>Documento</dt><dd>${esc(c.document_type||"")} ${esc(c.document_number||"—")}</dd>
-          <dt>Email</dt><dd>${esc(c.email||"—")}</dd>
-          <dt>Teléfono</dt><dd>${esc(c.phone||"—")}</dd>
-          <dt>Fecha de nac.</dt><dd>${fmtDate(c.birth_date)}</dd>
-          <dt>Dirección</dt><dd>${esc(c.address||"—")}</dd>
-          <dt>Notas</dt><dd>${esc(c.notes||"—")}</dd>
+          <dt>Documento</dt><dd>${dato(c.document_number && `${c.document_type || ""} ${c.document_number}`.trim())}</dd>
+          <dt>Email</dt><dd>${dato(c.email)}</dd>
+          <dt>Teléfono</dt><dd>${dato(c.phone)}</dd>
+          <dt>Fecha de nac.</dt><dd>${dato(c.birth_date && fmtDate(c.birth_date))}</dd>
+          <dt>Dirección</dt><dd>${dato(c.address)}</dd>
+          <dt>Notas</dt><dd>${dato(c.notes)}</dd>
         </dl>
       </div>
       <div class="card pad">
@@ -4617,6 +4625,7 @@ async function customerDetailView(view, id) {
     </div>`;
 
   if (writable) {
+    $("#editCust", view)?.addEventListener("click", () => customerFormModal(c, () => customerDetailView(view, id)));
     $("#addTreat", view)?.addEventListener("click", () => formModal({
       title:"Agregar tratamiento", fields:[
         { key:"treatment_type", label:"Tipo", type:"select", required:true, options:[
