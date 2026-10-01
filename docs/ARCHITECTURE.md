@@ -81,8 +81,9 @@ predefined (`sale`→`V-`, `quote`→`P-`, `work_order`→`OT-`, `repair`→`AR-
 `stock_level` is a cache of on-hand quantity per (product, branch); the source of
 truth is the `stock_movement` ledger. `services.stock.apply_movement` writes the
 movement, updates the level, snapshots `resulting_quantity`, and records an audit
-entry — all in one transaction. Outbound below zero is rejected unless
-`company_settings.allow_negative_stock` is on. Transfers post two `transfer`
+entry — all in one transaction. A manual outbound below zero is rejected unless
+`company_settings.allow_negative_stock` is on; a sale never is (it goes through
+and returns `stock_warnings`). Transfers post two `transfer`
 movements (out of source, into destination).
 
 ### Money & quantities

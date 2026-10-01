@@ -8,8 +8,12 @@ Three rules from CLAUDE.md meet here, and none of them may be re-implemented:
 * stock moves only through ``services.stock.apply_movement``.
 
 Everything below runs with ``commit=False`` so one sale is one transaction: if
-a line fails the stock check, no number is burned and no movement is left
-behind.
+a line fails, no number is burned and no movement is left behind.
+
+Missing stock is not a failure. A shop sells what is on the counter whether or
+not the system knew it was there (a product created at 0, a delivery nobody
+loaded), so a sale always discharges, stock may go negative, and
+``stock_warnings`` says so on the form and on the receipt instead of refusing.
 """
 from __future__ import annotations
 
@@ -20,6 +24,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core import search
+from app.models.branch import Branch
 from app.models.company import CompanySettings
 from app.models.customer import Customer
 from app.models.enums import DiscountType, PaymentMethod, SaleStatus, StockMovementType
@@ -173,7 +178,12 @@ def preview(db: Session, data: SaleCreate, *, company_id: int) -> SalePreview:
         sale_discount_value=data.discount_value,
     )
     paid = money(sum((p.amount for p in data.payments), ZERO))
+    warnings = [] if data.status is SaleStatus.QUOTE else stock_warnings(
+        db, data.items, company_id=company_id,
+        branch_id=data.branch_id or _default_branch(db, company_id),
+    )
     return SalePreview(
+        stock_warnings=warnings,
         items=[
             SalePreviewItem(
                 product_id=line.product.id, quantity=line.quantity,
@@ -193,13 +203,6 @@ def preview(db: Session, data: SaleCreate, *, company_id: int) -> SalePreview:
 
 
 # --- writing ---------------------------------------------------------------
-
-def _allow_negative_stock(db: Session, company_id: int) -> bool:
-    cfg = db.execute(
-        select(CompanySettings).where(CompanySettings.company_id == company_id)
-    ).scalar_one_or_none()
-    return bool(cfg.allow_negative_stock) if cfg else False
-
 
 def _default_branch(db: Session, company_id: int) -> int | None:
     cfg = db.execute(
@@ -221,7 +224,6 @@ def _move_stock(
         raise SaleError(
             "La venta necesita una sucursal para poder descontar stock."
         )
-    allow_negative = _allow_negative_stock(db, company_id)
     for item in sale.items:
         try:
             stock_service.apply_movement(
@@ -237,13 +239,64 @@ def _move_stock(
                 ),
                 company_id=company_id,
                 user_id=user_id,
-                allow_negative=(
-                    allow_negative or direction is StockMovementType.INBOUND
-                ),
+                # Never refused for lack of stock: see the module docstring.
+                # stock_warnings is what tells the operator.
+                allow_negative=True,
                 commit=False,
             )
         except stock_service.StockError as exc:
             raise SaleError(str(exc)) from exc
+
+
+def _qty(value: Decimal) -> str:
+    """3, not 3.00: a count of frames reads as a whole number."""
+    return f"{value.normalize():f}"
+
+
+def stock_warnings(
+    db: Session,
+    items: list[SaleItemCreate],
+    *,
+    company_id: int,
+    branch_id: int | None,
+) -> list[str]:
+    """One sentence per product the sale would leave below zero at its branch.
+
+    Read before the discharge, so it states what the shelf held and where it
+    ends up. Lines of the same product are added together, since that is what
+    leaves the shelf.
+    """
+    if branch_id is None or not items:
+        return []
+    wanted: dict[int, Decimal] = {}
+    for item in items:
+        wanted[item.product_id] = wanted.get(item.product_id, ZERO) + Decimal(item.quantity)
+    products = {
+        p.id: p for p in db.execute(
+            select(Product).where(
+                Product.id.in_(wanted), Product.company_id == company_id
+            )
+        ).scalars()
+    }
+    branch = db.execute(
+        select(Branch.name).where(Branch.id == branch_id, Branch.company_id == company_id)
+    ).scalar_one_or_none() or "la sucursal"
+    out = []
+    for product_id, qty in wanted.items():
+        product = products.get(product_id)
+        if product is None:
+            continue
+        level = stock_service.get_level(
+            db, company_id=company_id, product_id=product_id, branch_id=branch_id
+        )
+        have = Decimal(level.quantity) if level else ZERO
+        if have - qty >= 0:
+            continue
+        held = f"no hay stock cargado en {branch}" if have <= 0 else f"hay {_qty(have)} en {branch}"
+        out.append(
+            f"{product.code}: {held}. Se vende igual y el stock queda en {_qty(have - qty)}."
+        )
+    return out
 
 
 def _apply_payments(
@@ -332,13 +385,19 @@ def create_sale(
     db.flush()
     _resettle(sale)
 
+    warnings: list[str] = []
     if data.status is not SaleStatus.QUOTE:
         # A presupuesto has not left the shop, so it holds no stock.
+        warnings = stock_warnings(
+            db, data.items, company_id=company_id, branch_id=branch_id
+        )
         _move_stock(db, sale, company_id=company_id, user_id=user_id,
                     direction=StockMovementType.OUTBOUND)
 
     db.commit()
     db.refresh(sale)
+    # Not a column: it describes this write, so only this response carries it.
+    sale.stock_warnings = warnings
     return sale
 
 

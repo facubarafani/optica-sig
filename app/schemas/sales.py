@@ -140,6 +140,8 @@ class SaleRead(ORMBase):
     is_active: bool
     items: list[SaleItemRead] = Field(default_factory=list)
     payments: list[PaymentRead] = Field(default_factory=list)
+    # Only on the response that created the sale: lines it sold below zero.
+    stock_warnings: list[str] = Field(default_factory=list)
 
 
 class SaleListRead(ORMBase):
@@ -200,3 +202,5 @@ class SalePreview(BaseModel):
     paid_amount: Decimal
     balance: Decimal
     currency: str | None = None
+    # Products this sale would leave below zero. Never blocks the sale.
+    stock_warnings: list[str] = Field(default_factory=list)

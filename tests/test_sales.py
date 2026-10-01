@@ -219,13 +219,63 @@ def test_sale_discharges_stock_through_the_stock_service(
     assert moves[0]["reference"].startswith("V-")
 
 
-def test_selling_more_than_there_is_gets_refused_and_writes_nothing(
-    client, auth_headers, shop
+def test_selling_more_than_there_is_goes_through_and_says_so(
+    client, auth_headers, shop, customer_id
 ):
+    """A shop sells what is on the counter, loaded in the system or not."""
+    items = [{"product_id": shop["products"]["ARM-001"], "quantity": "12"}]
+    preview = client.post(
+        "/api/sales/preview",
+        json={"branch_id": shop["branch_id"], "items": items},
+        headers=auth_headers,
+    ).json()
+    assert preview["stock_warnings"] == [
+        "ARM-001: hay 10 en Central. Se vende igual y el stock queda en -2."
+    ]
+
+    resp = make_sale(client, auth_headers, shop, items=items, customer_id=customer_id)
+    assert resp.status_code == 201, resp.text
+    assert resp.json()["stock_warnings"] == preview["stock_warnings"]
+    levels = client.get(
+        f"/api/stock/levels?product_id={shop['products']['ARM-001']}",
+        headers=auth_headers,
+    ).json()
+    assert levels[0]["quantity"] == "-2.00"
+    # Only the response that made the sale carries the warning.
+    again = client.get(f"/api/sales/{resp.json()['id']}", headers=auth_headers).json()
+    assert again["stock_warnings"] == []
+
+
+def test_a_product_never_stocked_still_sells(
+    client, auth_headers, shop, product_type_id
+):
+    pid = client.post(
+        "/api/products",
+        json={"code": "NUEVO-1", "product_type_id": product_type_id,
+              "pricing_mode": "manual", "sale_price": "100"},
+        headers=auth_headers,
+    ).json()["id"]
+    resp = make_sale(client, auth_headers, shop,
+                     items=[{"product_id": pid, "quantity": "1"}],
+                     payments=[{"amount": "100", "method": "cash"}])
+    assert resp.status_code == 201, resp.text
+    assert resp.json()["stock_warnings"] == [
+        "NUEVO-1: no hay stock cargado en Central. Se vende igual y el stock queda en -1."
+    ]
+
+
+def test_enough_stock_warns_nothing(client, auth_headers, shop):
+    resp = make_sale(client, auth_headers, shop,
+                     payments=[{"amount": "50000", "method": "cash"}])
+    assert resp.status_code == 201, resp.text
+    assert resp.json()["stock_warnings"] == []
+
+
+def test_a_refused_sale_writes_nothing(client, auth_headers, shop):
     resp = make_sale(client, auth_headers, shop, items=[
         {"product_id": shop["products"]["ARM-001"], "quantity": "99"}],
         payments=[{"amount": "1", "method": "cash"}])
-    assert resp.status_code == 400, resp.text
+    assert resp.status_code == 400, resp.text   # a debt with no customer
 
     # No sale, no number burned, no stock moved.
     assert client.get("/api/sales", headers=auth_headers).json() == []

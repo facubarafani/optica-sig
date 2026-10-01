@@ -58,8 +58,12 @@ not built yet.
 10. **A sale is one transaction, written only by `services.sales`.** It resolves
     prices through `pricing.resolve_prices()` (batched), takes its number from
     `numbering.next_number()` and discharges stock through
-    `stock.apply_movement()` — all with `commit=False`, so a failed stock check
-    leaves no number burned and no movement behind. Totals are **stored
+    `stock.apply_movement()` — all with `commit=False`, so a refused sale
+    leaves no number burned and no movement behind. Missing stock never
+    refuses a sale: it discharges with `allow_negative=True` and
+    `sales.stock_warnings()` tells the form (preview) and the receipt (the
+    create response) which products went below zero. `allow_negative_stock`
+    now only governs manual movements. Totals are **stored
     snapshots**, never recomputed on read. Money is corrected by cancelling and
     re-issuing, not by editing a sale: `SaleUpdate` only exposes status, the
     reminder and the notes. The form's running total comes from
