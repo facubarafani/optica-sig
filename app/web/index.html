@@ -401,7 +401,7 @@
   .tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:9px 14px;font-weight:600;color:var(--muted);cursor:pointer;font-size:13.5px}
   .tabs button.active{color:var(--primary);border-bottom-color:var(--primary)}
   /* modal */
-  .overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);display:grid;place-items:center;padding:20px;z-index:50;animation:fade .12s ease}
+  .overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);display:grid;grid-template-columns:minmax(0,1fr);justify-items:center;align-items:center;padding:20px;z-index:50;animation:fade .12s ease}
   @keyframes fade{from{opacity:0}to{opacity:1}}
   .modal{background:var(--panel);border-radius:14px;box-shadow:var(--shadow-lg);width:480px;max-width:100%;max-height:90vh;display:flex;flex-direction:column;animation:pop .14s ease}
   .modal.wide{width:680px}
@@ -583,6 +583,85 @@
   .toast{background:#0f172a;color:#fff;padding:11px 15px;border-radius:9px;box-shadow:var(--shadow-lg);font-size:13px;max-width:360px;animation:slide .16s ease}
   .toast.err{background:var(--danger)}
   .toast.ok{background:var(--ok)}
+  /* ---- Nueva venta: el mostrador ---- */
+  .modal.sale{width:1060px}
+  .modal.sale .body{padding:0}
+  .pos{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(320px,1fr);min-height:460px}
+  .pos-l{padding:18px 20px;display:flex;flex-direction:column;gap:12px;min-width:0}
+  .pos-r{padding:16px 18px;background:var(--hover);border-left:1px solid var(--border);display:flex;flex-direction:column;gap:12px;min-width:0}
+  @media(max-width:880px){ .pos{grid-template-columns:1fr} .pos-r{border-left:0;border-top:1px solid var(--border)} }
+  @media(max-width:560px){ .pos-line{grid-template-columns:auto minmax(0,1fr) auto} .pos-line .nm{grid-column:1/-1} .pos-l,.pos-r{padding:14px} }
+  .pos-search{position:relative}
+  .pos-q{display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:var(--radius-control);padding:4px 4px 4px 12px;background:var(--panel)}
+  .pos-q:focus-within{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-50)}
+  .pos-q>.ic{color:var(--muted)}
+  .pos-q input{border:0;padding:6px 0;box-shadow:none;min-width:0;flex:1}
+  .pos-results{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:5;background:var(--panel);border:1px solid var(--border);
+    border-radius:var(--radius);box-shadow:var(--shadow-lg);max-height:320px;overflow:auto;padding:4px}
+  .pos-cust .pos-results{top:calc(100% + 4px)}
+  .pos-hit{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border:0;background:none;border-radius:8px;
+    font:inherit;font-size:13px;color:var(--text);text-align:left;cursor:pointer}
+  .pos-hit:hover,.pos-hit.on{background:var(--primary-50)}
+  .pos-hit .grow{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pos-hit .code{font-family:var(--mono);font-size:12px;color:var(--ink)}
+  .pos-hit .price{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+  .pos-none{padding:10px;font-size:13px;color:var(--muted)}
+  .pos-empty{display:flex;flex-direction:column;align-items:center;gap:8px;padding:40px 10px;color:var(--muted);font-size:13px;text-align:center;
+    border:1px dashed var(--border);border-radius:var(--radius)}
+  .pos-line{display:grid;grid-template-columns:minmax(0,1fr) auto 104px auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)}
+  .pos-line .nm{min-width:0}
+  .pos-line .nm b{display:block;font-size:13.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pos-line .nm small{display:block;color:var(--muted);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pos-line .code{font-family:var(--mono)}
+  .pos-tag{color:var(--ok);font-weight:600}
+  .pos-line .money{justify-self:end;text-align:right;font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+  .pos-qty input{width:44px}
+  .pos-edit{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;padding:8px 10px;background:var(--hover);border-radius:var(--radius-sm)}
+  .pos-edit label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}
+  .pos-edit input{width:120px;padding:5px 8px}
+  .pos-edit select{width:56px;padding:5px 6px}
+  .pos-links{display:flex;flex-wrap:wrap;gap:4px 16px}
+  .pos-extras{display:flex;flex-direction:column;gap:10px;margin-top:auto;padding-top:6px}
+  .pos-field{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:500;min-width:0}
+  .pos-field input,.pos-field select,.pos-field textarea{font-size:13px;padding:7px 10px}
+  .pos-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .pos-top{display:flex;justify-content:flex-end}
+  .pos-top:empty{display:none}
+  .pos-branch{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:var(--radius-pill);padding:0 4px 0 10px;background:var(--panel);font-size:12.5px}
+  .pos-branch .ic{color:var(--muted)}
+  .pos-branch select{border:0;background:none;padding:4px 4px;width:auto;font-size:12.5px;box-shadow:none}
+  .pos-cust{position:relative;display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px dashed var(--border);border-radius:var(--radius);background:var(--panel)}
+  .pos-cust>.ic{color:var(--muted)}
+  .pos-cust input{border:0;padding:4px 0;box-shadow:none;min-width:0;flex:1;background:none}
+  .pos-cust.need{border-color:var(--warn);background:var(--warn-50)}
+  .pos-cust.need>.ic{color:var(--warn)}
+  .pos-cust.set{border-style:solid}
+  .pos-cust .av{width:30px;height:30px;border-radius:50%;background:var(--primary-50);color:var(--primary-700);display:grid;place-items:center;font-weight:700;font-size:12px;flex:0 0 auto}
+  .pos-cust .grow{flex:1;min-width:0;display:flex;flex-direction:column;font-size:13px;line-height:1.3}
+  .pos-cust .grow b{color:var(--ink)}
+  .pos-cust .grow small{color:var(--muted);font-size:11.5px}
+  .pos-tot{display:flex;flex-direction:column;gap:3px;font-size:13px;font-variant-numeric:tabular-nums}
+  .pos-tot>div{display:flex;justify-content:space-between;gap:10px}
+  .pos-tot .muted{color:var(--muted)}
+  .pos-tot .grand{font-size:24px;font-weight:800;color:var(--ink);letter-spacing:-.01em}
+  .pos-tot .owe{color:var(--warn);font-weight:700}
+  .pos-sec{font-size:11px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:var(--muted);margin-top:2px}
+  .pos-methods{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .pos-pm{padding:10px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--panel);font:inherit;font-size:13px;font-weight:600;color:var(--text);cursor:pointer}
+  .pos-pm:hover{background:var(--press)}
+  .pos-pm.on{border-color:var(--primary);background:var(--primary-50);color:var(--primary-700);box-shadow:0 0 0 1px var(--primary)}
+  .pos-pm.debt.on{border-color:var(--warn);background:var(--warn-50);color:var(--warn);box-shadow:0 0 0 1px var(--warn)}
+  .pos-vuelto{font-size:18px;font-weight:800;color:var(--ok);padding-top:5px;font-variant-numeric:tabular-nums}
+  .pos-vuelto.short{color:var(--warn);font-size:14px}
+  .pos-split{display:flex;flex-direction:column;gap:7px}
+  .pos-splitrow{display:flex;gap:6px;align-items:center}
+  .pos-splitrow input{flex:1;min-width:0;padding:6px 9px}
+  .pos-splitrow select{width:auto;padding:6px 8px}
+  .pos-go{width:100%;justify-content:center;padding:12px 16px;font-size:15px;margin-top:4px}
+  .pos-why{font-size:12px;color:var(--warn);text-align:center;min-height:0}
+  .pos-why:empty{display:none}
+  .pos-quote{align-self:center}
+  .pos-quote:disabled{color:var(--muted);cursor:not-allowed;text-decoration:none}
   .stockwarn{display:flex;gap:9px;align-items:flex-start;margin-top:12px;padding:10px 12px;font-size:12.5px;
     color:var(--text);background:var(--warn-50);border:1px solid #fde68a;border-radius:var(--radius-sm)}
   .stockwarn>.ic{color:var(--warn);flex:0 0 auto;margin-top:1px}
@@ -1416,8 +1495,8 @@ async function route() {
 }
 
 /* ------------------------------- modal --------------------------------- */
-function openModal({ title, body, onConfirm, confirmLabel = "Guardar", wide = false }) {
-  const overlay = el(`<div class="overlay"><div class="modal ${wide ? "wide" : ""}">
+function openModal({ title, body, onConfirm, confirmLabel = "Guardar", wide = false, cls = "" }) {
+  const overlay = el(`<div class="overlay"><div class="modal ${wide ? "wide" : ""} ${cls}">
       <header><h3>${esc(title)}</h3><button class="x" type="button"><svg class="ic"><use href="#i-x"/></svg></button></header>
       <div class="body"></div>
       <footer></footer></div></div>`);
@@ -3838,224 +3917,428 @@ function stockAviso(warnings) {
     <div class="fhelp" style="margin:4px 0 0">Cargá el stock desde la sección Stock para que quede al día.</div></div></div>`;
 }
 
-/* The new-sale form. */
+/* The new-sale form: a mostrador. Products on the left, the ticket on the
+   right, so the total and the button that charges never scroll away however
+   long the sale gets. A typical sale is three actions: find the product,
+   pick how it is paid, Cobrar.
+
+   Everything rare is one click away rather than always on screen: a line's
+   price or discount behind its ⋯, the discount on the total and the note
+   behind links, the branch as a chip, a presupuesto as its own button.
+   "Queda debiendo" is a way of paying, which is what explains why a customer
+   is suddenly needed.
+
+   The totals still come from /api/sales/preview (rule 10). The preview is
+   asked without payments: what is paid is derived from the server's total,
+   so "paga todo" is always exactly the total and never a stale copy of it. */
+const POS_METHODS = [
+  { k:"cash", label:"Efectivo" }, { k:"card", label:"Tarjeta" },
+  { k:"transfer", label:"Transferencia" }, { k:"debt", label:"Queda debiendo" },
+];
+const cents = (v) => Math.round(Number(v || 0) * 100);
+const fromCents = (c) => (c / 100).toFixed(2);
+
 async function newSaleModal(onDone) {
-  const [customers, branchOpts, accounts, settings] = await Promise.all([
-    api("GET", "/api/customers").catch(() => []),
-    options({ endpoint:"/api/branches" }),
+  const [customers, branches, accounts, settings] = await Promise.all([
+    api("GET", "/api/customers?limit=10000").catch(() => []),
+    api("GET", "/api/branches").catch(() => []),
     api("GET", "/api/payment-accounts").catch(() => []),
     api("GET", "/api/company/settings").catch(() => ({})),
   ]);
   const draft = {
-    customer_id: "", branch_id: settings.default_branch_id || "", status: "confirmed",
-    items: [], discount_type: "percent", discount_value: "",
+    customer_id: "", branch_id: settings.default_branch_id || (branches[0] && branches[0].id) || "",
+    status: "confirmed", items: [], discount_type: "percent", discount_value: "",
     payments: [], promised_payment_date: "", reminder_note: "", notes: "",
   };
-  let totals = null;
+  /* How it is paid. `split` false: one method; `parcial` is what it pays now
+     ("" = everything). `split` true: explicit rows, each with its amount. */
+  const pay = { method: "cash", parcial: null, account_id: "", reference: "", recibe: "",
+                split: false, rows: [] };
+  const ui = { discOpen: false, noteOpen: false, custQ: "", busy: false, err: "" };
+  let totals = null, stock = {}, results = [], hi = 0;
 
-  const body = el(`<div>
-    <div class="form grid2">
-      <div class="form-row"><label class="fld">Cliente</label>
-        <select name="customer_id"><option value="">— consumidor final —</option>
-        ${customers.map(c => `<option value="${c.id}">${esc(customerLabel(c))}</option>`).join("")}</select>
-        <div class="fhelp">Obligatorio si queda saldo pendiente.</div></div>
-      <div class="form-row"><label class="fld">Sucursal</label>
-        <select name="branch_id"><option value="">— ninguna —</option>
-        ${branchOpts.map(o => `<option value="${o.value}" ${String(draft.branch_id)===String(o.value)?"selected":""}>${esc(o.label)}</option>`).join("")}</select>
-        <div class="fhelp">De acá se descuenta el stock.</div></div>
-    </div>
-
-    <div class="form-row full" style="margin-top:6px">
-      <div class="fld-head"><label class="fld">Productos <span class="req">*</span></label>
-        <button type="button" class="btn sm" id="addLine"><svg class="ic"><use href="#i-plus"/></svg>Agregar producto</button></div>
-      <table class="lines"><thead><tr>
-        <th>Producto</th><th class="num w-qty">Cant.</th><th class="num">Precio unit.</th>
-        <th>Descuento</th><th class="num">Total</th><th></th>
-      </tr></thead><tbody id="lineBody"></tbody></table>
-      <div class="fhelp" id="noLines">Todavía no agregaste productos.</div>
-    </div>
-
-    <div class="form grid2" style="margin-top:12px">
-      <div class="form-row"><label class="fld">Descuento sobre el total</label>
-        <div class="with-add">
-          <select name="discount_type" style="max-width:110px">
-            <option value="percent">%</option><option value="amount">$</option>
-          </select>
-          <input name="discount_value" type="number" step="0.01" min="0" placeholder="0">
-        </div></div>
-      <div class="form-row"><label class="fld">Estado</label>
-        <select name="status">
-          <option value="confirmed">Confirmada</option>
-          <option value="quote">Presupuesto (no descuenta stock)</option>
-        </select></div>
-    </div>
-
-    <div class="form-row full" style="margin-top:10px">
-      <div class="fld-head"><label class="fld">Abonado</label>
-        <button type="button" class="btn sm" id="addPay"><svg class="ic"><use href="#i-plus"/></svg>Agregar pago</button></div>
-      <div class="paylist" id="payList"></div>
-      <div class="fhelp" id="noPays">Sin pagos: queda todo como saldo pendiente.</div>
-    </div>
-
-    <div class="totals" id="totals"></div>
-
-    <div class="form grid2" id="reminderBox" style="margin-top:12px;display:none">
-      <div class="form-row"><label class="fld">Fecha en que promete pagar</label>
-        <input name="promised_payment_date" type="date"></div>
-      <div class="form-row"><label class="fld">Recordatorio</label>
-        <input name="reminder_note" placeholder="Llamar antes del mediodía…"></div>
-    </div>
-    <div class="form-row full" style="margin-top:8px">
-      <label class="fld">Notas</label><textarea name="notes" rows="2"></textarea></div>
-  </div>`);
-
-  const lineBody = $("#lineBody", body);
-  const payList = $("#payList", body);
-  const totalsBox = $("#totals", body);
-  const reminderBox = $("#reminderBox", body);
-
-  const bind = (name, key) => {
-    const elx = body.querySelector(`[name="${name}"]`);
-    elx.addEventListener("input", () => { draft[key] = elx.value; refresh(); });
-    elx.addEventListener("change", () => { draft[key] = elx.value; refresh(); });
+  const loadStock = async () => {
+    stock = {};
+    if (!draft.branch_id || !can("stock:read")) return;
+    for (const l of await api("GET", `/api/stock/levels?branch_id=${draft.branch_id}`).catch(() => []))
+      stock[l.product_id] = l.quantity;
   };
-  ["customer_id","branch_id","status","discount_type","discount_value",
-   "promised_payment_date","reminder_note","notes"].forEach(k => bind(k, k));
+  await loadStock();
 
-  function paintLines() {
-    $("#noLines", body).style.display = draft.items.length ? "none" : "";
-    lineBody.innerHTML = draft.items.map((it, i) => {
-      const t = totals && totals.items[i];
-      return `<tr data-i="${i}">
-        <td class="prod"><b>${esc(it.label)}</b><small>${esc(it.code)}${it.color ? " · " + esc(it.color) : ""}</small></td>
-        <td class="num"><input class="w-qty" data-f="quantity" type="number" step="0.01" min="0.01" value="${esc(it.quantity)}"></td>
-        <td class="num"><input class="w-price" data-f="unit_price" type="number" step="0.01" min="0"
-              value="${esc(it.unit_price)}" placeholder="${esc(it.suggested ?? "")}" title="Vacío = precio de lista"></td>
-        <td><div style="display:flex;gap:4px">
-          <select class="w-dtype" data-f="discount_type">
-            <option value="percent" ${it.discount_type!=="amount"?"selected":""}>%</option>
-            <option value="amount" ${it.discount_type==="amount"?"selected":""}>$</option>
-          </select>
-          <input class="w-disc" data-f="discount_value" type="number" step="0.01" min="0" value="${esc(it.discount_value)}" placeholder="0">
-        </div></td>
-        <td class="num" data-total>${t ? fmtMoney(t.line_total, totals.currency) : "—"}</td>
-        <td><button type="button" class="btn sm ghost" data-del="${i}" title="Quitar"><svg class="ic"><use href="#i-x"/></svg></button></td>
-      </tr>`;
+  const body = el(`<div class="pos">
+    <div class="pos-l">
+      <div class="pos-search">
+        <label class="pos-q"><svg class="ic"><use href="#i-search"/></svg>
+          <input id="posQ" placeholder="Código o nombre del producto" autocomplete="off" aria-label="Buscar producto">
+          <button type="button" class="btn sm ghost" id="posBrowse" title="Ver el catálogo agrupado por modelo">Catálogo</button></label>
+        <div class="pos-results" id="posRes" role="listbox" hidden></div>
+      </div>
+      <div id="posLines"></div>
+      <div class="pos-extras" id="posExtras"></div>
+    </div>
+    <div class="pos-r" id="posTicket"></div>
+  </div>`);
+  const $q = $("#posQ", body), $res = $("#posRes", body), $lines = $("#posLines", body),
+        $extras = $("#posExtras", body), $ticket = $("#posTicket", body);
+
+  // ---- money derived from the server's total ------------------------------
+  const totalC = () => totals ? cents(totals.total) : 0;
+  const deuda = () => !pay.split && pay.method === "debt";
+  function pagos() {
+    if (!totals || deuda()) return [];
+    if (pay.split) return pay.rows.filter(r => cents(r.amount) > 0);
+    const amount = pay.parcial != null ? fromCents(Math.min(cents(pay.parcial), totalC())) : totals.total;
+    return [{ amount, method: pay.method, account_id: pay.account_id, reference: pay.reference }];
+  }
+  const pagadoC = () => pagos().reduce((t, p) => t + cents(p.amount), 0);
+  const saldoC = () => totalC() - pagadoC();
+  const body_ = () => saleBody({ ...draft, payments: pagos() });
+
+  // ---- product search -----------------------------------------------------
+  const buscar = debounce(async () => {
+    const q = $q.value.trim();
+    if (!q) { results = []; paintResults(); return; }
+    results = await api("GET", `/api/products?sellable_only=true&limit=8&q=${encodeURIComponent(q)}`).catch(() => []);
+    hi = 0; paintResults();
+  }, 180);
+  function paintResults() {
+    if (!results.length) {
+      $res.hidden = !$q.value.trim();
+      $res.innerHTML = `<div class="pos-none">Sin resultados para "${esc($q.value.trim())}".</div>`;
+      return;
+    }
+    $res.hidden = false;
+    $res.innerHTML = results.map((p, i) => {
+      const qty = stock[p.id];
+      const st = !draft.branch_id || !can("stock:read") ? ""
+        : qty == null || Number(qty) <= 0 ? `<span class="badge amber">sin stock</span>`
+        : `<span class="badge gray">${fmtNum(qty)} en stock</span>`;
+      return `<button type="button" class="pos-hit ${i === hi ? "on" : ""}" data-i="${i}" role="option" aria-selected="${i === hi}">
+        ${(p.colors || []).length ? swatchList(p.colors, 3) : ""}
+        <span class="grow"><span class="code">${esc(p.code)}</span> ${esc(p.description || "")}</span>${st}
+        <span class="price">${p.resolved_sale_price != null ? fmtMoney(p.resolved_sale_price, p.price_currency) : "sin precio"}</span></button>`;
     }).join("");
-    $$("[data-f]", lineBody).forEach(inp => inp.addEventListener("input", () => {
-      const i = Number(inp.closest("tr").dataset.i);
-      draft.items[i][inp.dataset.f] = inp.value;
-      refresh({ keepLines: true });
-    }));
-    $$("[data-del]", lineBody).forEach(b => b.addEventListener("click", () => {
-      draft.items.splice(Number(b.dataset.del), 1); refresh();
-    }));
   }
-
-  function paintPays() {
-    $("#noPays", body).style.display = draft.payments.length ? "none" : "";
-    payList.innerHTML = draft.payments.map((p, i) => `
-      <div class="payrow" data-i="${i}">
-        <input class="amt" data-f="amount" type="number" step="0.01" min="0" value="${esc(p.amount)}" placeholder="Importe">
-        <select data-f="method" style="width:auto">
-          ${PAYMENT_METHOD_OPTIONS.map(o => `<option value="${o.value}" ${p.method===o.value?"selected":""}>${esc(o.label)}</option>`).join("")}
-        </select>
-        <select data-f="account_id" style="width:auto"><option value="">— sin cuenta —</option>
-          ${accounts.map(a => `<option value="${a.id}" ${String(p.account_id)===String(a.id)?"selected":""}>${esc(a.name)}</option>`).join("")}
-        </select>
-        <input data-f="reference" value="${esc(p.reference || "")}" placeholder="Referencia" style="width:130px">
-        <button type="button" class="btn sm ghost" data-delpay="${i}"><svg class="ic"><use href="#i-x"/></svg></button>
-      </div>`).join("");
-    $$("[data-f]", payList).forEach(inp => inp.addEventListener("input", () => {
-      const i = Number(inp.closest(".payrow").dataset.i);
-      draft.payments[i][inp.dataset.f] = inp.value;
-      // Choosing an account suggests its usual method, without forcing it.
-      if (inp.dataset.f === "account_id") {
-        const acc = accounts.find(a => String(a.id) === inp.value);
-        if (acc && acc.method) {
-          draft.payments[i].method = acc.method;
-          inp.closest(".payrow").querySelector('[data-f="method"]').value = acc.method;
-        }
-      }
-      refresh({ keepPays: true });
-    }));
-    $$("[data-delpay]", payList).forEach(b => b.addEventListener("click", () => {
-      draft.payments.splice(Number(b.dataset.delpay), 1); refresh();
-    }));
-  }
-
-  function paintTotals(err) {
-    if (err) { totalsBox.innerHTML = `<div style="color:var(--danger);font-size:13px">${esc(err)}</div>`; return; }
-    if (!totals) { totalsBox.innerHTML = `<div class="fhelp">Agregá un producto para ver el total.</div>`; return; }
-    const owes = Number(totals.balance) > 0;
-    totalsBox.innerHTML = `<dl>
-      <dt>Subtotal</dt><dd>${fmtMoney(totals.subtotal, totals.currency)}</dd>
-      ${Number(totals.discount_amount) > 0
-        ? `<dt>Descuento sobre el total</dt><dd>− ${fmtMoney(totals.discount_amount, totals.currency)}</dd>` : ""}
-      <div class="grand" style="display:contents"><dt>TOTAL</dt><dd>${fmtMoney(totals.total, totals.currency)}</dd></div>
-      <dt>Abonado</dt><dd>${fmtMoney(totals.paid_amount, totals.currency)}</dd>
-      <div class="due ${owes ? "" : "ok"}" style="display:contents">
-        <dt>${owes ? "Saldo que debe" : "Saldo"}</dt><dd>${fmtMoney(totals.balance, totals.currency)}</dd></div>
-    </dl>${stockAviso(totals.stock_warnings)}`;
-    reminderBox.style.display = owes ? "" : "none";
-  }
-
-  /* Write the new line totals into the cells rather than re-rendering the
-     rows: the preview lands ~200ms after a keystroke, and a repaint would
-     take the caret out of the field being typed into. */
-  function updateLineTotals() {
-    $$("tr[data-i]", lineBody).forEach(tr => {
-      const t = totals && totals.items[Number(tr.dataset.i)];
-      tr.querySelector("[data-total]").innerHTML =
-        t ? fmtMoney(t.line_total, totals.currency) : "—";
-    });
-  }
-
-  const askTotals = debounce(async () => {
-    if (!draft.items.length) { totals = null; paintTotals(); updateLineTotals(); return; }
-    try {
-      totals = await api("POST", "/api/sales/preview", saleBody(draft));
-      paintTotals(); updateLineTotals();
-    } catch (e) { totals = null; paintTotals(e.message); updateLineTotals(); }
-  }, 200);
-
-  function refresh({ keepLines = false, keepPays = false } = {}) {
-    if (!keepLines) paintLines();
-    if (!keepPays) paintPays();
-    askTotals();
-  }
-
-  $("#addLine", body).addEventListener("click", () => pickProduct(draft.branch_id, (p) => {
-    draft.items.push({
+  function agregar(p) {
+    // The same article twice is one line with two units, not two lines.
+    const ya = draft.items.find(it => it.product_id === p.id);
+    if (ya) ya.quantity = String(Number(ya.quantity || 0) + 1);
+    else draft.items.push({
       product_id: p.id, label: p.description || p.code, code: p.code,
-      color: p.color_name || "", quantity: "1", unit_price: "",
-      suggested: p.resolved_sale_price, discount_type: "percent", discount_value: "",
+      color: (p.colors || []).map(c => c.name).join(", "), quantity: "1", unit_price: "",
+      suggested: p.resolved_sale_price, discount_type: "percent", discount_value: "", edit: false,
     });
+    $q.value = ""; results = []; paintResults();
+    refresh(); $q.focus();
+  }
+  $q.addEventListener("input", buscar);
+  $q.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowDown" && results.length) { hi = (hi + 1) % results.length; paintResults(); e.preventDefault(); }
+    else if (e.key === "ArrowUp" && results.length) { hi = (hi - 1 + results.length) % results.length; paintResults(); e.preventDefault(); }
+    else if (e.key === "Enter") { e.preventDefault(); if (results[hi]) agregar(results[hi]); }
+    // Escape clears the search first; only an empty search lets it close the sale.
+    else if (e.key === "Escape" && $q.value) { e.stopPropagation(); $q.value = ""; results = []; paintResults(); }
+  });
+  $res.addEventListener("mousedown", (e) => {
+    const b = e.target.closest("[data-i]"); if (!b) return;
+    e.preventDefault(); agregar(results[Number(b.dataset.i)]);
+  });
+  $q.addEventListener("blur", () => setTimeout(() => { $res.hidden = true; }, 120));
+  $q.addEventListener("focus", () => { if ($q.value.trim()) paintResults(); });
+  $("#posBrowse", body).addEventListener("click", () => pickProduct(draft.branch_id, agregar));
+
+  // ---- lines --------------------------------------------------------------
+  function paintLines() {
+    if (!draft.items.length) {
+      $lines.innerHTML = `<div class="pos-empty"><svg class="ic lg"><use href="#i-search"/></svg>
+        Buscá el producto por código o nombre y apretá Enter.</div>`;
+      return;
+    }
+    $lines.innerHTML = draft.items.map((it, i) => {
+      const t = totals && totals.items[i];
+      const tags = [
+        it.unit_price !== "" ? `precio ${fmtMoney(it.unit_price)}` : "",
+        Number(it.discount_value) > 0 ? `−${it.discount_type === "amount" ? fmtMoney(it.discount_value) : it.discount_value + "%"}` : "",
+      ].filter(Boolean).join(" · ");
+      return `<div class="pos-line" data-i="${i}">
+        <div class="nm"><b>${esc(it.label)}</b><small><span class="code">${esc(it.code)}</span>${it.color ? " · " + esc(it.color) : ""}${tags ? ` <span class="pos-tag">${esc(tags)}</span>` : ""}</small></div>
+        <span class="stkstep pos-qty"><button type="button" data-a="dec" aria-label="Uno menos">−</button>
+          <input type="number" min="1" step="1" data-f="quantity" value="${esc(it.quantity)}" aria-label="Cantidad de ${esc(it.code)}">
+          <button type="button" data-a="inc" aria-label="Uno más">+</button></span>
+        <span class="money" data-total>${t ? fmtMoney(t.line_total, totals.currency) : "-"}</span>
+        <button type="button" class="btn sm ghost" data-a="menu" aria-label="Más opciones"><svg class="ic"><use href="#i-more"/></svg></button>
+        ${it.edit ? `<div class="pos-edit">
+          <label>Precio unitario<input type="number" step="0.01" min="0" data-f="unit_price" value="${esc(it.unit_price)}" placeholder="${esc(it.suggested ?? "")}"></label>
+          <label>Descuento<span class="with-add"><select data-f="discount_type">
+            <option value="percent" ${it.discount_type !== "amount" ? "selected" : ""}>%</option>
+            <option value="amount" ${it.discount_type === "amount" ? "selected" : ""}>$</option></select>
+            <input type="number" step="0.01" min="0" data-f="discount_value" value="${esc(it.discount_value)}" placeholder="0"></span></label>
+          <button type="button" class="stklink" data-a="done">Listo</button></div>` : ""}
+      </div>`;
+    }).join("");
+  }
+  $lines.addEventListener("input", (e) => {
+    const f = e.target.dataset.f; if (!f) return;
+    draft.items[Number(e.target.closest("[data-i]").dataset.i)][f] = e.target.value;
+    askTotals();
+  });
+  $lines.addEventListener("change", (e) => { if (e.target.dataset.f) { paintLines(); askTotals(); } });
+  $lines.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-a]"); if (!b) return;
+    const i = Number(b.closest("[data-i]").dataset.i), it = draft.items[i];
+    if (b.dataset.a === "inc") it.quantity = String(Number(it.quantity || 0) + 1);
+    if (b.dataset.a === "dec") it.quantity = String(Math.max(1, Number(it.quantity || 0) - 1));
+    if (b.dataset.a === "done") it.edit = false;
+    if (b.dataset.a === "menu") return openRowMenu(b, [
+      { icon:"i-dollar", label:"Cambiar precio o descuento", onClick: () => { it.edit = true; refresh(); } },
+      { icon:"i-x", label:"Quitar", danger:true, onClick: () => { draft.items.splice(i, 1); refresh(); } },
+    ]);
     refresh();
-  }));
-  $("#addPay", body).addEventListener("click", () => {
-    // Pre-fill with what is still owed: the common case is "paga todo".
-    const owed = totals ? totals.balance : "";
-    draft.payments.push({ amount: owed && Number(owed) > 0 ? owed : "", method: "cash", account_id: "", reference: "" });
-    refresh();
+  });
+
+  // ---- extras under the lines: discount on the total, note ---------------
+  function paintExtras() {
+    $extras.innerHTML = `<div class="pos-links">
+        ${ui.discOpen ? "" : `<button type="button" class="stklink" data-a="disc"><svg class="ic"><use href="#i-percent"/></svg>Descuento al total</button>`}
+        ${ui.noteOpen ? "" : `<button type="button" class="stklink" data-a="note"><svg class="ic"><use href="#i-pencil"/></svg>Nota</button>`}</div>
+      ${ui.discOpen ? `<label class="pos-field">Descuento al total<span class="with-add" style="max-width:240px">
+          <select name="discount_type" style="max-width:70px"><option value="percent" ${draft.discount_type !== "amount" ? "selected" : ""}>%</option>
+            <option value="amount" ${draft.discount_type === "amount" ? "selected" : ""}>$</option></select>
+          <input name="discount_value" type="number" step="0.01" min="0" placeholder="0" value="${esc(draft.discount_value)}"></span></label>` : ""}
+      ${ui.noteOpen ? `<label class="pos-field">Nota<textarea name="notes" rows="2" placeholder="Entrega el jueves, retira la hija…">${esc(draft.notes)}</textarea></label>` : ""}`;
+  }
+  $extras.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-a]"); if (!b) return;
+    if (b.dataset.a === "disc") ui.discOpen = true;
+    if (b.dataset.a === "note") ui.noteOpen = true;
+    paintExtras();
+    $extras.querySelector(b.dataset.a === "disc" ? '[name="discount_value"]' : '[name="notes"]')?.focus();
+  });
+  $extras.addEventListener("input", (e) => { if (e.target.name) { draft[e.target.name] = e.target.value; if (e.target.name !== "notes") askTotals(); } });
+  $extras.addEventListener("change", (e) => { if (e.target.name === "discount_type") { draft.discount_type = e.target.value; askTotals(); } });
+
+  // ---- the ticket ---------------------------------------------------------
+  const cliente = () => customers.find(c => String(c.id) === String(draft.customer_id));
+  const iniciales = (c) => ((c.first_name || "")[0] || "") + ((c.last_name || "")[0] || "");
+  const debe = () => totals && saldoC() > 0;
+  function falta() {
+    if (!draft.items.length) return "Agregá al menos un producto.";
+    if (ui.err) return ui.err;
+    if (!totals) return "";
+    if (pagadoC() > totalC()) return "Lo que paga supera el total.";
+    if (debe() && !draft.customer_id) return "Elegí quién queda debiendo.";
+    return "";
+  }
+  function custHtml() {
+    const c = cliente();
+    if (c) return `<div class="pos-cust set"><span class="av">${esc(iniciales(c).toUpperCase())}</span>
+      <span class="grow"><b>${esc(`${c.first_name} ${c.last_name}`)}</b>${c.document_number ? `<small>${esc(c.document_number)}</small>` : ""}</span>
+      <button type="button" class="stklink" data-a="uncust">Cambiar</button></div>`;
+    const need = debe();
+    const q = ui.custQ.trim().toLowerCase();
+    const hits = q ? customers.filter(x => customerLabel(x).toLowerCase().includes(q) || (x.phone || "").includes(q)).slice(0, 6) : [];
+    return `<div class="pos-cust ${need ? "need" : ""}">
+      <svg class="ic"><use href="#i-users"/></svg>
+      <input id="posCust" placeholder="${need ? "¿Quién queda debiendo?" : "Consumidor final (buscar cliente)"}" value="${esc(ui.custQ)}" autocomplete="off" aria-label="Cliente">
+      ${can("customers:write") ? `<button type="button" class="stklink" data-a="newcust">Nuevo</button>` : ""}
+      ${q ? `<div class="pos-results">${hits.length ? hits.map(x => `<button type="button" class="pos-hit" data-cust="${x.id}"><span class="grow">${esc(customerLabel(x))}</span>${x.phone ? `<span class="fhelp" style="margin:0">${esc(x.phone)}</span>` : ""}</button>`).join("")
+        : `<div class="pos-none">Ningún cliente coincide.</div>`}</div>` : ""}
+    </div>`;
+  }
+  function payHtml() {
+    if (pay.split) {
+      const resto = totalC() - pagadoC();
+      return `<div class="pos-split">${pay.rows.map((r, i) => `<div class="pos-splitrow" data-r="${i}">
+          <input type="number" step="0.01" min="0" data-rf="amount" value="${esc(r.amount)}" placeholder="Importe" aria-label="Importe">
+          <select data-rf="method" aria-label="Medio">${PAYMENT_METHOD_OPTIONS.map(o => `<option value="${o.value}" ${r.method === o.value ? "selected" : ""}>${esc(o.label)}</option>`).join("")}</select>
+          ${pay.rows.length > 1 ? `<button type="button" class="btn sm ghost" data-a="delrow" aria-label="Quitar"><svg class="ic"><use href="#i-x"/></svg></button>` : ""}</div>`).join("")}
+        <div class="pos-links"><button type="button" class="stklink" data-a="addrow"><svg class="ic"><use href="#i-plus"/></svg>Otro medio${resto > 0 ? ` por ${fmtMoney(fromCents(resto))}` : ""}</button>
+          <button type="button" class="stklink" data-a="unsplit">Un solo medio</button></div></div>`;
+    }
+    let h = `<div class="pos-methods" role="radiogroup" aria-label="Cómo paga">${POS_METHODS.map(m =>
+      `<button type="button" class="pos-pm ${m.k === "debt" ? "debt" : ""} ${pay.method === m.k ? "on" : ""}" data-m="${m.k}" role="radio" aria-checked="${pay.method === m.k}">${esc(m.label)}</button>`).join("")}</div>`;
+    if (pay.method === "cash" && pay.parcial == null && totals) {
+      const vuelto = cents(pay.recibe) - totalC();
+      h += `<div class="pos-two"><label class="pos-field">Recibe<input id="posRecibe" type="number" step="0.01" min="0" value="${esc(pay.recibe)}" placeholder="${esc(totals.total)}"></label>
+        <div class="pos-field">Vuelto<div class="pos-vuelto ${pay.recibe && vuelto < 0 ? "short" : ""}" id="posVuelto">${!pay.recibe ? "-" : vuelto >= 0 ? fmtMoney(fromCents(vuelto)) : "Faltan " + fmtMoney(fromCents(-vuelto))}</div></div></div>`;
+    }
+    if (pay.method === "card" || pay.method === "transfer") {
+      h += `<div class="pos-two"><label class="pos-field">Cuenta<select data-p="account_id"><option value="">(sin cuenta)</option>
+          ${accounts.map(a => `<option value="${a.id}" ${String(pay.account_id) === String(a.id) ? "selected" : ""}>${esc(a.name)}</option>`).join("")}</select></label>
+        <label class="pos-field">${pay.method === "card" ? "Cupón / cuotas" : "Referencia"}<input data-p="reference" value="${esc(pay.reference)}" placeholder="Opcional"></label></div>`;
+    }
+    if (pay.method !== "debt") {
+      h += pay.parcial != null
+        ? `<label class="pos-field">Paga ahora<input id="posParcial" type="number" step="0.01" min="0" value="${esc(pay.parcial)}"></label>`
+        : "";
+      h += `<div class="pos-links">${pay.parcial != null
+          ? `<button type="button" class="stklink" data-a="todo">Paga todo</button>`
+          : `<button type="button" class="stklink" data-a="parcial">Paga una parte</button>`}
+        <button type="button" class="stklink" data-a="split">Dividir en dos medios</button></div>`;
+    }
+    return h;
+  }
+  /* A field's change event fires on blur, which happens on the mousedown of
+     whatever was clicked next. Repainting the ticket then would swap the
+     button out between mousedown and click, and the click (on "Cobrar", say)
+     would be lost. So while a press is in progress the repaint waits, and
+     runs just after the click has landed. */
+  let pressing = false, pendingPaint = false;
+  $ticket.addEventListener("pointerdown", () => { pressing = true; });
+  const soltar = () => setTimeout(() => {
+    pressing = false;
+    if (pendingPaint) { pendingPaint = false; paintTicket(); }
+  }, 0);
+  document.addEventListener("pointerup", soltar);
+  function paintTicket() {
+    if (pressing) { pendingPaint = true; return; }
+    const f = falta();
+    const saldo = totals ? saldoC() : 0;
+    const label = !totals ? "Cobrar"
+      : deuda() ? `Registrar ${fmtMoney(totals.total, totals.currency)} a cuenta`
+      : `Cobrar ${fmtMoney(fromCents(pagadoC()), totals.currency)}`;
+    $ticket.innerHTML = `
+      <div class="pos-top">${branches.length > 1 ? `<label class="pos-branch"><svg class="ic"><use href="#i-store"/></svg>
+          <select id="posBranch" aria-label="Sucursal">${branches.map(b => `<option value="${b.id}" ${String(b.id) === String(draft.branch_id) ? "selected" : ""}>${esc(b.name)}</option>`).join("")}</select></label>` : ""}</div>
+      ${custHtml()}
+      <div class="pos-tot">${totals && Number(totals.discount_amount) > 0
+          ? `<div class="muted"><span>Subtotal</span><span>${fmtMoney(totals.subtotal, totals.currency)}</span></div>
+             <div class="muted"><span>Descuento</span><span>−${fmtMoney(totals.discount_amount, totals.currency)}</span></div>` : ""}
+        <div class="grand"><span>Total</span><span>${totals ? fmtMoney(totals.total, totals.currency) : fmtMoney(0)}</span></div>
+        ${totals && saldo > 0 ? `<div class="owe"><span>Queda debiendo</span><span>${fmtMoney(fromCents(saldo), totals.currency)}</span></div>` : ""}
+      </div>
+      ${totals ? stockAviso(totals.stock_warnings) : ""}
+      <div class="pos-sec">Cómo paga</div>
+      ${payHtml()}
+      ${totals && saldo > 0 ? `<div class="pos-two"><label class="pos-field">Promete pagar el<input type="date" data-d="promised_payment_date" value="${esc(draft.promised_payment_date)}"></label>
+        <label class="pos-field">Recordatorio<input data-d="reminder_note" value="${esc(draft.reminder_note)}" placeholder="Llamar el viernes"></label></div>` : ""}
+      <button type="button" class="btn primary pos-go" id="posGo" ${f || ui.busy ? "disabled" : ""}>${esc(label)}</button>
+      <div class="pos-why">${esc(f)}</div>
+      <button type="button" class="stklink pos-quote" id="posQuote" ${draft.items.length && !ui.busy ? "" : "disabled"}>Guardar como presupuesto</button>`;
+  }
+  $ticket.addEventListener("click", (e) => {
+    const m = e.target.closest("[data-m]");
+    if (m) {
+      pay.method = m.dataset.m;
+      if (pay.method === "debt") pay.parcial = null;
+      // A card or transfer lands in the account usually used for it.
+      if ((pay.method === "card" || pay.method === "transfer") && !pay.account_id) {
+        const acc = accounts.find(a => a.method === pay.method);
+        if (acc) pay.account_id = String(acc.id);
+      }
+      return paintTicket();
+    }
+    const hit = e.target.closest("[data-cust]");
+    if (hit) { draft.customer_id = hit.dataset.cust; ui.custQ = ""; return refresh(); }
+    const b = e.target.closest("[data-a]"); if (!b) return;
+    const a = b.dataset.a;
+    if (a === "uncust") { draft.customer_id = ""; paintTicket(); return $("#posCust", $ticket)?.focus(); }
+    if (a === "newcust") return customerFormModal(null, (c) => {
+      if (!c) return;
+      customers.push(c); draft.customer_id = String(c.id); ui.custQ = ""; paintTicket();
+    });
+    if (a === "parcial") { pay.parcial = ""; paintTicket(); return $("#posParcial", $ticket)?.focus(); }
+    if (a === "todo") pay.parcial = null;
+    if (a === "split") {
+      pay.split = true;
+      const first = pay.parcial != null ? pay.parcial : "";
+      pay.rows = [{ amount: first, method: pay.method === "debt" ? "cash" : pay.method, account_id: pay.account_id, reference: pay.reference },
+                  { amount: "", method: pay.method === "card" ? "cash" : "card", account_id: "", reference: "" }];
+    }
+    if (a === "unsplit") { pay.split = false; pay.parcial = null; }
+    if (a === "addrow") pay.rows.push({ amount: totals ? fromCents(Math.max(0, saldoC())) : "", method: "cash", account_id: "", reference: "" });
+    if (a === "delrow") pay.rows.splice(Number(b.closest("[data-r]").dataset.r), 1);
+    paintTicket();
+  });
+  $ticket.addEventListener("input", (e) => {
+    const t = e.target;
+    if (t.id === "posCust") {
+      ui.custQ = t.value; paintTicket();
+      const i = $("#posCust", $ticket); i.focus(); i.setSelectionRange(i.value.length, i.value.length);
+      return;
+    }
+    if (t.id === "posRecibe") {
+      pay.recibe = t.value;
+      const v = cents(t.value) - totalC();
+      $("#posVuelto", $ticket).textContent = !t.value ? "-" : v >= 0 ? fmtMoney(fromCents(v)) : "Faltan " + fmtMoney(fromCents(-v));
+      $("#posVuelto", $ticket).classList.toggle("short", !!t.value && v < 0);
+      return;
+    }
+    if (t.dataset.p) { pay[t.dataset.p] = t.value; return; }
+    if (t.dataset.d) { draft[t.dataset.d] = t.value; return; }
+    // Amounts change the balance, and the balance decides what else shows:
+    // repaint on change (blur), not on every keystroke, so the caret stays.
+    if (t.id === "posParcial") pay.parcial = t.value;
+    if (t.dataset.rf) pay.rows[Number(t.closest("[data-r]").dataset.r)][t.dataset.rf] = t.value;
+  });
+  $ticket.addEventListener("change", async (e) => {
+    const t = e.target;
+    if (t.id === "posBranch") { draft.branch_id = t.value; await loadStock(); return refresh(); }
+    if (t.dataset.rf === "amount") {
+      // Two medios: the one left blank takes whatever is still owed.
+      const vacias = pay.rows.filter(r => !cents(r.amount));
+      if (vacias.length === 1 && totals) {
+        const resto = totalC() - pay.rows.reduce((x, r) => x + cents(r.amount), 0);
+        if (resto > 0) vacias[0].amount = fromCents(resto);
+      }
+    }
+    if (t.id === "posParcial" || t.dataset.rf) paintTicket();
+  });
+  $ticket.addEventListener("keydown", (e) => {
+    if (e.target.id !== "posCust") return;
+    const first = $ticket.querySelector("[data-cust]");
+    if (e.key === "Enter" && first) { e.preventDefault(); first.click(); }
+    if (e.key === "Escape" && ui.custQ) { e.stopPropagation(); ui.custQ = ""; paintTicket(); }
+  });
+
+  // ---- preview and save ---------------------------------------------------
+  async function preview() {
+    if (!draft.items.length) { totals = null; return; }
+    // A line the server cannot price says why where the button would be,
+    // instead of a toast on every keystroke.
+    try { totals = await api("POST", "/api/sales/preview", saleBody({ ...draft, payments: [] })); ui.err = ""; }
+    catch (e) { totals = null; ui.err = e.message; }
+  }
+  const askTotals = debounce(async () => {
+    await preview();
+    // Line totals are written into their cells, not re-rendered, so a
+    // quantity being typed keeps its caret.
+    $$("[data-total]", $lines).forEach(c => {
+      const t = totals && totals.items[Number(c.closest("[data-i]").dataset.i)];
+      c.textContent = t ? fmtMoney(t.line_total, totals.currency) : "-";
+    });
+    paintTicket();
+  }, 200);
+  function refresh() { paintLines(); paintExtras(); paintTicket(); askTotals(); }
+
+  async function guardar(presupuesto) {
+    ui.busy = true; paintTicket();
+    try {
+      await preview();                  // never charge against a stale total
+      const cuerpo = presupuesto
+        ? saleBody({ ...draft, status: "quote", payments: [], promised_payment_date: "", reminder_note: "" })
+        : body_();
+      const err = presupuesto ? "" : falta();
+      if (err) { toast(err, "err"); return; }
+      const sale = await api("POST", "/api/sales", cuerpo);
+      toast(presupuesto ? `Presupuesto ${sale.number} guardado` : `Venta ${sale.number} registrada`, "ok");
+      const faltan = sale.stock_warnings || [];
+      if (faltan.length)
+        toast(faltan.length === 1 ? faltan[0]
+          : `${faltan.length} productos quedaron con stock negativo. Cargá el stock desde la sección Stock.`);
+      cerrar(); clearOptions(); onDone && onDone();
+    } catch (e) { toast(e.message, "err"); }
+    finally { ui.busy = false; if (document.body.contains(body)) paintTicket(); }
+  }
+  $ticket.addEventListener("click", (e) => {
+    if (e.target.closest("#posGo")) guardar(false);
+    if (e.target.closest("#posQuote")) guardar(true);
   });
 
   refresh();
-  openModal({
-    title: "Nueva venta", body, wide: true, confirmLabel: "Registrar venta",
-    onConfirm: async (close) => {
-      if (!draft.items.length) return toast("Agregá al menos un producto.", "err");
-      try {
-        const sale = await api("POST", "/api/sales", saleBody(draft));
-        toast(`Venta ${sale.number} registrada`, "ok");
-        const faltan = sale.stock_warnings || [];
-        if (faltan.length)
-          toast(faltan.length === 1 ? faltan[0]
-            : `${faltan.length} productos quedaron con stock negativo. Cargá el stock desde la sección Stock.`);
-        close(); clearOptions(); onDone && onDone();
-      } catch (e) { toast(e.message, "err"); }
-    },
-  });
+  const cerrarModal = openModal({ title: "Nueva venta", body, cls: "sale" });
+  const cerrar = () => { document.removeEventListener("pointerup", soltar); cerrarModal(); };
+  $q.focus();
 }
 
 /* Sale detail: what was sold, what was paid, what is still owed. */
@@ -4730,8 +5013,8 @@ function customerFormModal(row, onSaved) {
   const fields = row ? CUSTOMER_FIELDS.concat([{ key:"is_active", label:"Activo", type:"checkbox" }]) : CUSTOMER_FIELDS;
   formModal({ title: row ? "Editar cliente" : "Nuevo cliente", grid:true, fields, values: row || {},
     onSubmit: async (p) => {
-      if (row) await api("PUT", "/api/customers/" + row.id, p); else await api("POST", "/api/customers", p);
-      toast("Guardado", "ok"); onSaved();
+      const saved = row ? await api("PUT", "/api/customers/" + row.id, p) : await api("POST", "/api/customers", p);
+      toast("Guardado", "ok"); onSaved(saved);
     } });
 }
 
