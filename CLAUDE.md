@@ -194,6 +194,19 @@ origin) and opens `/app`; the provider's own token lives under
 `sgi_platform_token` and is untouched. `/app` paints a red banner whenever its
 token carries an `impersonated_by` claim.
 
+## Landing page (`app/web/landing.html`)
+
+The public page at the root of `miopticadigital.com.ar` (and `www.`), served
+by `main.py::root` only on those hosts; every other host keeps redirecting `/`
+to a console, and `/landing` previews it anywhere. Same rules as the consoles:
+one self-contained file, no external requests, no em dashes, Poppins embedded
+(the same Latin subset the console carries) and used only for the lockup, the
+hero chart and headings; reading text is the system font. Its one interaction
+is the frame that recolours per article, which is rule 11 drawn. The WhatsApp
+number is the `WHATSAPP` constant at the top of its `<script>` (empty makes
+every "Pedí una demo" fall back to the final band, where the email is); the
+address itself is in the two `mailto:` links.
+
 ## Email, invitations and password resets
 
 - **Sending goes through `services/email.py`**, which hides the provider behind

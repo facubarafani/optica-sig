@@ -475,3 +475,16 @@ def test_the_bare_domain_opens_the_console_that_matches_the_host(client):
                       ).status_code == 200
     assert client.get("/app", headers={"host": "admin.miopticadigital.com.ar"}
                       ).status_code == 200
+
+
+def test_bare_domain_root_is_the_landing(client):
+    """miopticadigital.com.ar serves the public landing; every other host keeps
+    redirecting to a console, so nobody's bookmark changes meaning."""
+    for host in ("miopticadigital.com.ar", "www.miopticadigital.com.ar",
+                 "MIOPTICADIGITAL.COM.AR:443"):
+        resp = client.get("/", headers={"host": host}, follow_redirects=False)
+        assert resp.status_code == 200, host
+        assert "text/html" in resp.headers["content-type"]
+        assert "Pedí una demo" in resp.text
+        assert "app.miopticadigital.com.ar" in resp.text  # "Ingresar" leads to the console
+    assert client.get("/landing", headers={"host": "localhost"}).status_code == 200

@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from fastapi import FastAPI, Request, status
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from sqlalchemy.exc import IntegrityError
 
 from app.api import api_router
@@ -49,16 +49,32 @@ def health() -> dict[str, str]:
 # is the same origin (see admin.html). Serving them on separate origins would
 # need the handoff rewritten, so the split here is cosmetic, not a boundary.
 ADMIN_HOST_LABEL = "admin"
+# The bare marketing domain is the one host whose root is a page rather than a
+# redirect: the public landing. Every other host (app., the Render hostname,
+# localhost) keeps sending "/" to a console, so a shop that bookmarked the bare
+# Render URL still lands where it always did.
+LANDING_HOSTS = {"miopticadigital.com.ar", "www.miopticadigital.com.ar"}
+
+
+def _host(request: Request) -> str:
+    return (request.headers.get("host") or "").split(":")[0].lower()
 
 
 def _is_admin_host(request: Request) -> bool:
-    host = (request.headers.get("host") or "").split(":")[0].lower()
-    return host.split(".")[0] == ADMIN_HOST_LABEL
+    return _host(request).split(".")[0] == ADMIN_HOST_LABEL
 
 
 @app.get("/", include_in_schema=False)
-def root(request: Request) -> RedirectResponse:
+def root(request: Request) -> Response:
+    if _host(request) in LANDING_HOSTS:
+        return FileResponse(WEB_DIR / "landing.html")
     return RedirectResponse(url="/admin" if _is_admin_host(request) else "/app")
+
+
+# The same page under a fixed path, so it can be previewed on any host.
+@app.get("/landing", include_in_schema=False)
+def landing() -> FileResponse:
+    return FileResponse(WEB_DIR / "landing.html")
 
 
 @app.get("/app", include_in_schema=False)
