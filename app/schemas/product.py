@@ -172,8 +172,22 @@ class ProductBase(BaseModel):
         return _norm_category_code(v)
 
 
+class InitialStock(BaseModel):
+    """Units on the shelf when the product is registered, for one branch.
+
+    ``color_id`` says which article gets them when the colours split the
+    product into a style: the style itself holds no stock (rule 11).
+    """
+
+    branch_id: int
+    quantity: Decimal = Field(gt=0)
+    color_id: int | None = None
+
+
 class ProductCreate(ProductBase):
-    pass
+    # Loaded as INBOUND movements in the same transaction as the product, so a
+    # refused movement leaves no product behind. Needs stock:write.
+    initial_stock: list[InitialStock] = []
 
 
 class ProductUpdate(BaseModel):

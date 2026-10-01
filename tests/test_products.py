@@ -105,3 +105,117 @@ def test_oversized_strings_are_rejected_not_truncated(client, auth_headers,
         headers=auth_headers,
     )
     assert resp.status_code == 422, resp.text
+
+
+# --- initial stock ----------------------------------------------------------
+
+def _levels(client, headers, product_id):
+    return {
+        lv["branch_id"]: lv["quantity"]
+        for lv in client.get(
+            f"/api/stock/levels?product_id={product_id}", headers=headers
+        ).json()
+    }
+
+
+def test_a_new_product_can_arrive_with_its_stock(
+    client, auth_headers, product_type_id, branch_id
+):
+    resp = client.post(
+        "/api/products",
+        json={"code": "ARM-S1", "product_type_id": product_type_id,
+              "initial_stock": [{"branch_id": branch_id, "quantity": "4"}]},
+        headers=auth_headers,
+    )
+    assert resp.status_code == 201, resp.text
+    assert _levels(client, auth_headers, resp.json()["id"]) == {branch_id: "4.00"}
+    moves = client.get(
+        f"/api/stock/movements?product_id={resp.json()['id']}", headers=auth_headers
+    ).json()
+    assert [(m["movement_type"], m["note"]) for m in moves] \
+        == [("inbound", "Stock inicial")]
+
+
+def test_initial_stock_lands_on_each_colour_not_the_style(
+    client, auth_headers, product_type_id, branch_id
+):
+    negro, havana = (
+        client.post("/api/colors", json={"name": n}, headers=auth_headers).json()["id"]
+        for n in ("Negro", "Havana")
+    )
+    resp = client.post(
+        "/api/products",
+        json={"code": "ARM-S2", "product_type_id": product_type_id,
+              "color_ids": [negro, havana],
+              "initial_stock": [
+                  {"branch_id": branch_id, "quantity": "2", "color_id": negro},
+                  {"branch_id": branch_id, "quantity": "1", "color_id": havana},
+              ]},
+        headers=auth_headers,
+    )
+    assert resp.status_code == 201, resp.text
+    style = resp.json()
+    variants = {
+        v["code"]: v["id"] for v in client.get(
+            f"/api/products?parent_id={style['id']}", headers=auth_headers
+        ).json()
+    }
+    assert _levels(client, auth_headers, variants["ARM-S2-NEG"]) == {branch_id: "2.00"}
+    assert _levels(client, auth_headers, variants["ARM-S2-HAV"]) == {branch_id: "1.00"}
+    assert _levels(client, auth_headers, style["id"]) == {}
+
+
+def test_stock_without_its_colour_leaves_nothing_behind(
+    client, auth_headers, product_type_id, branch_id
+):
+    negro, havana = (
+        client.post("/api/colors", json={"name": n}, headers=auth_headers).json()["id"]
+        for n in ("Negro", "Havana")
+    )
+    resp = client.post(
+        "/api/products",
+        json={"code": "ARM-S3", "product_type_id": product_type_id,
+              "color_ids": [negro, havana],
+              "initial_stock": [{"branch_id": branch_id, "quantity": "2"}]},
+        headers=auth_headers,
+    )
+    assert resp.status_code == 400, resp.text
+    assert client.get("/api/products?q=ARM-S3", headers=auth_headers).json() == []
+
+
+def test_initial_stock_refuses_a_branch_of_another_shop(
+    client, auth_headers, product_type_id
+):
+    resp = client.post(
+        "/api/products",
+        json={"code": "ARM-S4", "product_type_id": product_type_id,
+              "initial_stock": [{"branch_id": 999, "quantity": "1"}]},
+        headers=auth_headers,
+    )
+    assert resp.status_code == 400, resp.text
+
+
+def test_initial_stock_needs_stock_write(client, auth_headers, product_type_id, branch_id):
+    perms = {p["code"]: p["id"] for p in client.get(
+        "/api/permissions", headers=auth_headers).json()}
+    role = client.post(
+        "/api/roles",
+        json={"name": "Catálogo", "permission_ids":
+              [perms["products:read"], perms["products:write"]]},
+        headers=auth_headers,
+    ).json()
+    client.post(
+        "/api/users",
+        json={"email": "cat@test.com", "full_name": "Cat",
+              "password": "catalogo1234", "role_ids": [role["id"]]},
+        headers=auth_headers,
+    )
+    token = client.post("/api/auth/login", json={
+        "email": "cat@test.com", "password": "catalogo1234"}).json()["access_token"]
+    resp = client.post(
+        "/api/products",
+        json={"code": "ARM-S5", "product_type_id": product_type_id,
+              "initial_stock": [{"branch_id": branch_id, "quantity": "1"}]},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 403, resp.text

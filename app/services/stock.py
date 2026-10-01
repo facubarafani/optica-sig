@@ -11,6 +11,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, contains_eager
 
 from app.core import search
+from app.models.branch import Branch
 from app.models.enums import StockMovementType
 from app.models.product import Color, Product
 from app.models.stock import StockLevel, StockMovement
@@ -214,6 +215,57 @@ def apply_movement(
     else:
         db.flush()
     return movement
+
+
+def load_initial_stock(
+    db: Session,
+    product: Product,
+    variants: list[Product],
+    entries: list,
+    *,
+    company_id: int,
+    user_id: int | None = None,
+) -> list[StockMovement]:
+    """Put a just-created product's shelf count in, one INBOUND per entry. No commit.
+
+    ``variants`` are the articles the create split the product into. When
+    there are any, the product is a style and each entry must name the colour
+    it counts; otherwise the product itself is the article and a colour on the
+    entry is ignored. Branches are checked against the company here because
+    the entries arrive straight from the create form.
+    """
+    by_color = {c.id: v for v in variants for c in v.colors}
+    branches = set(db.execute(
+        select(Branch.id).where(
+            Branch.company_id == company_id, Branch.is_active.is_(True)
+        )
+    ).scalars())
+    movements = []
+    for entry in entries:
+        if entry.branch_id not in branches:
+            raise StockError("La sucursal elegida para el stock inicial no existe.")
+        target = product
+        if variants:
+            target = by_color.get(entry.color_id)
+            if target is None:
+                raise StockError(
+                    f'"{product.code}" se crea con un producto por color: '
+                    "el stock inicial tiene que decir de qué color es."
+                )
+        movements.append(apply_movement(
+            db,
+            StockMovementCreate(
+                product_id=target.id,
+                branch_id=entry.branch_id,
+                movement_type=StockMovementType.INBOUND,
+                quantity=entry.quantity,
+                note="Stock inicial",
+            ),
+            company_id=company_id,
+            user_id=user_id,
+            commit=False,
+        ))
+    return movements
 
 
 def apply_transfer(

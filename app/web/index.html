@@ -470,6 +470,39 @@
      derecha, atrás desde la izquierda, igual que el mapa de arriba. */
   .wizstage{transition:height .26s ease}
   .wizpane{transition:opacity .16s ease,transform .16s ease}
+  /* Stock inicial: primero si se carga, después cuánto, después dónde. */
+  .stkmode{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+  .stkmode label{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;cursor:pointer;
+    border:1px solid var(--border);border-radius:var(--radius);background:var(--panel)}
+  .stkmode label:hover{background:var(--hover)}
+  .stkmode label:has(input:checked){border-color:var(--primary);background:var(--primary-50);
+    box-shadow:0 0 0 1px var(--primary)}
+  .stkmode input{width:auto;margin:2px 0 0}
+  .stkmode b{display:block;font-size:13.5px;color:var(--ink)}
+  .stkmode small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+  .stkblock{display:flex;flex-direction:column;gap:8px;padding:0 0 12px;margin-bottom:12px;border-bottom:1px solid var(--border)}
+  .stkrow{display:flex;align-items:center;gap:10px;min-height:34px}
+  .stkrow .stkname{flex:1;min-width:0;font-size:13px;display:flex;align-items:center;gap:7px}
+  .stkbranch .stkname{font-weight:600;color:var(--ink)}
+  .stkbranch .ic{color:var(--muted)}
+  .stkstep{display:inline-flex;align-items:stretch;flex:0 0 auto;border:1px solid var(--border);
+    border-radius:var(--radius-control);overflow:hidden;background:var(--panel)}
+  .stkstep:focus-within{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-50)}
+  .stkstep button{width:32px;border:0;background:none;font:inherit;font-size:16px;line-height:1;color:var(--text);cursor:pointer}
+  .stkstep button:hover{background:var(--hover)}
+  .stkstep button:active{background:var(--press)}
+  .stkstep input{width:58px;border:0;border-inline:1px solid var(--border);border-radius:0;text-align:center;
+    padding:7px 4px;font-variant-numeric:tabular-nums;box-shadow:none}
+  .stkstep input::-webkit-inner-spin-button,.stkstep input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+  .stkstep input{-moz-appearance:textfield}
+  .stkmore{display:flex;flex-wrap:wrap;gap:4px 14px;margin:-4px 0 4px}
+  .stklink{background:none;border:0;padding:4px 2px;font:inherit;font-size:12.5px;color:var(--primary);
+    cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+  .stklink:hover{text-decoration:underline}
+  .stksum{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--muted);
+    padding-top:4px;font-variant-numeric:tabular-nums}
+  .stksum b{color:var(--ink)}
+  @media(max-width:560px){ .stkmode{grid-template-columns:1fr} }
   @media(prefers-reduced-motion:reduce){ .wizstage,.wizpane{transition:none} }
   .wizard table{margin-bottom:12px}
   .wizard input[type=file]{display:block;width:100%;padding:10px;border:1px dashed var(--border);border-radius:var(--radius-sm);background:var(--bg);font-size:13px}
@@ -3029,12 +3062,16 @@ async function productsView(view) {
      quedaba sexto en la lista, sin explicación a la vista. Se parte en tres
      pasos, uno por idea, con el mismo chrome de pastillas que el asistente de
      importación. La edición NO se parte: ahí uno entra a cambiar un campo
-     concreto y un asistente sería un estorbo. */
+     concreto y un asistente sería un estorbo.
+     El último paso pide el stock que hay hoy, no el mínimo: al dar de alta un
+     producto lo que uno tiene en la mano es cuántos hay. El mínimo es una
+     alarma de reposición y se ajusta después, desde la edición. */
   const PASOS = [
     { label:"Qué es",         keys:["code","product_type_id","brand_id","model_id","supplier_id","description"] },
     { label:"Colores",        keys:["color_ids","multicolor"] },
-    { label:"Precio y costo", keys:["pricing_mode","sale_price","price_list_id","price_category_code","current_cost","min_stock"] },
+    { label:"Precio y costo", keys:["pricing_mode","sale_price","price_list_id","price_category_code","current_cost"] },
   ];
+  const PASO_STOCK = { label:"Stock inicial", stock:true };
 
   async function openProductWizard() {
     const todos = baseFields().concat([{ key:"current_cost", label:"Costo inicial", type:"decimal", step:"0.01",
@@ -3049,6 +3086,11 @@ async function productsView(view) {
         help:"Dejalo vacío si el producto no viene en colores, como unos lentes de contacto." };
     const colores = await api("GET", "/api/colors").catch(() => []);
     const codigoDeColor = Object.fromEntries(colores.map(c => [String(c.id), c.code]));
+    const nombreDeColor = Object.fromEntries(colores.map(c => [String(c.id), c.name]));
+    // Sin permiso de stock, o sin sucursales donde ponerlo, el paso no aparece.
+    const sucursales = can("stock:write")
+      ? await api("GET", "/api/branches").catch(() => []) : [];
+    const pasos = sucursales.length ? PASOS.concat([PASO_STOCK]) : PASOS;
 
     const acc = { pricing_mode: "price_list" };
     const body = el(`<div class="wizard"></div>`);
@@ -3057,7 +3099,7 @@ async function productsView(view) {
     await pintar();
 
     // Declaración y no `const`: pintar() corre antes de llegar a esta línea.
-    function pastillas() { return stepMap(PASOS.map(p => p.label), i); }
+    function pastillas() { return stepMap(pasos.map(p => p.label), i); }
 
     const menosMovimiento = window.matchMedia("(prefers-reduced-motion: reduce)");
     const esperar = (ms) => new Promise(r => setTimeout(r, ms));
@@ -3067,7 +3109,7 @@ async function productsView(view) {
     function actualizarMapa() {
       const m = body.querySelector(".stepmap");
       if (!m) return false;
-      m.style.setProperty("--avance", (i / (PASOS.length - 1)) * 100 + "%");
+      m.style.setProperty("--avance", (i / (pasos.length - 1)) * 100 + "%");
       [...m.querySelectorAll(".stepmap-step")].forEach((paso, k) => {
         paso.classList.toggle("done", k < i);
         paso.classList.toggle("on", k === i);
@@ -3122,16 +3164,142 @@ async function productsView(view) {
         <code>${esc(code)}</code> queda como estilo: agrupa a los colores y no se vende ni se stockea.</div>`;
     }
 
+    /* Se reparte igual que se va a crear: con un producto por color, el stock
+       va en cada color (el estilo no se stockea); si no, en el producto. */
+    const seParte = () => (acc.color_ids || []).length > 1 && !acc.multicolor;
+    const porDefecto = can("company:read")
+      ? await api("GET", "/api/company/settings").then(x => x.default_branch_id).catch(() => null) : null;
+    const sucursalInicial = sucursales.some(b => b.id === porDefecto) ? porDefecto : sucursales[0]?.id;
+
+    /* El paso de stock no es una lista de campos: es una decisión (arranca en
+       0 o se carga) y un conteo por sucursal. Se cuenta donde está la
+       mercadería: primero la sucursal principal y, si hace falta, "otra
+       sucursal" suma un bloque más. El total se muestra y nunca se escribe, así
+       que no hay dos números que tengan que coincidir. Devuelve un <form> con
+       el mismo read() que buildForm para que el asistente lo trate igual. */
+    function formStock() {
+      const st = acc.stock || { cargar:false, abiertas:[sucursalInicial], q:{} };
+      const code = (acc.code || "").trim();
+      const articulos = seParte()
+        ? acc.color_ids.map(String).map(c => ({ c, label:`${code}-${codigoDeColor[c] || "?"}`, sub:nombreDeColor[c] || "" }))
+        : [{ c:"0", label:code, sub:"" }];
+      const varias = sucursales.length > 1;
+      const nombreSuc = Object.fromEntries(sucursales.map(b => [b.id, b.name]));
+      const form = el(`<form class="form"></form>`);
+      form.addEventListener("submit", e => e.preventDefault());
+      const clave = (a, b) => `${a.c}_${b}`;
+      const n = v => Number(v) > 0 ? Number(v) : 0;
+      const nombre = a => `<code>${esc(a.label)}</code>${a.sub ? ` <span class="ccmuted">${esc(a.sub)}</span>` : ""}`;
+      const paso = (k, etiqueta) => `<span class="stkstep">
+        <button type="button" data-paso="-1" data-k="${k}" aria-label="Uno menos">−</button>
+        <input type="number" min="0" step="1" placeholder="0" name="q_${k}" aria-label="${esc(etiqueta)}" value="${st.q[k] != null ? esc(st.q[k]) : ""}">
+        <button type="button" data-paso="1" data-k="${k}" aria-label="Uno más">+</button></span>`;
+
+      function dibujar() {
+        let html = `<div class="stkmode" role="radiogroup" aria-label="Stock inicial">
+          <label><input type="radio" name="cargar" value="0" ${st.cargar ? "" : "checked"}>
+            <span><b>Empieza en 0</b><small>Todavía no llegó, o se carga después desde Stock.</small></span></label>
+          <label><input type="radio" name="cargar" value="1" ${st.cargar ? "checked" : ""}>
+            <span><b>Cargar lo que hay</b><small>Contá lo que hay en ${varias ? "cada sucursal" : "el local"}.</small></span></label>
+        </div>`;
+        if (st.cargar) {
+          for (const b of st.abiertas) {
+            html += `<div class="stkblock">`;
+            if (varias)
+              html += `<div class="stkrow stkbranch"><span class="stkname"><svg class="ic"><use href="#i-store"/></svg>${esc(nombreSuc[b])}</span>
+                ${st.abiertas.length > 1 ? `<button type="button" class="stklink" data-quitar="${b}">Quitar</button>` : ""}</div>`;
+            html += articulos.map(a => `<div class="stkrow">
+              <span class="stkname">${articulos.length > 1 ? nombre(a) : "Cantidad"}</span>
+              ${paso(clave(a, b), `${articulos.length > 1 ? a.label : "Cantidad"}${varias ? " en " + nombreSuc[b] : ""}`)}</div>`).join("");
+            html += `</div>`;
+          }
+          const resto = sucursales.filter(b => !st.abiertas.includes(b.id));
+          if (resto.length)
+            html += `<div class="stkmore">${resto.map(b =>
+              `<button type="button" class="stklink" data-sumar="${b.id}"><svg class="ic"><use href="#i-plus"/></svg>${esc(b.name)}</button>`).join("")}</div>`;
+          if (st.abiertas.length > 1 || articulos.length > 1) html += `<div class="stksum" data-total></div>`;
+        }
+        form.innerHTML = html;
+        sumar();
+      }
+      // El total se recalcula mientras se escribe, sin redibujar los campos.
+      function sumar() {
+        const caja = form.querySelector("[data-total]");
+        if (!caja) return;
+        const por = articulos.map(a => st.abiertas.reduce((t, b) => t + n(st.q[clave(a, b)]), 0));
+        const todo = por.reduce((t, x) => t + x, 0);
+        const detalle = articulos.length > 1
+          ? articulos.map((a, i) => `${esc(a.sub || a.label)} ${fmtNum(por[i])}`).join(" · ")
+          : "Total";
+        caja.innerHTML = `<span>${detalle}</span><b>${fmtNum(todo)} ${todo === 1 ? "unidad" : "unidades"}</b>`;
+      }
+      form.addEventListener("input", e => {
+        const t = e.target;
+        if (t.name?.startsWith("q_")) { st.q[t.name.slice(2)] = t.value; sumar(); }
+      });
+      form.addEventListener("change", e => {
+        if (e.target.name !== "cargar") return;
+        st.cargar = e.target.value === "1";
+        dibujar();
+        form.querySelector('input[type=number]')?.focus();
+      });
+      form.addEventListener("click", e => {
+        const mas = e.target.closest("[data-paso]");
+        const sumarSuc = e.target.closest("[data-sumar]");
+        const quitar = e.target.closest("[data-quitar]");
+        if (mas) {
+          const k = mas.dataset.k;
+          st.q[k] = String(Math.max(0, n(st.q[k]) + Number(mas.dataset.paso)));
+          form.querySelector(`[name="q_${k}"]`).value = st.q[k];
+          sumar();
+        } else if (sumarSuc) {
+          const b = Number(sumarSuc.dataset.sumar);
+          st.abiertas.push(b);
+          dibujar();
+          form.querySelector(`[name="q_${clave(articulos[0], b)}"]`)?.focus();
+        } else if (quitar) {
+          // Quitar una sucursal borra lo que se contó ahí: no se carga a escondidas.
+          const b = Number(quitar.dataset.quitar);
+          st.abiertas = st.abiertas.filter(x => x !== b);
+          for (const a of articulos) delete st.q[clave(a, b)];
+          dibujar();
+        } else return;
+        form.dispatchEvent(new Event("change"));
+      });
+      form.read = () => ({ stock: st });
+      form.movimientos = () => {
+        if (!st.cargar) return [];
+        const out = [];
+        for (const b of st.abiertas) for (const a of articulos) {
+          const q = st.q[clave(a, b)];
+          if (n(q)) out.push({ branch_id: b, quantity: String(q), color_id: Number(a.c) || null });
+        }
+        return out;
+      };
+      form.problema = () => {
+        if (!st.cargar) return null;
+        const vals = st.abiertas.flatMap(b => articulos.map(a => st.q[clave(a, b)]));
+        if (vals.some(v => v !== "" && v != null && !(Number(v) >= 0)))
+          return "El stock no puede ser negativo.";
+        return null;
+      };
+      dibujar();
+      return form;
+    }
+
     async function pintar(dir = 0) {
-      const paso = PASOS[i];
-      const campos = paso.keys.map(k => porKey[k]).filter(Boolean);
-      const form = await buildForm(campos, acc, true);
+      const paso = pasos[i];
+      const campos = paso.stock ? [{ key:"stock" }] : paso.keys.map(k => porKey[k]).filter(Boolean);
+      const form = paso.stock ? formStock() : await buildForm(campos, acc, true);
       if (!body.querySelector(".stepmap"))
         body.innerHTML = pastillas() + `<div class="wizstage"></div>`;
       else actualizarMapa();
       const caja = el(`<div class="wizpane"></div>`);
       caja.appendChild(form);
       if (i === 0) await wireDependentSelects(form, null);
+
+      if (paso.stock && seParte())
+        caja.appendChild(el(`<div class="fhelp" style="margin:8px 0 0">El estilo <code>${esc((acc.code || "").trim())}</code> no lleva stock: se carga en cada color.</div>`));
 
       const previo = i === 1 ? el(`<div style="margin:-4px 0 4px"></div>`) : null;
       if (previo) {
@@ -3149,10 +3317,18 @@ async function productsView(view) {
       if (i) {
         const atras = el(`<button class="btn" type="button"><svg class="ic"><use href="#i-arrow-left"/></svg>Volver</button>`);
         // Volver no valida: lo escrito se guarda igual, para no perderlo.
-        atras.addEventListener("click", async () => { Object.assign(acc, form.read()); i--; await pintar(-1); });
+        atras.addEventListener("click", async () => { guardar(); i--; await pintar(-1); });
         izq.appendChild(atras);
       }
-      const ultimo = i === PASOS.length - 1;
+      const ultimo = i === pasos.length - 1;
+      /* Un número borrado no vuelve en read(), así que el valor viejo quedaría
+         en acc: se limpian las claves del paso antes de volcar lo que hay. */
+      const guardar = () => {
+        const datos = form.read();
+        campos.forEach(f => delete acc[f.key]);
+        Object.assign(acc, datos);
+        return datos;
+      };
       const seguir = el(`<button class="btn primary" type="button">${ultimo
         ? `<svg class="ic"><use href="#i-check"/></svg>Crear producto`
         : `Siguiente<svg class="ic"><use href="#i-arrow-right"/></svg>`}</button>`);
@@ -3163,7 +3339,8 @@ async function productsView(view) {
       let enviando = false;
       const revisar = () => {
         if (enviando) return;
-        const err = validate(campos, form.read());
+        const datos = form.read();
+        const err = validate(campos, datos) || (paso.stock && form.problema());
         seguir.disabled = !!err;
         falta.textContent = err || "";
       };
@@ -3171,16 +3348,20 @@ async function productsView(view) {
       form.addEventListener("change", revisar);
       seguir.addEventListener("click", async () => {
         const datos = form.read();
-        const err = validate(campos, datos);
+        const err = validate(campos, datos) || (paso.stock && form.problema());
         if (err) return toast(err, "err");
-        Object.assign(acc, datos);
+        guardar();
         if (!ultimo) { i++; return pintar(1); }
         enviando = true; seguir.disabled = true;
         try {
-          const saved = await api("POST", "/api/products", acc);
+          const { stock, ...cuerpo } = acc;
+          cuerpo.initial_stock = paso.stock ? form.movimientos() : [];
+          const saved = await api("POST", "/api/products", cuerpo);
           const hechas = saved.variant_count || 0;
+          const unidades = cuerpo.initial_stock.reduce((t, e) => t + Number(e.quantity), 0);
           clearOptions();
-          toast(hechas > 0 ? `Guardado · ${hechas} producto(s) por color` : "Guardado", "ok");
+          toast((hechas > 0 ? `Guardado · ${hechas} producto(s) por color` : "Guardado")
+            + (unidades ? ` · ${fmtNum(unidades)} en stock` : ""), "ok");
           cerrar();
           if (hechas > 0) enterFamily(saved); else await load();
         } catch (e) { toast(e.message || "No se pudo guardar.", "err"); enviando = false; revisar(); }

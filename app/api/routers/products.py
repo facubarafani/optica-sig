@@ -21,6 +21,7 @@ from app.schemas.product import (
 )
 from app.services import pricing as pricing_service
 from app.services import products as products_service
+from app.services import stock as stock_service
 
 router = APIRouter(prefix="/products", tags=["products"])
 crud = CRUDBase(Product)
@@ -149,6 +150,14 @@ def create_product(
     payload = data.model_dump(exclude_unset=True)
     # Not a column: the colours are a relationship, set once the row exists.
     color_ids = payload.pop("color_ids", None)
+    initial_stock = data.initial_stock
+    payload.pop("initial_stock", None)
+    # Stock is its own permission: a products:write role cannot count shelves.
+    if initial_stock and not has_permission(current_user, "stock:write"):
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            "No tenés permiso para cargar stock. Creá el producto sin stock inicial.",
+        )
     obj = Product(**payload, company_id=company_id)
     try:
         products_service.assert_valid_parent(
@@ -161,14 +170,22 @@ def create_product(
         # More than one colour means more than one article: the colours ticked
         # here *are* the variants, so they are made now rather than in a second
         # step somebody has to remember.
-        products_service.sync_variants(
+        variants = products_service.sync_variants(
             db, obj, company_id=company_id, user_id=current_user.id,
             previous_color_ids=[],
         )
+        if initial_stock:
+            stock_service.load_initial_stock(
+                db, obj, variants, initial_stock,
+                company_id=company_id, user_id=current_user.id,
+            )
     except products_service.ProductError as exc:
         db.rollback()
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
     except pricing_service.PricingError as exc:
+        db.rollback()
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
+    except stock_service.StockError as exc:
         db.rollback()
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
     db.commit()
