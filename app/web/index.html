@@ -991,7 +991,13 @@ function fmtMoney(v, currency) {
   catch { return n.toFixed(2); }
 }
 const fmtNum  = (v) => (v == null || v === "" ? "—" : String(Number(v)));
-const fmtDate = (v) => (v ? new Date(v).toLocaleDateString("es-AR") : "—");
+// "2026-08-12" is a calendar day, not an instant: read as UTC midnight it
+// shows the day before in Argentina. A plain date is built in local time.
+const parseDay = (v) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+  return m ? new Date(+m[1], +m[2] - 1, +m[3]) : new Date(v);
+};
+const fmtDate = (v) => (v ? parseDay(v).toLocaleDateString("es-AR") : "—");
 const fmtDateTime = (v) => (v ? new Date(v).toLocaleString("es-AR", { dateStyle:"short", timeStyle:"short" }) : "—");
 function badge(text, cls) { return `<span class="badge ${cls}">${esc(text)}</span>`; }
 /* "ARM-001 · Armazón clásico" from a row that names its product (stock levels,

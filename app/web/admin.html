@@ -278,7 +278,10 @@ const badge = (text, cls) => `<span class="badge ${cls}">${esc(text)}</span>`;
 
 function fmtDate(v) {
   if (!v) return "—";
-  const d = new Date(v);
+  // A plain "2019-03-01" is a calendar day: read as UTC midnight it would
+  // show the day before in Argentina, so it is built in local time.
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+  const d = m ? new Date(+m[1], +m[2] - 1, +m[3]) : new Date(v);
   if (isNaN(d)) return "—";
   return d.toLocaleDateString("es-AR", { day:"2-digit", month:"2-digit", year:"numeric" });
 }

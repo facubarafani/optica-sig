@@ -160,6 +160,10 @@ conventions worth knowing before editing it:
   leave the identifying columns unmarked.
 - Row actions: keep at most two labelled buttons and put the rest in the `⋯`
   menu via `openRowMenu(anchor, items)`.
+- **A plain date is a calendar day.** `new Date("2026-08-12")` is UTC
+  midnight, which Argentina sees as the 11th. `fmtDate` builds `YYYY-MM-DD`
+  in local time; anything else that turns a date-only string into a `Date`
+  must do the same.
 - **No em dashes in anything a user reads.** `—` (U+2014) must never reach the
   screen: not in option labels, buttons, headings, toasts, placeholders or
   empty states, and not in the strings that arrive from the backend either —
