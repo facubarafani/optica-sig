@@ -10,6 +10,7 @@ from app.api.routers import (
     company,
     customers,
     imports,
+    invoicing,
     pricing,
     product_models,
     products,
@@ -33,5 +34,6 @@ api_router.include_router(pricing.router)
 api_router.include_router(stock.router)
 api_router.include_router(customers.router)
 api_router.include_router(sales.router)
+api_router.include_router(invoicing.router)
 api_router.include_router(imports.router)
 api_router.include_router(activity.router)

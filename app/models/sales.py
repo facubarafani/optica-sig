@@ -33,6 +33,7 @@ from app.models.base import CompanyMixin, IDMixin, SoftDeleteMixin, TimestampMix
 from app.models.enums import DiscountType, PaymentMethod, SaleStatus
 
 if TYPE_CHECKING:
+    from app.models.invoicing import Invoice
     from app.models.product import Product
 
 MONEY = Numeric(12, 2)
@@ -110,6 +111,10 @@ class Sale(IDMixin, CompanyMixin, TimestampMixin, SoftDeleteMixin, Base):
     )
     payments: Mapped[list["SalePayment"]] = relationship(
         back_populates="sale", cascade="all, delete-orphan", lazy="selectin"
+    )
+    # Its comprobantes, oldest first. No delete cascade: fiscal records stay.
+    invoices: Mapped[list["Invoice"]] = relationship(
+        back_populates="sale", order_by="Invoice.id", lazy="selectin"
     )
 
 

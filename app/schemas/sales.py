@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from app.models.enums import DiscountType, PaymentMethod, SaleStatus
 from app.schemas.common import ORMBase, SoftDeleteRead
+from app.schemas.invoicing import InvoiceRead
 
 
 # --- payment accounts (cuentas) -------------------------------------------
@@ -140,6 +141,8 @@ class SaleRead(ORMBase):
     is_active: bool
     items: list[SaleItemRead] = Field(default_factory=list)
     payments: list[PaymentRead] = Field(default_factory=list)
+    # Its comprobantes, oldest first, rejected attempts included.
+    invoices: list[InvoiceRead] = Field(default_factory=list)
     # Only on the response that created the sale: lines it sold below zero.
     stock_warnings: list[str] = Field(default_factory=list)
 
@@ -159,6 +162,7 @@ class SaleListRead(ORMBase):
     promised_payment_date: date | None = None
     reminder_note: str | None = None
     is_active: bool
+    invoices: list[InvoiceRead] = Field(default_factory=list)
 
 
 class PendingSummary(BaseModel):

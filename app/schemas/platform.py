@@ -72,6 +72,9 @@ class TenantSummary(TenantRead):
     user_count: int = 0
     product_count: int = 0
     sale_count: int = 0
+    # Facturación electrónica: active, paused, submitted (waiting for us),
+    # draft, or None when the shop never opened the guide.
+    invoicing: str | None = None
 
 
 class TenantCreated(BaseModel):

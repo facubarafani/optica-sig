@@ -3,10 +3,22 @@ from __future__ import annotations
 from datetime import date, datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 
-from app.models.enums import TreatmentType
+from app.models.enums import DocumentType, IvaCondition, TreatmentType
 from app.schemas.common import ORMBase, SoftDeleteRead
+
+
+def _canonical_document_type(value: str | None) -> str | None:
+    """A known spelling becomes the controlled value ("d.n.i." -> "DNI").
+
+    Anything else is kept as typed, so a customer saved before the field was a
+    list still saves; invoicing is what refuses a type ARCA does not accept.
+    """
+    if value is None or not value.strip():
+        return None
+    known = DocumentType.parse(value)
+    return known.value if known else value.strip()
 
 
 # --- customer -------------------------------------------------------------
@@ -15,11 +27,15 @@ class CustomerBase(BaseModel):
     last_name: str
     document_type: str | None = None
     document_number: str | None = None
+    # Empty is a consumidor final. Decides A or B for a Responsable Inscripto.
+    iva_condition: IvaCondition | None = None
     email: EmailStr | None = None
     phone: str | None = None
     address: str | None = None
     birth_date: date | None = None
     notes: str | None = None
+
+    _document_type = field_validator("document_type")(_canonical_document_type)
 
 
 class CustomerCreate(CustomerBase):
@@ -31,12 +47,15 @@ class CustomerUpdate(BaseModel):
     last_name: str | None = None
     document_type: str | None = None
     document_number: str | None = None
+    iva_condition: IvaCondition | None = None
     email: EmailStr | None = None
     phone: str | None = None
     address: str | None = None
     birth_date: date | None = None
     notes: str | None = None
     is_active: bool | None = None
+
+    _document_type = field_validator("document_type")(_canonical_document_type)
 
 
 class CustomerRead(SoftDeleteRead, CustomerBase):

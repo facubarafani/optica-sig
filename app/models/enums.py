@@ -6,6 +6,8 @@ free text. New values go here, never inline strings.
 from __future__ import annotations
 
 import enum
+import re
+import unicodedata
 
 
 class SupplierType(str, enum.Enum):
@@ -100,6 +102,110 @@ class DiscountType(str, enum.Enum):
     PERCENT = "percent"           # porcentaje (%)
 
 
+# --- Facturación electrónica (services.invoicing) ---------------------------
+# The three lists below are stored as plain strings, like Currency: ARCA adds
+# conditions and rates now and then, and a Postgres enum would turn each one
+# into a migration. The names are ARCA's own (proper nouns, like DNI), so they
+# map one to one onto arca-api's.
+
+
+class IvaCondition(str, enum.Enum):
+    """A taxpayer's condición frente al IVA.
+
+    An issuer (the shop) is one of the first three; a buyer can be any of them.
+    The buyer's decides the class a Responsable Inscripto issues: A or B.
+    """
+
+    RESPONSABLE_INSCRIPTO = "responsable_inscripto"
+    MONOTRIBUTO = "monotributo"
+    EXENTO = "exento"
+    CONSUMIDOR_FINAL = "consumidor_final"
+    NO_CATEGORIZADO = "no_categorizado"
+    PROVEEDOR_EXTERIOR = "proveedor_exterior"
+    CLIENTE_EXTERIOR = "cliente_exterior"
+    IVA_LIBERADO_LEY_19640 = "iva_liberado_ley_19640"
+    MONOTRIBUTO_SOCIAL = "monotributo_social"
+    IVA_NO_ALCANZADO = "iva_no_alcanzado"
+    MONOTRIBUTO_TRABAJADOR_INDEPENDIENTE_PROMOVIDO = (
+        "monotributo_trabajador_independiente_promovido"
+    )
+
+
+ISSUER_IVA_CONDITIONS = (
+    IvaCondition.RESPONSABLE_INSCRIPTO, IvaCondition.MONOTRIBUTO, IvaCondition.EXENTO,
+)
+
+
+class IvaRate(str, enum.Enum):
+    """The alícuota a product type is sold at. Only class A and B carry it."""
+
+    RATE_0 = "0"
+    RATE_2_5 = "2.5"
+    RATE_5 = "5"
+    RATE_10_5 = "10.5"
+    RATE_21 = "21"                # the general rate, and the default
+    RATE_27 = "27"
+    EXEMPT = "exempt"             # exento
+    UNTAXED = "untaxed"           # no gravado
+
+
+class DocumentType(str, enum.Enum):
+    """How a customer is identified on a comprobante.
+
+    The values are what shops already typed into the free-text field (``DNI``,
+    ``CUIT``), so existing rows read as members without a data migration.
+    """
+
+    DNI = "DNI"
+    CUIT = "CUIT"
+    CUIL = "CUIL"
+    CDI = "CDI"
+    PASSPORT = "PASAPORTE"
+    FOREIGN_ID = "CI_EXTRANJERA"  # cédula de identidad extranjera
+
+    @classmethod
+    def parse(cls, text: str | None) -> "DocumentType | None":
+        """``"dni"``, ``"D.N.I."``, ``"Pasaporte"`` -> the member; None if unknown."""
+        if not text:
+            return None
+        plain = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode()
+        key = re.sub(r"[^A-Z]", "", plain.upper())
+        return _DOCUMENT_ALIASES.get(key)
+
+
+_DOCUMENT_ALIASES = {
+    "DNI": DocumentType.DNI, "CUIT": DocumentType.CUIT, "CUIL": DocumentType.CUIL,
+    "CDI": DocumentType.CDI, "PASAPORTE": DocumentType.PASSPORT,
+    "PAS": DocumentType.PASSPORT, "PASSPORT": DocumentType.PASSPORT,
+    "CIEXTRANJERA": DocumentType.FOREIGN_ID, "CI": DocumentType.FOREIGN_ID,
+}
+
+
+class InvoiceType(str, enum.Enum):
+    """A comprobante: its kind and its class (A, B or C)."""
+
+    INVOICE_A = "invoice_a"       # factura A
+    INVOICE_B = "invoice_b"       # factura B
+    INVOICE_C = "invoice_c"       # factura C
+    CREDIT_NOTE_A = "credit_note_a"   # nota de crédito A
+    CREDIT_NOTE_B = "credit_note_b"   # nota de crédito B
+    CREDIT_NOTE_C = "credit_note_c"   # nota de crédito C
+
+
+class InvoiceStatus(str, enum.Enum):
+    """Where a comprobante stands with ARCA.
+
+    ``PENDING`` covers everything not settled yet, including "we don't know":
+    a request that timed out may have been authorized, so it is only ever
+    resent under the same key. ``REJECTED`` means nothing was issued and no
+    number was used, which is the only state a new attempt may follow.
+    """
+
+    PENDING = "pending"           # en trámite
+    AUTHORIZED = "authorized"     # autorizado, con CAE
+    REJECTED = "rejected"         # rechazado: no se emitió
+
+
 # --- Reserved for transactional modules not built yet (shown in the ER
 #     diagram). Defined here so states are controlled from day one. ---
 
@@ -137,6 +243,9 @@ class PlatformAction(str, enum.Enum):
     TENANT_PASSWORD_RESET = "tenant.password_reset"
     TENANT_IMPERSONATE = "tenant.impersonate"
     TENANT_INVITE_SENT = "tenant.invite_sent"
+    TENANT_INVOICING_LINK = "tenant.invoicing_link"
+    TENANT_INVOICING_UPDATE = "tenant.invoicing_update"
+    TENANT_INVOICING_NOTE = "tenant.invoicing_note"
 
 
 class TokenPurpose(str, enum.Enum):

@@ -6,7 +6,8 @@ Guidance for AI assistants and contributors working in this repository.
 
 Backend for a **Sistema de Gestión Integral para ópticas** (optics-store ERP),
 Argentina. This codebase implements the **master-data backbone** plus the first
-transactional module, **Ventas** (sales, payments, pending accounts). The
+transactional module, **Ventas** (sales, payments, pending accounts), with its
+**facturación electrónica** through our own arca-api gateway. The
 remaining transactional modules — caja, cuentas corrientes, trabajos externos,
 arreglos, cuentas a pagar, reportes — are designed in `docs/ER_DIAGRAM.md` but
 not built yet.
@@ -143,6 +144,27 @@ not built yet.
     `/api/activity/cursor` id it read when the tab opened as `after_id`, so
     it only walks what was done since; older changes are undone from
     Actividad.
+19. **A comprobante is a second step, never part of the sale.** ARCA is
+    reached only through arca-api, and only `services/arca.py` calls it
+    (`ARCA_API_BACKEND=fake` in tests). The sale commits first; the Facturar
+    button then asks `services/invoicing.py`, which decides the class (C for
+    a Monotributista or Exento; A or B for a Responsable Inscripto, by the
+    buyer's IVA condition), turns every discount into per-line bonificaciones
+    that add up to `sale.total` to the cent, and takes the alícuota from the
+    product type. Its row, `Idempotency-Key` and exact body are committed
+    **before** the request leaves; a pending comprobante is only ever resent
+    under that key, never rebuilt, and only a definite "nothing was stored"
+    (`REJECTED`) frees a new attempt. No transaction stays open across the
+    call. Anular reverses an authorized factura with a nota de crédito, and
+    is refused while one is still pending. The company-to-issuer link
+    (`arca_issuers`) is written only from `/api/admin`, one issuer per shop.
+    A shop reaches it through the guide in Empresa: it does its own steps at
+    ARCA (a web-services punto de venta, the delegation to
+    `ARCA_PLATFORM_CUIT`) and sends its data, which only ever writes an
+    `invoicing_requests` row and emails us; we accept the delegation at ARCA
+    and activate it, after checking the declared IVA condition against ARCA's
+    padrón. Comprobante numbers are ARCA's, not `services.numbering`'s, and
+    fiscal rows are never edited or deleted. See `docs/INVOICING.md`.
 
 ## Web console (`app/web/index.html`)
 
@@ -160,6 +182,20 @@ conventions worth knowing before editing it:
   leave the identifying columns unmarked.
 - Row actions: keep at most two labelled buttons and put the rest in the `⋯`
   menu via `openRowMenu(anchor, items)`.
+- **The one file it loads besides itself:** the facturación guide's
+  screenshots of ARCA's own screens, in `app/web/guia/` (served at
+  `/app/guia/`, mounted in `main.py`). They are cropped from ARCA's published
+  instructivos, as rendered, never from the PDFs' raw images, which can hold
+  personal data ARCA covered with shapes drawn on top. They show under their
+  step, always (a "show screenshot" toggle was tried and read as hidden):
+  about 250 KB that come with Empresa and are cached after, and only for shops
+  that do not invoice yet, since an active shop never renders the guide.
+  `tests/test_invoicing_setup.py` checks that every name the guide uses has a
+  file. Inlining them as base64 would add about 330 KB to every page load.
+- **A plain date is a calendar day.** `new Date("2026-08-12")` is UTC
+  midnight, which Argentina sees as the 11th. `fmtDate` builds `YYYY-MM-DD`
+  in local time; anything else that turns a date-only string into a `Date`
+  must do the same.
 - **No em dashes in anything a user reads.** `—` (U+2014) must never reach the
   screen: not in option labels, buttons, headings, toasts, placeholders or
   empty states, and not in the strings that arrive from the backend either —

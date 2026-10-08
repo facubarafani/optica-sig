@@ -15,6 +15,11 @@ os.environ.setdefault("SECRET_KEY", "test-secret-key-0123456789abcdef0123456789"
 # able to send, whatever the ambient environment says.
 os.environ["EMAIL_BACKEND"] = "memory"
 os.environ["PUBLIC_BASE_URL"] = "https://test.sgi"
+# Same reasoning for invoicing: the suite must never reach a real arca-api,
+# whatever ARCA_API_URL the developer's shell happens to export.
+os.environ["ARCA_API_BACKEND"] = "fake"
+os.environ["ARCA_PLATFORM_CUIT"] = "30712345671"
+os.environ["ARCA_PLATFORM_NAME"] = "MI OPTICA DIGITAL"
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
@@ -27,6 +32,7 @@ from app.core.config import settings  # noqa: E402
 from app.core.database import Base, get_db  # noqa: E402
 from app.core import ratelimit  # noqa: E402
 from app.core.security import hash_password  # noqa: E402
+from app.services import arca  # noqa: E402
 from app.services import email as email_service  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models.auth import Permission, User  # noqa: E402
@@ -59,9 +65,10 @@ app.dependency_overrides[get_db] = _override_get_db
 
 @pytest.fixture(autouse=True)
 def _fresh_state():
-    """Both of these are process-global, so they leak between tests otherwise."""
+    """These are process-global, so they leak between tests otherwise."""
     email_service.outbox.clear()
     ratelimit.reset()
+    arca.fake.reset()
     yield
 
 

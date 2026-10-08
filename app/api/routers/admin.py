@@ -16,6 +16,12 @@ from app.core.deps import get_current_platform_user
 from app.core.security import SCOPE_PLATFORM, create_access_token
 from app.models.platform import PlatformUser
 from app.schemas.auth import Token
+from app.schemas.invoicing import (
+    TenantInvoicingLink,
+    TenantInvoicingNote,
+    TenantInvoicingRead,
+    TenantInvoicingUpdate,
+)
 from app.schemas.platform import (
     AuditLogRead,
     ImpersonateRequest,
@@ -82,6 +88,7 @@ def list_tenants(
             user_count=row["user_count"],
             product_count=row["product_count"],
             sale_count=row["sale_count"],
+            invoicing=row["invoicing"],
         )
         for row in platform_service.list_tenants(db)
     ]
@@ -297,6 +304,79 @@ def impersonate(
         user_email=target.email,
         user_full_name=target.full_name,
     )
+
+
+# --- facturación electrónica ----------------------------------------------
+@router.get("/tenants/{company_id}/invoicing", response_model=TenantInvoicingRead)
+def get_tenant_invoicing(
+    company_id: int,
+    db: Session = Depends(get_db),
+    _: PlatformUser = Depends(get_current_platform_user),
+):
+    try:
+        return platform_service.tenant_invoicing(db, company_id)
+    except platform_service.PlatformError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc))
+
+
+@router.post("/tenants/{company_id}/invoicing", response_model=TenantInvoicingRead)
+def link_tenant_invoicing(
+    company_id: int,
+    data: TenantInvoicingLink,
+    db: Session = Depends(get_db),
+    current: PlatformUser = Depends(get_current_platform_user),
+):
+    """Register the shop's CUIT in arca-api (delegated) or link an existing
+    issuer. Only this side can: the link decides whose CUIT a shop invoices as."""
+    try:
+        return platform_service.link_tenant_invoicing(db, current, company_id, data)
+    except platform_service.PlatformError as exc:
+        db.rollback()
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
+
+
+@router.patch("/tenants/{company_id}/invoicing", response_model=TenantInvoicingRead)
+def update_tenant_invoicing(
+    company_id: int,
+    data: TenantInvoicingUpdate,
+    db: Session = Depends(get_db),
+    current: PlatformUser = Depends(get_current_platform_user),
+):
+    try:
+        return platform_service.update_tenant_invoicing(db, current, company_id, data)
+    except platform_service.PlatformError as exc:
+        db.rollback()
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
+
+
+@router.put("/tenants/{company_id}/invoicing/note", response_model=TenantInvoicingRead)
+def note_tenant_invoicing(
+    company_id: int,
+    data: TenantInvoicingNote,
+    db: Session = Depends(get_db),
+    current: PlatformUser = Depends(get_current_platform_user),
+):
+    """Answer the shop's request ("todavía no vemos la delegación"): it shows
+    in its guide and is mailed to whoever sent it. Empty clears it."""
+    try:
+        return platform_service.set_invoicing_note(db, current, company_id, data.note)
+    except platform_service.PlatformError as exc:
+        db.rollback()
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
+
+
+@router.get("/tenants/{company_id}/invoicing/health")
+def tenant_invoicing_health(
+    company_id: int,
+    db: Session = Depends(get_db),
+    _: PlatformUser = Depends(get_current_platform_user),
+) -> dict:
+    """arca-api's health check for the shop's issuer: is ARCA up, is the ticket
+    valid, and has the delegation been accepted (``invoicing.ok``)."""
+    try:
+        return platform_service.tenant_invoicing_health(db, company_id)
+    except platform_service.PlatformError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
 
 
 # --- audit ----------------------------------------------------------------

@@ -27,6 +27,8 @@ class Customer(IDMixin, CompanyMixin, TimestampMixin, SoftDeleteMixin, Base):
     last_name: Mapped[str] = mapped_column(String(100), nullable=False)
     document_type: Mapped[str | None] = mapped_column(String(20))  # DNI, CUIT...
     document_number: Mapped[str | None] = mapped_column(String(30), index=True)
+    # IvaCondition value. Empty reads as consumidor final, which most are.
+    iva_condition: Mapped[str | None] = mapped_column(String(40))
     email: Mapped[str | None] = mapped_column(String(150))
     phone: Mapped[str | None] = mapped_column(String(50))
     address: Mapped[str | None] = mapped_column(String(255))

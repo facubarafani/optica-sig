@@ -38,7 +38,7 @@ from app.schemas.sales import (
     SalePreviewItem,
 )
 from app.schemas.stock import StockMovementCreate
-from app.services import clock, numbering, pricing
+from app.services import clock, invoicing, numbering, pricing
 from app.services import products as products_service
 from app.services import stock as stock_service
 
@@ -433,8 +433,20 @@ def cancel_sale(
     """Anular: put the goods back and mark it cancelled.
 
     Payments are left on the record — the money did change hands, and erasing
-    that would hide a refund that still has to happen.
+    that would hide a refund that still has to happen. A factura is reversed
+    by a nota de crédito afterwards (``invoicing.credit_note_if_invoiced``),
+    outside this transaction; one still with ARCA blocks the cancellation.
     """
+    if sale.status is SaleStatus.CANCELLED:
+        raise SaleError("La venta ya está anulada.")
+    try:
+        invoicing.assert_cancellable(db, sale)
+    except invoicing.InvoicingError as exc:
+        raise SaleError(str(exc)) from exc
+    # Read again under the row lock assert_cancellable took: a second Anular
+    # waits here for the first, then finds the sale already cancelled instead
+    # of putting the stock back twice.
+    db.refresh(sale)
     if sale.status is SaleStatus.CANCELLED:
         raise SaleError("La venta ya está anulada.")
     if sale.status is not SaleStatus.QUOTE:
