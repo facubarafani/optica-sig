@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.models.enums import PricingMode
+from app.models.enums import IvaRate, PricingMode
 from app.schemas.common import SoftDeleteRead
 
 _HEX_RE = re.compile(r"^#?(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
@@ -42,17 +42,21 @@ def _norm_hex(v: str | None) -> str | None:
 class ProductTypeCreate(BaseModel):
     name: str
     description: str | None = None
+    # Alícuota for facturas A and B. Empty is the general 21%.
+    iva_rate: IvaRate | None = None
 
 
 class ProductTypeUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
+    iva_rate: IvaRate | None = None
     is_active: bool | None = None
 
 
 class ProductTypeRead(SoftDeleteRead):
     name: str
     description: str | None = None
+    iva_rate: IvaRate | None = None
 
 
 # --- brand ----------------------------------------------------------------

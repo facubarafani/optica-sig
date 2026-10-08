@@ -127,6 +127,7 @@ FIELD_LABELS = {
     "min_stock": "Stock mínimo", "is_active": "Activo", "hex_code": "Tono",
     "price": "Precio", "quantity": "Cantidad", "product_id": "Producto",
     "branch_id": "Sucursal", "movement_type": "Tipo de movimiento",
+    "iva_rate": "Alícuota de IVA", "point_of_sale": "Punto de venta",
 }
 _FK_DISPLAY = {
     "parent_id": (Product, "code"), "product_id": (Product, "code"),

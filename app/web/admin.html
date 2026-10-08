@@ -540,6 +540,7 @@ function renderTenantTable(rows) {
       <th class="num">Usuarios</th>
       <th class="num col-p2">Productos</th>
       <th class="num col-p2">Ventas</th>
+      <th class="col-p2">Facturación</th>
       <th class="col-p3">Alta</th>
       <th>Estado</th>
       <th></th>
@@ -553,6 +554,7 @@ function renderTenantTable(rows) {
         <td class="num">${t.user_count}</td>
         <td class="num col-p2">${t.product_count}</td>
         <td class="num col-p2">${t.sale_count}</td>
+        <td class="col-p2">${INVOICING_BADGE[t.invoicing] ? badge(...INVOICING_BADGE[t.invoicing]) : `<span class="fhelp">-</span>`}</td>
         <td class="col-p3">${fmtDate(t.created_at)}</td>
         <td>${t.is_active ? badge("Activa","green") : badge("Suspendida","red")}</td>
         <td class="actions">
@@ -780,6 +782,8 @@ async function openTenantDetail(id) {
       <dt>Estado</dt><dd>${t.is_active ? badge("Activa","green") : badge("Suspendida","red")}</dd>
       <dt>Alta</dt><dd>${fmtDate(t.created_at)}</dd>
     </dl>
+    <div class="sect">Facturación electrónica</div>
+    <div id="invoicingBox"><div class="fhelp">Consultando arca-api…</div></div>
     <div class="sect">Usuarios (${users.length})</div>
     <div class="tbl-wrap" style="border:1px solid var(--border)">
       <table><thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Estado</th><th></th></tr></thead>
@@ -818,6 +822,244 @@ async function openTenantDetail(id) {
   }));
 
   openModal({ title: t.name, body, wide: true });
+  paintInvoicing($("#invoicingBox", body), t);
+}
+
+/* --- facturación electrónica --------------------------------------------
+   The link between a shop and its arca-api issuer decides whose CUIT its
+   sales are invoiced under, so only this console makes it. The shop then
+   sees a Facturar button on its sales. */
+const IVA_ES = { responsable_inscripto: "Responsable Inscripto", monotributo: "Monotributista", exento: "Exento" };
+// "submitted" is the one that needs us: the shop finished its steps at ARCA.
+const INVOICING_BADGE = { active: ["Activa", "green"], paused: ["Pausada", "gray"],
+  submitted: ["Por activar", "amber"], draft: ["En la guía", "gray"] };
+const fmtCuit = (c) => (c && /^\d{11}$/.test(c)) ? `${c.slice(0, 2)}-${c.slice(2, 10)}-${c.slice(10)}` : (c || "");
+const CREDENTIAL_ES = { ACTIVE: "activa", AWAITING_CERTIFICATE: "esperando certificado",
+  NOT_CONFIGURED: "sin configurar", EXPIRED: "vencida" };
+const FISCAL = [["commercial_address", "commercialAddress", "domicilio comercial"],
+  ["gross_income_tax", "grossIncomeTax", "Ingresos Brutos"],
+  ["activity_start_date", "activityStartDate", "inicio de actividades"],
+  ["trade_name", "tradeName", "nombre de fantasía"]];
+
+async function paintInvoicing(box, t) {
+  let inv;
+  try { inv = await api("GET", `/api/admin/tenants/${t.id}/invoicing`); }
+  catch (e) { box.innerHTML = `<div class="warnbox">${esc(e.message)}</div>`; return; }
+  if (!box.isConnected) return;
+  if (!inv.linked && inv.request) {
+    box.innerHTML = requestPanel(inv);
+  } else if (!inv.linked) {
+    box.innerHTML = `<p class="fhelp" style="margin:0 0 10px">${inv.configured
+        ? "Todavía no completó la guía de Empresa, Facturación electrónica. Se puede activar igual con sus datos."
+        : "Este servidor no tiene arca-api configurado (ARCA_API_URL y ARCA_API_KEY)."}</p>
+      ${inv.configured ? `<button class="btn primary sm" type="button" data-inv="link">
+        <svg class="ic"><use href="#i-receipt"/></svg>Activar facturación</button>` : ""}`;
+  } else {
+    const issuer = inv.issuer || {};
+    const missing = FISCAL.filter(([, key]) => (issuer.missingForPdf || []).includes(key)).map(f => f[2]);
+    const cred = issuer.credential || {};
+    box.innerHTML = `
+      <dl class="kv">
+        <dt>Emisor</dt><dd class="mono">${esc(inv.issuer_id)}</dd>
+        <dt>CUIT</dt><dd class="mono">${esc(inv.cuit)}</dd>
+        <dt>Razón social</dt><dd>${esc(inv.legal_name)}</dd>
+        <dt>Condición IVA</dt><dd>${esc(IVA_ES[inv.iva_condition] || inv.iva_condition)}
+          (${inv.iva_condition === "responsable_inscripto" ? "facturas A y B" : "factura C"})</dd>
+        <dt>Punto de venta</dt><dd class="mono">${inv.point_of_sale}</dd>
+        <dt>Estado</dt><dd>${inv.is_active ? badge("Activa","green") : badge("Pausada","gray")}${
+          cred.status ? ` <span class="fhelp">credencial ${esc(CREDENTIAL_ES[cred.status] || cred.status)}</span>` : ""}</dd>
+      </dl>
+      ${inv.error ? `<div class="warnbox" style="margin-top:10px">arca-api no respondió: ${esc(inv.error)}</div>` : ""}
+      ${(t.tax_id || "").replace(/\D/g, "") && (t.tax_id || "").replace(/\D/g, "") !== inv.cuit
+        ? `<div class="warnbox" style="margin-top:10px">El emisor factura con el CUIT ${esc(inv.cuit)}, que no es el de la
+            óptica (${esc(t.tax_id)}). Sus ventas salen a nombre de ese CUIT.</div>` : ""}
+      ${missing.length ? `<div class="warnbox" style="margin-top:10px">Para imprimir comprobantes falta: ${esc(missing.join(", "))}.</div>` : ""}
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn sm" type="button" data-inv="health"><svg class="ic"><use href="#i-shield"/></svg>Chequear con ARCA</button>
+        <button class="btn sm" type="button" data-inv="edit"><svg class="ic"><use href="#i-pencil"/></svg>Editar</button>
+      </div>`;
+  }
+  const on = (act, fn) => { const b = $(`[data-inv=${act}]`, box); if (b) b.addEventListener("click", fn); };
+  const repaint = () => paintInvoicing(box, t);
+  on("link", () => openLinkInvoicing(t, repaint, inv.request));
+  on("edit", () => openEditInvoicing(t, inv, repaint));
+  on("health", () => showInvoicingHealth(t));
+  on("note", () => openInvoicingNote(t, inv.request, repaint));
+}
+
+/* What the shop sent from its guide, beside ARCA's padrón for that CUIT: the
+   IVA condition can never change once registered, so it is checked against
+   the source here, before Activar. Then our own two steps at ARCA. */
+function requestPanel(inv) {
+  const r = inv.request, tp = inv.taxpayer;
+  const declared = r.iva_condition;
+  const suggested = tp && tp.ivaCondition && tp.ivaCondition.suggested
+    ? tp.ivaCondition.suggested.toLowerCase() : null;
+  const clash = suggested && declared && suggested !== declared;
+  const address = tp && tp.fiscalAddress
+    ? [tp.fiscalAddress.address, tp.fiscalAddress.locality, tp.fiscalAddress.province].filter(Boolean).join(", ") : "";
+  return `
+    <p style="margin:0 0 10px">${r.submitted_at
+      ? `${badge("Por activar","amber")} La óptica envió sus datos el ${fmtDate(r.submitted_at)}.`
+      : `${badge("En la guía","gray")} La óptica empezó la guía pero todavía no la envió.`}</p>
+    <dl class="kv">
+      <dt>CUIT</dt><dd class="mono">${esc(fmtCuit(r.cuit))}</dd>
+      <dt>Razón social</dt><dd>${esc(r.legal_name || "-")}</dd>
+      <dt>Condición IVA</dt><dd>${esc(IVA_ES[declared] || declared || "-")}</dd>
+      <dt>Punto de venta</dt><dd class="mono">${esc(String(r.point_of_sale || "-"))}</dd>
+      <dt>Domicilio comercial</dt><dd>${esc(r.commercial_address || "-")}</dd>
+      <dt>Ingresos Brutos</dt><dd>${esc(r.gross_income_tax || "-")}</dd>
+      <dt>Inicio de actividades</dt><dd>${r.activity_start_date ? fmtDate(r.activity_start_date) : "-"}</dd>
+    </dl>
+    <div class="sect" style="margin-top:14px">Padrón de ARCA</div>
+    ${tp ? `<dl class="kv">
+        <dt>Nombre</dt><dd>${esc(tp.name || "-")}${tp.keyStatus && tp.keyStatus !== "ACTIVO" ? " " + badge(tp.keyStatus, "red") : ""}</dd>
+        <dt>Condición sugerida</dt><dd>${esc(IVA_ES[suggested] || "sin sugerencia")}
+          <span class="fhelp">${esc((tp.ivaCondition && tp.ivaCondition.reason) || "")}</span></dd>
+        <dt>Domicilio fiscal</dt><dd>${esc(address || "-")}</dd>
+      </dl>
+      ${clash ? `<div class="warnbox" style="margin-top:10px">ARCA sugiere <b>${esc(IVA_ES[suggested])}</b> y la óptica
+        declaró <b>${esc(IVA_ES[declared] || declared)}</b>. Confirmalo antes de activar: no se puede cambiar después.</div>` : ""}`
+      : `<p class="fhelp" style="margin:0">${esc(inv.taxpayer_error || "Sin CUIT para consultar.")}</p>`}
+    ${r.provider_note ? `<div class="warnbox" style="margin-top:10px"><b>Nuestro mensaje:</b> ${esc(r.provider_note)}</div>` : ""}
+    <div class="sect" style="margin-top:14px">Antes de activar, en ARCA con nuestra Clave Fiscal</div>
+    <ol style="margin:0;padding-left:18px;font-size:13px;line-height:1.6">
+      <li><b>Aceptación de Designación</b>: aceptá la delegación de ${esc(fmtCuit(r.cuit))} (figura como pendiente).
+        <a href="https://www.afip.gob.ar/guias/paso-a-paso/Como-delego-servicios-para-que-utilicen-en-mi-nombre-como-se-acepta-delegacion.pdf#page=8"
+          target="_blank" rel="noopener">Instructivo de ARCA</a></li>
+      <li><b>Administrador de Relaciones</b>: elegí ${esc(fmtCuit(r.cuit))} como representado, <b>Nueva Relación</b>,
+        WebServices, <b>Facturación Electrónica</b>, y como representante nuestro computador fiscal.
+        <a href="https://www.afip.gob.ar/ws/WSAA/ADMINREL.DelegarWS.pdf#page=11" target="_blank" rel="noopener">Instructivo de ARCA</a></li>
+    </ol>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn primary sm" type="button" data-inv="link"><svg class="ic"><use href="#i-receipt"/></svg>Activar</button>
+      <button class="btn sm" type="button" data-inv="note"><svg class="ic"><use href="#i-mail"/></svg>Dejar un mensaje</button>
+    </div>`;
+}
+
+function openInvoicingNote(t, request, onDone) {
+  const form = el(`<form class="form">
+      <div class="form-row"><label class="fld">Mensaje para la óptica</label>
+        <textarea name="note" maxlength="500" rows="4" placeholder="Todavía no vemos la delegación de Facturación Electrónica: revisá el paso 2.">${esc(request.provider_note || "")}</textarea>
+        <div class="fhelp">Lo ve en su guía y le llega por email. Vacío, se borra.</div></div>
+    </form>`);
+  openModal({
+    title: `Mensaje · ${t.name}`, body: form, confirmLabel: "Enviar",
+    onConfirm: async () => {
+      const note = new FormData(form).get("note") || "";
+      await api("PUT", `/api/admin/tenants/${t.id}/invoicing/note`, { note });
+      toast(note.trim() ? "Mensaje enviado" : "Mensaje borrado", "ok");
+      onDone();
+    },
+  });
+}
+
+function fiscalRows(values) {
+  return `<div class="sect">Lo que imprime el comprobante</div>
+    <div class="form-row full"><label class="fld">Domicilio comercial</label>
+      <input name="commercial_address" value="${esc(values.commercial_address || "")}" placeholder="Desde donde factura"></div>
+    <div class="form-row"><label class="fld">Ingresos Brutos</label>
+      <input name="gross_income_tax" value="${esc(values.gross_income_tax || "")}" placeholder="901-123456-7, o Exento"></div>
+    <div class="form-row"><label class="fld">Inicio de actividades</label>
+      <input name="activity_start_date" type="date" value="${esc(values.activity_start_date || "")}"></div>
+    <div class="form-row full"><label class="fld">Nombre de fantasía</label>
+      <input name="trade_name" value="${esc(values.trade_name || "")}"></div>`;
+}
+
+function openLinkInvoicing(t, onDone, request) {
+  const r = request || {};
+  const form = el(`
+    <form class="form grid2">
+      <div class="form-row full"><div class="warnbox">
+        Antes, en ARCA: la óptica delega <b>Facturación Electrónica</b> en nuestro CUIT y crea un punto
+        de venta para web services; nosotros aceptamos la delegación y autorizamos el certificado.
+        El paso a paso está en el README de arca-api, y el chequeo con ARCA dice qué falta.
+      </div></div>
+      <div class="form-row"><label class="fld">CUIT <span class="req">*</span></label>
+        <input name="cuit" value="${esc(r.cuit || (t.tax_id || "").replace(/\D/g, ""))}" placeholder="20123456789" inputmode="numeric"></div>
+      <div class="form-row"><label class="fld">Condición frente al IVA <span class="req">*</span></label>
+        <select name="iva_condition">
+          <option value="">(elegí una: no se puede cambiar después)</option>
+          <option value="monotributo">Monotributista (factura C)</option>
+          <option value="responsable_inscripto">Responsable Inscripto (A y B)</option>
+          <option value="exento">Exento (factura C)</option>
+        </select></div>
+      <div class="form-row"><label class="fld">Razón social</label>
+        <input name="legal_name" value="${esc(r.legal_name || t.legal_name || t.name)}"></div>
+      <div class="form-row"><label class="fld">Punto de venta <span class="req">*</span></label>
+        <input name="point_of_sale" type="number" min="1" max="99998" value="${esc(String(r.point_of_sale || ""))}" required></div>
+      ${fiscalRows({
+        commercial_address: r.commercial_address || t.address, gross_income_tax: r.gross_income_tax,
+        activity_start_date: r.activity_start_date, trade_name: r.trade_name || t.name })}
+      <div class="form-row full"><label class="fld">Emisor que ya existe en arca-api (opcional)</label>
+        <input name="issuer_id" placeholder="iss_…">
+        <div class="fhelp">Sólo si se dio de alta a mano. Si no, se registra con los datos de arriba.</div></div>
+    </form>`);
+  // The condition the shop declared comes preselected; the choice stays explicit.
+  if (r.iva_condition) $("[name=iva_condition]", form).value = r.iva_condition;
+  openModal({
+    title: `Activar facturación · ${t.name}`, body: form, wide: true, confirmLabel: "Activar",
+    onConfirm: async () => {
+      const data = Object.fromEntries(new FormData(form).entries());
+      for (const k of Object.keys(data)) if (data[k] === "") delete data[k];
+      if (!data.point_of_sale) { toast("Indicá el punto de venta", "err"); return false; }
+      // arca-api cannot change it later, and it decides every comprobante's class.
+      if (!data.issuer_id && !data.iva_condition) { toast("Elegí la condición frente al IVA", "err"); return false; }
+      data.point_of_sale = Number(data.point_of_sale);
+      if (data.issuer_id) { delete data.cuit; delete data.iva_condition; delete data.legal_name; }
+      await api("POST", `/api/admin/tenants/${t.id}/invoicing`, data);
+      toast("Facturación activada", "ok");
+      onDone();
+    },
+  });
+}
+
+function openEditInvoicing(t, inv, onDone) {
+  const issuer = inv.issuer || {};
+  const current = Object.fromEntries(FISCAL.map(([field, key]) => [field, issuer[key] || ""]));
+  const form = el(`
+    <form class="form grid2">
+      <div class="form-row"><label class="fld">Punto de venta</label>
+        <input name="point_of_sale" type="number" min="1" max="99998" value="${inv.point_of_sale}"></div>
+      <div class="form-row"><label class="fld">&nbsp;</label>
+        <label class="switch"><input type="checkbox" name="is_active" ${inv.is_active ? "checked" : ""}> Facturación activa</label></div>
+      ${fiscalRows(current)}
+      <div class="form-row full fhelp">El CUIT y la condición frente al IVA no cambian: con ellos se emitió cada comprobante.</div>
+    </form>`);
+  openModal({
+    title: `Facturación · ${t.name}`, body: form, wide: true,
+    onConfirm: async () => {
+      const data = Object.fromEntries(new FormData(form).entries());
+      const body = { is_active: data.is_active === "on" };
+      if (data.point_of_sale) body.point_of_sale = Number(data.point_of_sale);
+      // Only what changed, so the audit says what was actually edited.
+      for (const [field] of FISCAL) if (data[field] && data[field] !== current[field]) body[field] = data[field];
+      await api("PATCH", `/api/admin/tenants/${t.id}/invoicing`, body);
+      toast("Facturación actualizada", "ok");
+      onDone();
+    },
+  });
+}
+
+async function showInvoicingHealth(t) {
+  let h;
+  try { h = await api("GET", `/api/admin/tenants/${t.id}/invoicing/health`); }
+  catch (e) { toast(e.message, "err"); return; }
+  const line = (label, part) => `<dt>${label}</dt><dd>${part.ok ? badge("OK","green") : badge("Falla","red")}${
+    part.error ? ` <span class="fhelp">${esc(part.error)}</span>` : ""}</dd>`;
+  const points = (h.invoicing.pointsOfSale || [])
+    .map(p => `${p.number}${p.blocked ? " (bloqueado)" : ""}`).join(", ");
+  openModal({
+    title: `Chequeo con ARCA · ${t.name}`,
+    body: `<dl class="kv">
+        ${line("ARCA", h.arca)}
+        ${line("Autenticación", h.authentication)}
+        ${line("Facturación", h.invoicing)}
+        <dt>Puntos de venta</dt><dd>${esc(points || "ninguno informado (homologación no tiene)")}</dd>
+      </dl>
+      ${h.invoicing.ok ? "" : `<p class="fhelp" style="margin-top:10px">Si ARCA dice que el CUIT no aparece en la
+        lista de relaciones, falta la delegación o su aceptación. Puede tardar hasta 24 h en propagarse.</p>`}`,
+  });
 }
 
 function openAddAdmin(t) {
@@ -923,6 +1165,9 @@ const ACTION_ES = {
   "tenant.password_reset": "Contraseña restablecida",
   "tenant.impersonate": "Ingreso de soporte",
   "tenant.invite_sent": "Invitación enviada",
+  "tenant.invoicing_link": "Facturación vinculada",
+  "tenant.invoicing_update": "Facturación editada",
+  "tenant.invoicing_note": "Mensaje de facturación",
 };
 const ACTION_BADGE = {
   "tenant.create": "green",
@@ -933,6 +1178,9 @@ const ACTION_BADGE = {
   "tenant.password_reset": "amber",
   "tenant.impersonate": "amber",
   "tenant.invite_sent": "violet",
+  "tenant.invoicing_link": "green",
+  "tenant.invoicing_update": "gray",
+  "tenant.invoicing_note": "amber",
 };
 
 async function viewAudit(view) {

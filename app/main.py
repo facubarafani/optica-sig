@@ -4,6 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from fastapi import FastAPI, Request, status
+from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from sqlalchemy.exc import IntegrityError
 
@@ -80,6 +81,13 @@ def landing() -> FileResponse:
 @app.get("/app", include_in_schema=False)
 def web_console() -> FileResponse:
     return FileResponse(WEB_DIR / "index.html")
+
+
+# Screenshots of ARCA's own screens for the facturación setup guide (Empresa),
+# cropped from ARCA's published instructivos. The one thing the console loads
+# besides its own file: images, same origin, fetched only when a step of the
+# guide is opened, so index.html stays the whole console.
+app.mount("/app/guia", StaticFiles(directory=WEB_DIR / "guia"), name="guia")
 
 
 # --- Provider admin console ----------------------------------------------

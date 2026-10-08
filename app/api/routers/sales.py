@@ -25,6 +25,7 @@ from app.schemas.sales import (
     SaleRead,
     SaleUpdate,
 )
+from app.services import invoicing
 from app.services import sales as sales_service
 
 router = APIRouter()
@@ -144,6 +145,12 @@ def update_sale(
     """Only status, the reminder and the notes. Money and lines are immutable —
     correct a sale by cancelling it and issuing another."""
     sale = _get_or_404(db, sale_id, company_id)
+    if data.status is SaleStatus.CANCELLED and sale.status is not SaleStatus.CANCELLED:
+        # Setting the flag here would skip what anular does: the stock going
+        # back and the nota de crédito reversing its factura.
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, "Para anular una venta usá Anular."
+        )
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(sale, field, value)
     db.commit()
@@ -175,14 +182,20 @@ def cancel_sale(
     company_id: int = Depends(get_company_id),
     current_user: User = Depends(require_permission("sales:write")),
 ):
-    """Anular: the stock goes back, the payment record stays."""
+    """Anular: the stock goes back, the payment record stays, and a factura is
+    reversed by a nota de crédito (shown on the sale, whatever ARCA answers)."""
     sale = _get_or_404(db, sale_id, company_id)
     try:
-        return sales_service.cancel_sale(
+        sale = sales_service.cancel_sale(
             db, sale, company_id=company_id, user_id=current_user.id
         )
     except sales_service.SaleError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
+    if invoicing.credit_note_if_invoiced(
+        db, sale, company_id=company_id, user_id=current_user.id
+    ) is not None:
+        db.refresh(sale)
+    return sale
 
 
 router.include_router(sales)

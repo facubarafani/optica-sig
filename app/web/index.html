@@ -433,6 +433,31 @@
   .checklist label{display:flex;align-items:center;gap:8px;font-weight:500;font-size:13px}
   .fhelp{font-size:11.5px;color:var(--muted);margin-top:4px}
   .fwarn{font-size:11.5px;color:var(--warn);background:var(--warn-50);border:1px solid #fde68a;border-radius:6px;padding:5px 8px;margin-top:5px}
+  .fok{font-size:12.5px;color:var(--ok);background:var(--ok-50);border:1px solid #bbf7d0;border-radius:6px;padding:7px 10px;margin-top:8px}
+  .fbad{font-size:12.5px;color:var(--danger);background:var(--danger-50);border:1px solid var(--danger-200);border-radius:6px;padding:7px 10px;margin-top:8px}
+  /* ---------- facturación electrónica: la guía de alta ---------- */
+  .guide{list-style:none;counter-reset:paso;margin:14px 0 0;padding:0;display:grid;gap:12px}
+  .guide > li{counter-increment:paso;position:relative;padding:12px 14px 12px 50px;border:1px solid var(--border);border-radius:var(--radius)}
+  .guide > li::before{content:counter(paso);position:absolute;left:14px;top:11px;width:24px;height:24px;border-radius:50%;
+    background:var(--primary-50);color:var(--primary-700);font-weight:700;font-size:13px;display:grid;place-items:center}
+  .guide h4{margin:2px 0 6px;font-size:14px}
+  .guide ol{margin:0;padding-left:18px;font-size:13px;line-height:1.6}
+  .guide table{font-size:12.5px;margin:4px 0 6px;border-collapse:collapse}
+  .guide table td{padding:2px 14px 2px 0;border:0;max-width:none;white-space:normal}
+  .guide table tr.pick td{font-weight:700;color:var(--primary-700)}
+  .guide .copy{font-family:var(--mono);background:var(--press);border:1px solid var(--border);border-radius:6px;padding:1px 6px}
+  /* Screenshots sit under their step, side by side when there is room. */
+  .guide .shots{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:flex-start;margin:8px 0 12px}
+  .guide figure.shot{margin:0;max-width:min(100%,560px)}
+  /* The frame is exactly the image's size (never wider), so an overlay placed
+     in percentages lands on the same spot of the screenshot at any width. */
+  .guide .shot-img{position:relative;display:block;width:fit-content;max-width:100%;
+    border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .guide .shot-img img{display:block;max-width:100%;height:auto}
+  .guide figure.shot figcaption{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.45}
+  .guide .fix{position:absolute;border:2px solid var(--danger);border-radius:4px;box-shadow:0 0 0 3px rgba(220,38,38,.2)}
+  .guide .fix-label{position:absolute;background:var(--danger);color:#fff;font-size:11.5px;font-weight:600;line-height:1.35;
+    padding:4px 8px;border-radius:5px;max-width:62%}
   /* ---------- import wizard ---------- */
   /* ---------- mapa de pasos ----------
      Un camino, no una fila de pastillas: la línea dice cuánto falta y por dónde
@@ -785,10 +810,33 @@ const ENUM_ES = {
   treatment_type: { myopia: "Miopía", astigmatism: "Astigmatismo", hyperopia: "Hipermetropía", presbyopia: "Presbicia", other: "Otro" },
   payment_method: { cash: "Efectivo", transfer: "Transferencia", card: "Tarjeta" },
   sale_status: { quote: "Presupuesto", confirmed: "Confirmada", pending: "Pendiente", delivered: "Entregada", cancelled: "Anulada" },
+  // Facturación electrónica. A buyer with no condition is a consumidor final;
+  // a product type with no alícuota is at the general 21%.
+  iva_condition: {
+    responsable_inscripto: "Responsable Inscripto", monotributo: "Monotributista", exento: "Exento",
+    consumidor_final: "Consumidor final", monotributo_social: "Monotributo social",
+    monotributo_trabajador_independiente_promovido: "Monotributo trabajador independiente promovido",
+    no_categorizado: "No categorizado", iva_no_alcanzado: "IVA no alcanzado",
+    iva_liberado_ley_19640: "IVA liberado (Ley 19.640)", cliente_exterior: "Cliente del exterior",
+    proveedor_exterior: "Proveedor del exterior",
+  },
+  iva_rate: { "21": "21%", "10.5": "10,5%", "27": "27%", "5": "5%", "2.5": "2,5%", "0": "0%", exempt: "Exento", untaxed: "No gravado" },
+  document_type: { DNI: "DNI", CUIT: "CUIT", CUIL: "CUIL", PASAPORTE: "Pasaporte", CDI: "CDI", CI_EXTRANJERA: "CI extranjera" },
+  invoice_type: {
+    invoice_a: "Factura A", invoice_b: "Factura B", invoice_c: "Factura C",
+    credit_note_a: "Nota de crédito A", credit_note_b: "Nota de crédito B", credit_note_c: "Nota de crédito C",
+  },
+  invoice_status: { pending: "En trámite", authorized: "Autorizada", rejected: "Rechazada" },
 };
 const PAYMENT_METHOD_OPTIONS = Object.entries(ENUM_ES.payment_method)
   .map(([value, label]) => ({ value, label }));
 const SALE_STATUS_BADGE = { quote:"gray", confirmed:"blue", pending:"amber", delivered:"green", cancelled:"red" };
+const INVOICE_STATUS_BADGE = { pending:"amber", authorized:"green", rejected:"red" };
+const enumOptions = (map) => Object.entries(map).map(([value, label]) => ({ value, label }));
+/* Whether this shop invoices, from /api/invoicing/status at login. Fields
+   and columns about IVA stay out of the way of a shop that does not. */
+const invoicingOn = () => !!(state.invoicing && state.invoicing.enabled);
+const invoicesAB = () => invoicingOn() && (state.invoicing.classes || []).includes("A");
 
 /* Shades an optics shop actually stocks, grouped the way someone looks for
    them. Clicking one fills the tone *and*, if the name is still blank, the
@@ -1112,10 +1160,15 @@ async function loadSession() {
   if (can("company:read")) {
     try { state.company = await api("GET", "/api/company"); state.currency = state.company.currency || "ARS"; } catch {}
   }
+  state.invoicing = null;
+  if (can("sales:read")) {
+    try { state.invoicing = await api("GET", "/api/invoicing/status"); } catch {}
+  }
 }
 
 function logout() {
   state.token = null; state.user = null; state.perms = new Set(); state.company = null;
+  state.invoicing = null;
   localStorage.removeItem(TOKEN_KEY);
   try { sessionStorage.removeItem(INICIO_KEY); } catch {}
   _inicio = null;
@@ -1589,7 +1642,7 @@ async function buildForm(fields, values = {}, grid = false) {
       const hasOpts = (f._opts || []).length > 0;
       const allowEmpty = f.required
         ? (hasOpts ? "" : `<option value="">— sin opciones: creá una primero —</option>`)
-        : `<option value="">— ninguno —</option>`;
+        : `<option value="">${f.emptyLabel ? esc(f.emptyLabel) : "— ninguno —"}</option>`;
       const opts = (f._opts || []).map(o => `<option value="${esc(o.value)}" ${String(v) === String(o.value) ? "selected" : ""}>${esc(o.label)}</option>`).join("");
       const quick = f.quickCreate && canQuickCreate(f.quickCreate);
       row.innerHTML = `<label class="fld">${esc(f.label)}${reqMark}</label>
@@ -2010,6 +2063,8 @@ function stepMap(labels, i) {
 
 function renderTable(columns, rows, rowActions, ctx) {
   if (!rows || !rows.length) return `<div class="card"><div class="empty">Sin registros.</div></div>`;
+  // `when`: a column that only means something for some shops (invoicing).
+  columns = columns.filter(c => !c.when || c.when());
   const prio = (c) => c.priority ? ` col-p${c.priority}` : "";
   const head = columns.map(c => `<th class="${c.align === "right" ? "num" : ""}${prio(c)}">${esc(c.label)}</th>`).join("") + (rowActions ? "<th></th>" : "");
   const body = rows.map(r => {
@@ -2041,11 +2096,17 @@ const CONFIG = {
     endpoint: "/api/branches", perm: "branches", softDelete: true,
     columns: [
       { key:"id", label:"ID" }, { key:"code", label:"Código", mono:true }, { key:"name", label:"Nombre" },
-      { key:"phone", label:"Teléfono" }, { key:"email", label:"Email" }, { key:"is_active", label:"Estado", type:"bool" },
+      { key:"phone", label:"Teléfono" }, { key:"email", label:"Email" },
+      { key:"point_of_sale", label:"Punto de venta", priority:2, when: invoicingOn,
+        render:(v) => v ? esc(String(v)) : `<span class="fhelp">el de la óptica</span>` },
+      { key:"is_active", label:"Estado", type:"bool" },
     ],
     fields: [
       { key:"name", label:"Nombre", required:true }, { key:"code", label:"Código", required:true },
       { key:"address", label:"Dirección" }, { key:"phone", label:"Teléfono" }, { key:"email", label:"Email", type:"email" },
+      { key:"point_of_sale", label:"Punto de venta ARCA", valueType:"int", placeholder:"el de la óptica",
+        showIf: invoicingOn,
+        help:"El número de punto de venta que ARCA le dio a esta sucursal. Vacío, factura con el de la óptica." },
     ],
   },
   suppliers: {
@@ -2081,8 +2142,14 @@ const CONFIG = {
   product_types: {
     title: "Tipos de producto", newTitle: "Nuevo tipo", editTitle: "Editar tipo",
     endpoint: "/api/product-types", perm: "products", softDelete: true,
-    columns: [ { key:"id", label:"ID" }, { key:"name", label:"Nombre" }, { key:"description", label:"Descripción" }, { key:"is_active", label:"Estado", type:"bool" } ],
-    fields: [ { key:"name", label:"Nombre", required:true }, { key:"description", label:"Descripción", type:"textarea" } ],
+    columns: [ { key:"id", label:"ID" }, { key:"name", label:"Nombre" }, { key:"description", label:"Descripción" },
+      { key:"iva_rate", label:"Alícuota IVA", priority:2, when: invoicesAB,
+        render:(v) => v ? esc(ENUM_ES.iva_rate[v] || v) : `<span class="fhelp">21%</span>` },
+      { key:"is_active", label:"Estado", type:"bool" } ],
+    fields: [ { key:"name", label:"Nombre", required:true }, { key:"description", label:"Descripción", type:"textarea" },
+      { key:"iva_rate", label:"Alícuota de IVA", type:"select", emptyLabel:"21% (la general)",
+        options: enumOptions(ENUM_ES.iva_rate).filter(o => o.value !== "21"), showIf: invoicesAB,
+        help:"Con la que se facturan (A y B) los productos de este tipo. Confirmala con tu contador." } ],
   },
   brands: {
     title: "Marcas", newTitle: "Nueva marca", editTitle: "Editar marca",
@@ -4327,7 +4394,12 @@ async function newSaleModal(onDone) {
       const err = presupuesto ? "" : falta();
       if (err) { toast(err, "err"); return; }
       const sale = await api("POST", "/api/sales", cuerpo);
-      toast(presupuesto ? `Presupuesto ${sale.number} guardado` : `Venta ${sale.number} registrada`, "ok");
+      const facturable = !presupuesto && invoicingOn() && can("sales:write") && Number(sale.total) > 0;
+      toast(presupuesto ? `Presupuesto ${sale.number} guardado` : `Venta ${sale.number} registrada`, "ok",
+        facturable ? { label: "Facturar", onClick: async () => {
+          try { toastInvoice(await api("POST", `/api/sales/${sale.id}/invoice`)); }
+          catch (e) { toast(e.message, "err"); }
+        } } : null);
       const faltan = sale.stock_warnings || [];
       if (faltan.length)
         toast(faltan.length === 1 ? faltan[0]
@@ -4384,6 +4456,7 @@ async function saleDetailModal(id, onDone) {
       <dt>Abonado</dt><dd>${fmtMoney(sale.paid_amount)}</dd>
       <div class="due ${owes ? "" : "ok"}" style="display:contents"><dt>Saldo</dt><dd>${fmtMoney(sale.balance)}</dd></div></dl>
     </div>
+    <div id="invoiceSection"></div>
     <h4 style="margin:16px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)">Pagos</h4>
     ${sale.payments.length ? `<table class="lines"><tbody>
       ${sale.payments.map(p => `<tr>
@@ -4405,6 +4478,14 @@ async function saleDetailModal(id, onDone) {
   const close = openModal({ title: `Venta ${sale.number}`, body, wide: true });
   const done = () => { close(); onDone && onDone(); };
 
+  const invoiceBox = $("#invoiceSection", body);
+  const repaintInvoices = async () => {
+    if (!invoiceBox.isConnected) return;
+    try { invoiceSection(invoiceBox, await api("GET", `/api/sales/${id}`), repaintInvoices); }
+    catch (e) { toast(e.message, "err"); }
+  };
+  invoiceSection(invoiceBox, sale, repaintInvoices);
+
   const pay = $("#payBtn", body);
   if (pay) pay.addEventListener("click", () => paymentModal(sale, accounts, done));
   const rem = $("#remBtn", body);
@@ -4412,13 +4493,127 @@ async function saleDetailModal(id, onDone) {
   const cancel = $("#cancelBtn", body);
   if (cancel) cancel.addEventListener("click", () => confirmDanger({
     title: "Anular venta",
-    message: `Se devuelve el stock de ${sale.number} y la venta queda anulada. Los pagos ya registrados se conservan.`,
+    message: `Se devuelve el stock de ${sale.number} y la venta queda anulada. Los pagos ya registrados se conservan.`
+      + ((sale.invoices || []).some(i => i.type.startsWith("invoice_") && i.status === "authorized")
+        ? " La factura se anula con una nota de crédito." : ""),
     confirmLabel: "Anular",
     onConfirm: async () => {
       await api("POST", `/api/sales/${sale.id}/cancel`);
       toast("Venta anulada", "ok"); done();
     },
   }));
+}
+
+/* Facturación de una venta: sus comprobantes y lo que se puede hacer con ellos.
+   Muestra el comprobante vigente de cada clase (o el último rechazo, para que
+   se vea por qué), y mientras algo esté en trámite vuelve a preguntar cada
+   cinco segundos, sólo mientras la ficha siga abierta. */
+const invoiceName = (i) => `${ENUM_ES.invoice_type[i.type] || i.type}${i.formatted_number ? " " + i.formatted_number : ""}`;
+
+function invoiceSection(box, sale, repaint) {
+  const writable = can("sales:write");
+  const all = sale.invoices || [];
+  const kind = (prefix) => {
+    const xs = all.filter(i => i.type.startsWith(prefix));
+    return xs.filter(i => i.status !== "rejected").slice(-1)[0] || xs.slice(-1)[0];
+  };
+  const factura = kind("invoice_"), nota = kind("credit_note_");
+  const vigente = (i) => i && i.status !== "rejected";
+  const canInvoice = writable && invoicingOn() && !vigente(factura)
+    && sale.status !== "quote" && sale.status !== "cancelled" && Number(sale.total) > 0;
+  const canCredit = writable && sale.status === "cancelled"
+    && factura && factura.status === "authorized" && !vigente(nota);
+  const shown = [factura, nota].filter(Boolean);
+  if (!shown.length && !canInvoice) {
+    const hint = !invoicingOn() && state.invoicing && state.invoicing.available
+      && sale.status !== "quote" && sale.status !== "cancelled";
+    box.innerHTML = hint ? `<div class="fhelp" style="margin-top:14px;font-size:12.5px">Para facturar tus ventas,
+      completá la guía en Empresa, Facturación electrónica.</div>` : "";
+    return;
+  }
+  const mismatch = factura && factura.status === "authorized" && Number(factura.total) !== Number(sale.total);
+
+  box.innerHTML = `
+    <h4 style="margin:16px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)">Facturación</h4>
+    ${shown.length ? `<table class="lines"><tbody>${shown.map(i => `<tr>
+        <td>${esc(ENUM_ES.invoice_type[i.type] || i.type)}</td>
+        <td class="mono">${esc(i.formatted_number || "")}</td>
+        <td>${badge(ENUM_ES.invoice_status[i.status] || i.status, INVOICE_STATUS_BADGE[i.status] || "gray")}</td>
+        <td class="mono">${i.cae ? "CAE " + esc(i.cae) : ""}</td>
+        <td class="actions">${i.status === "authorized"
+          ? `<button class="btn sm" type="button" data-pdf="${i.id}"><svg class="ic"><use href="#i-receipt"/></svg>PDF</button>`
+          : (i.status === "pending" && writable
+            ? `<button class="btn sm" type="button" data-retry="${i.id}"><svg class="ic"><use href="#i-rotate"/></svg>Reintentar</button>` : "")}</td>
+      </tr>${i.error && i.status !== "authorized"
+        // The reason is the point of the row: it wraps instead of being cut at 200px.
+        ? `<tr><td colspan="5" class="fhelp" style="white-space:normal;max-width:none">${esc(i.error)}</td></tr>` : ""}`).join("")}
+    </tbody></table>` : ""}
+    ${mismatch ? `<div class="fwarn" style="margin-top:8px">ARCA autorizó ${fmtMoney(factura.total)} y la venta es de ${fmtMoney(sale.total)}: avisá a soporte antes de entregar el comprobante.</div>` : ""}
+    ${canInvoice || canCredit ? `<div class="toolbar" style="margin:10px 0 0">
+      ${canInvoice ? `<button class="btn primary" type="button" data-invoice><svg class="ic"><use href="#i-receipt"/></svg>${factura ? "Facturar de nuevo" : "Facturar"}</button>` : ""}
+      ${canCredit ? `<button class="btn" type="button" data-credit><svg class="ic"><use href="#i-receipt"/></svg>Emitir nota de crédito</button>` : ""}
+    </div>` : ""}`;
+
+  const act = (btn, run) => btn && btn.addEventListener("click", async () => {
+    btn.disabled = true;
+    box._polls = 0;
+    try { toastInvoice(await run()); } catch (e) { toast(e.message, "err"); }
+    repaint();
+  });
+  act($("[data-invoice]", box), () => api("POST", `/api/sales/${sale.id}/invoice`));
+  act($("[data-credit]", box), () => api("POST", `/api/sales/${sale.id}/credit-note`));
+  $$("[data-retry]", box).forEach(b => act(b, () => api("POST", `/api/invoices/${b.dataset.retry}/retry`)));
+  $$("[data-pdf]", box).forEach(b => b.addEventListener("click",
+    () => openInvoicePdf(shown.find(i => String(i.id) === b.dataset.pdf))));
+
+  const pending = shown.filter(i => i.status === "pending");
+  if (pending.length && (box._polls = (box._polls || 0) + 1) <= 24) {
+    setTimeout(async () => {
+      if (!box.isConnected) return;
+      for (const i of pending) { try { await api("GET", `/api/invoices/${i.id}`); } catch {} }
+      repaint();
+    }, 5000);
+  }
+}
+
+function toastInvoice(inv) {
+  if (inv.status === "authorized")
+    toast(`${invoiceName(inv)} autorizada`, "ok", { label: "PDF", onClick: () => openInvoicePdf(inv) });
+  else if (inv.status === "pending") toast(`${invoiceName(inv)} en trámite con ARCA. Se actualiza sola.`);
+  else toast(`${invoiceName(inv)} rechazada: ${inv.error || "sin motivo"}`, "err");
+}
+
+/* The printable comprobante, as arca-api renders it. The tab is opened on the
+   click itself, before the request, so no popup blocker gets in the way. */
+async function openInvoicePdf(inv) {
+  const tab = window.open("", "_blank");
+  try {
+    const res = await fetch(`/api/invoices/${inv.id}/pdf`, { headers: { Authorization: "Bearer " + state.token } });
+    if (!res.ok) {
+      const txt = await res.text();
+      let data = txt; try { data = JSON.parse(txt); } catch {}
+      throw new Error(errMsg(data, res.status));
+    }
+    const url = URL.createObjectURL(await res.blob());
+    if (tab) tab.location = url;
+    else {
+      const a = document.createElement("a");
+      a.href = url; a.download = `${invoiceName(inv).toLowerCase().replace(/ /g, "-")}.pdf`;
+      document.body.appendChild(a); a.click(); a.remove();
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (e) { if (tab) tab.close(); toast(e.message, "err"); }
+}
+
+/* La factura de una venta, en una celda del listado. */
+function invoiceCell(list) {
+  const live = (list || []).filter(i => i.status !== "rejected");
+  const f = live.filter(i => i.type.startsWith("invoice_")).slice(-1)[0];
+  if (!f) return "-";
+  if (f.status === "pending") return badge("en trámite", "amber");
+  const credited = live.some(i => i.type.startsWith("credit_note_") && i.status === "authorized");
+  return `<span class="mono">${esc(f.type.slice(-1).toUpperCase())} ${esc(f.formatted_number || "")}</span>`
+    + (credited ? " " + badge("con NC", "gray") : "");
 }
 
 function paymentModal(sale, accounts, onDone) {
@@ -4502,6 +4697,7 @@ async function salesListTab(n) {
         if (!v || Number(r.balance) <= 0) return "—";
         const late = v < todayISO();
         return `${fmtDate(v)} ${late ? badge("vencido","red") : ""}`; } },
+    { key:"invoices", label:"Factura", priority:2, when: invoicingOn, render:(v) => invoiceCell(v) },
     { key:"status", label:"Estado", render:(v)=>badge(ENUM_ES.sale_status[v] || v, SALE_STATUS_BADGE[v] || "gray") },
   ], "Ninguna venta coincide con la búsqueda.", (row) => saleDetailModal(row.id, reload));
 
@@ -5004,8 +5200,13 @@ async function stockView(view) {
 const CUSTOMER_FIELDS = [
   { key:"first_name", label:"Nombre", required:true },
   { key:"last_name", label:"Apellido", required:true },
-  { key:"document_type", label:"Tipo de documento", placeholder:"DNI / CUIT…" },
+  { key:"document_type", label:"Tipo de documento", type:"select", emptyLabel:"(ninguno)",
+    options: enumOptions(ENUM_ES.document_type) },
   { key:"document_number", label:"Número de documento" },
+  { key:"iva_condition", label:"Condición frente al IVA", type:"select", emptyLabel:"Consumidor final",
+    options: enumOptions(ENUM_ES.iva_condition).filter(o => o.value !== "consumidor_final"),
+    showIf: invoicingOn,
+    help:"Sale en la factura. Si la óptica es Responsable Inscripta, decide si va A (con su CUIT) o B." },
   { key:"email", label:"Email", type:"email" },
   { key:"phone", label:"Teléfono" },
   { key:"birth_date", label:"Fecha de nacimiento", type:"date" },
@@ -5016,7 +5217,12 @@ const CUSTOMER_FIELDS = [
 /* Alta y edición de un cliente: el mismo formulario desde la lista y desde la
    ficha. Sin `row` es un alta. */
 function customerFormModal(row, onSaved) {
-  const fields = row ? CUSTOMER_FIELDS.concat([{ key:"is_active", label:"Activo", type:"checkbox" }]) : CUSTOMER_FIELDS;
+  let fields = row ? CUSTOMER_FIELDS.concat([{ key:"is_active", label:"Activo", type:"checkbox" }]) : CUSTOMER_FIELDS;
+  // A type typed in before this was a list stays on offer, so saving the form
+  // does not erase it. Facturar is what asks for one ARCA takes.
+  if (row && row.document_type && !(row.document_type in ENUM_ES.document_type))
+    fields = fields.map(f => f.key !== "document_type" ? f : { ...f, options: f.options.concat(
+      [{ value: row.document_type, label: `${row.document_type} (no sirve para facturar)` }]) });
   formModal({ title: row ? "Editar cliente" : "Nuevo cliente", grid:true, fields, values: row || {},
     onSubmit: async (p) => {
       const saved = row ? await api("PUT", "/api/customers/" + row.id, p) : await api("POST", "/api/customers", p);
@@ -5080,6 +5286,7 @@ async function customerDetailView(view, id) {
         <h3 style="margin-bottom:12px">Datos ${writable?`<button class="btn sm" id="editCust" style="float:right"><svg class="ic"><use href="#i-pencil"/></svg>Editar</button>`:""}</h3>
         <dl class="kv">
           <dt>Documento</dt><dd>${dato(c.document_number && `${c.document_type || ""} ${c.document_number}`.trim())}</dd>
+          ${invoicingOn() ? `<dt>Condición IVA</dt><dd>${esc(ENUM_ES.iva_condition[c.iva_condition] || "Consumidor final")}</dd>` : ""}
           <dt>Email</dt><dd>${dato(c.email)}</dd>
           <dt>Teléfono</dt><dd>${dato(c.phone)}</dd>
           <dt>Fecha de nac.</dt><dd>${dato(c.birth_date && fmtDate(c.birth_date))}</dd>
@@ -5257,6 +5464,253 @@ function zonasHorarias(actual) {
   return opts;
 }
 
+/* =======================================================================
+   FACTURACIÓN ELECTRÓNICA: la guía de alta (Empresa)
+   Como hacen los proveedores de facturación: la óptica hace dos pasos en
+   ARCA con su Clave Fiscal (un punto de venta para web services y la
+   delegación de Facturación Electrónica en nuestro CUIT) y nos manda sus
+   datos desde acá. Nosotros aceptamos la delegación en ARCA y la activamos
+   desde /admin: esta tarjeta guarda el pedido, nunca activa nada sola.
+   ======================================================================= */
+const PDV_SISTEMA = [
+  { value:"responsable_inscripto", label:"Responsable Inscripto", clase:"facturas A y B",
+    sistema:"Factura Electrónica - RI IVA - Aplicativo y Webservices" },
+  { value:"monotributo", label:"Monotributista", clase:"factura C",
+    sistema:"Factura Electrónica - Monotributo - Webservices" },
+  { value:"exento", label:"Exento", clase:"factura C",
+    sistema:"Facturación Electrónica - Exento en IVA - Web Services" },
+];
+const fmtCuit = (c) => (c && /^\d{11}$/.test(c)) ? `${c.slice(0, 2)}-${c.slice(2, 10)}-${c.slice(10)}` : (c || "");
+// ARCA's own instructivos, where the guide's screenshots come from.
+const ARCA_INSTRUCTIVOS = {
+  puntoDeVenta: "https://arca.gob.ar/guias/paso-a-paso/Guia-Como-emito-factura-electronica-y-punto-de-venta.pdf#page=15",
+  delegar: "https://www.afip.gob.ar/guias/paso-a-paso/Como-delego-servicios-para-que-utilicen-en-mi-nombre-como-se-acepta-delegacion.pdf",
+  webservices: "https://www.afip.gob.ar/ws/WSAA/ADMINREL.DelegarWS.pdf#page=10",
+};
+/* Screenshots of ARCA's own screens, right under the step they show. They
+   come with Empresa (about 250 KB, then cached; loading="lazy" only defers
+   any far down the page), and a shop that already invoices never renders the
+   guide at all. `shots` is [file, alt, caption, overlay, max width in px for
+   one ARCA drew oversized]. */
+const arcaShots = (shots) => `<div class="shots">${shots.map(([file, alt, caption, overlay, max]) => `
+    <figure class="shot"${max ? ` style="max-width:min(100%,${max}px)"` : ""}>
+      <div class="shot-img"><img src="/app/guia/${file}.webp" alt="${esc(alt)}" loading="lazy">${overlay || ""}</div>
+      ${caption ? `<figcaption>${caption}</figcaption>` : ""}
+    </figure>`).join("")}</div>`;
+// The punto de venta form, with ARCA's example corrected: it shows "Factura
+// en Línea", which is Comprobantes en Línea and would leave us unable to
+// invoice for the shop.
+const SISTEMA_FIX = `<span class="fix" style="left:26%;top:52.6%;width:47.4%;height:5.2%"></span>
+  <span class="fix-label" style="left:26%;top:59.4%">Acá no elijas Factura en Línea: elegí la de web services de tu condición</span>`;
+const condicionLabel = (v) => {
+  const o = PDV_SISTEMA.find(x => x.value === v);
+  return o ? `${o.label} (${o.clase})` : (v || "-");
+};
+
+async function invoicingSetupCard(card, company) {
+  let s;
+  try { s = await api("GET", "/api/invoicing/setup"); } catch { card.remove(); return; }
+  if (!s.available) { card.remove(); return; }
+  const paint = (editing = false) => {
+    if (s.state === "active" || s.state === "paused") return paintInvoicingActive(card, s);
+    if (s.state === "submitted" && !editing) return paintInvoicingSubmitted(card, s, () => paint(true));
+    return paintInvoicingGuide(card, s, company, (fresh) => { s = fresh; paint(); });
+  };
+  paint();
+}
+
+function paintInvoicingActive(card, s) {
+  const i = s.issuer;
+  card.innerHTML = `
+    <h3 style="margin-bottom:6px">Facturación electrónica ${s.state === "active" ? badge("Activa","green") : badge("Pausada","gray")}</h3>
+    <p class="fhelp" style="margin:0 0 12px;font-size:13px">${s.state === "active"
+      ? `Activa desde el ${fmtDate(i.since)}. Cada venta tiene el botón Facturar, y anular una venta facturada emite su nota de crédito.`
+      : "Está pausada desde soporte: escribinos para reactivarla."}</p>
+    <dl class="kv">
+      <dt>CUIT</dt><dd class="mono">${esc(fmtCuit(i.cuit))}</dd>
+      <dt>Razón social</dt><dd>${esc(i.legal_name)}</dd>
+      <dt>Condición</dt><dd>${esc(condicionLabel(i.iva_condition))}</dd>
+      <dt>Punto de venta</dt><dd><span class="mono">${i.point_of_sale}</span>
+        <span class="fhelp">(una sucursal con otro número lo carga en Sucursales)</span></dd>
+    </dl>
+    <div class="toolbar" style="margin:14px 0 0">
+      <button class="btn" type="button" data-check><svg class="ic"><use href="#i-check"/></svg>Verificar con ARCA</button>
+    </div>
+    <div data-result></div>`;
+  // The console learns it here too, so Facturar shows without logging in again.
+  api("GET", "/api/invoicing/status").then(st => { state.invoicing = st; }).catch(() => {});
+  const btn = $("[data-check]", card), out = $("[data-result]", card);
+  btn.addEventListener("click", async () => {
+    btn.disabled = true;
+    out.innerHTML = `<div class="fhelp" style="margin-top:8px">Consultando a ARCA…</div>`;
+    try {
+      const r = await api("POST", "/api/invoicing/setup/check");
+      out.innerHTML = `<div class="${r.ok ? "fok" : "fbad"}">${esc(r.message)}</div>`;
+    } catch (e) { out.innerHTML = `<div class="fbad">${esc(e.message)}</div>`; }
+    btn.disabled = false;
+  });
+}
+
+function paintInvoicingSubmitted(card, s, onEdit) {
+  const r = s.request;
+  card.innerHTML = `
+    <h3 style="margin-bottom:6px">Facturación electrónica ${badge("En revisión","amber")}</h3>
+    <p style="margin:0 0 10px;font-size:13.5px">Recibimos tus datos el ${fmtDate(r.submitted_at)}. Ahora aceptamos
+      la delegación en ARCA y la activamos: te avisamos por email apenas esté, normalmente dentro del día hábil.</p>
+    ${r.provider_note ? `<div class="fwarn" style="font-size:13px;padding:8px 10px;margin:0 0 12px">
+      <b>Mensaje nuestro:</b> ${esc(r.provider_note)}</div>` : ""}
+    <dl class="kv">
+      <dt>CUIT</dt><dd class="mono">${esc(fmtCuit(r.cuit))}</dd>
+      <dt>Razón social</dt><dd>${esc(r.legal_name || "")}</dd>
+      <dt>Condición</dt><dd>${esc(condicionLabel(r.iva_condition))}</dd>
+      <dt>Punto de venta</dt><dd class="mono">${esc(String(r.point_of_sale || ""))}</dd>
+      <dt>Domicilio comercial</dt><dd>${esc(r.commercial_address || "")}</dd>
+      <dt>Ingresos Brutos</dt><dd>${esc(r.gross_income_tax || "")}</dd>
+      <dt>Inicio de actividades</dt><dd>${fmtDate(r.activity_start_date)}</dd>
+    </dl>
+    ${can("company:write") ? `<div class="toolbar" style="margin:14px 0 0">
+      <button class="btn" type="button" data-edit><svg class="ic"><use href="#i-pencil"/></svg>Corregir y volver a enviar</button>
+    </div>` : ""}`;
+  const b = $("[data-edit]", card);
+  if (b) b.addEventListener("click", onEdit);
+}
+
+async function paintInvoicingGuide(card, s, company, onSaved) {
+  const writable = can("company:write");
+  const r = s.request || {};
+  const resend = s.state === "submitted";
+  const values = {
+    cuit: fmtCuit(r.cuit || (company.tax_id || "").replace(/\D/g, "")),
+    legal_name: r.legal_name || company.legal_name || "",
+    iva_condition: r.iva_condition || "",
+    point_of_sale: r.point_of_sale ?? "",
+    commercial_address: r.commercial_address || company.address || "",
+    gross_income_tax: r.gross_income_tax || "",
+    activity_start_date: r.activity_start_date || "",
+    trade_name: r.trade_name || company.name || "",
+  };
+  const fields = [
+    { key:"cuit", label:"CUIT de la óptica", placeholder:"20-12345678-9" },
+    { key:"iva_condition", label:"Condición frente al IVA", type:"select", emptyLabel:"(elegí una)",
+      options: PDV_SISTEMA.map(o => ({ value:o.value, label:`${o.label}: ${o.clase}` })),
+      help:"Decide qué facturas emitís, y después no se puede cambiar." },
+    { key:"legal_name", label:"Razón social", help:"Como figura en ARCA." },
+    { key:"point_of_sale", label:"Punto de venta del paso 1", type:"int" },
+    { key:"commercial_address", label:"Domicilio comercial", full:true,
+      help:"El de la óptica: sale impreso en cada comprobante." },
+    { key:"gross_income_tax", label:"Ingresos Brutos", placeholder:"901-123456-7, o Exento" },
+    { key:"activity_start_date", label:"Inicio de actividades", type:"date" },
+    { key:"trade_name", label:"Nombre de fantasía", help:"Opcional: encabeza el comprobante." },
+  ];
+  const cuit = fmtCuit(s.platform_cuit);
+  card.innerHTML = `
+    <h3 style="margin-bottom:6px">Facturación electrónica ${s.state === "draft" ? badge("Sin enviar","gray") : ""}</h3>
+    ${r.provider_note ? `<div class="fwarn" style="font-size:13px;padding:8px 10px;margin:0 0 10px">
+      <b>Mensaje nuestro:</b> ${esc(r.provider_note)}</div>` : ""}
+    <p class="fhelp" style="margin:0;font-size:13px">Para facturar desde acá, ARCA pide dos pasos que se hacen una sola vez,
+      con el CUIT y la Clave Fiscal de la óptica (nivel 3). Llevan unos diez minutos. Después nos mandás tus datos y la activamos nosotros.
+      Las capturas son de los instructivos de ARCA:
+      <a href="${ARCA_INSTRUCTIVOS.puntoDeVenta}" target="_blank" rel="noopener">alta de punto de venta</a>,
+      <a href="${ARCA_INSTRUCTIVOS.delegar}" target="_blank" rel="noopener">delegar un servicio</a> y
+      <a href="${ARCA_INSTRUCTIVOS.webservices}" target="_blank" rel="noopener">delegar un web service</a>.</p>
+    <ol class="guide">
+      <li><h4>Creá un punto de venta para web services</h4>
+        <ol>
+          <li>Entrá a <a href="https://www.arca.gob.ar" target="_blank" rel="noopener">arca.gob.ar</a> con el CUIT y la Clave Fiscal de la óptica.</li>
+          <li>Abrí <b>Administración de Puntos de Venta y Domicilios</b>. Si no aparece entre tus servicios,
+            sumalo desde <b>Administrador de Relaciones de Clave Fiscal</b>.</li>
+          <li>Elegí tu CUIT, después <b>A/B/M de Puntos de Venta</b> y <b>Agregar</b>.
+            ${arcaShots([
+              ["pdv-1-menu", "Menú principal de Gestión de puntos de venta, con la opción A/B/M de puntos de venta",
+               "La opción <b>A/B/M de puntos de venta / emisión</b>."],
+              ["pdv-2-agregar", "Listado de puntos de venta con el botón Agregar", "El botón <b>Agregar</b>, abajo del listado.", "", 420],
+            ])}</li>
+          <li>Poné un número que no uses para otra cosa, el nombre de fantasía y el domicilio de la óptica.</li>
+          <li>En <b>Sistema</b>, el que corresponde a tu condición frente al IVA:
+            <table><tbody>${PDV_SISTEMA.map(o => `<tr data-cond="${o.value}"><td>${esc(o.label)}</td><td>${esc(o.sistema)}</td></tr>`).join("")}</tbody></table>
+            No elijas una opción de <i>Comprobantes en Línea</i>: con esa, ARCA no nos deja facturar por vos.
+            ${arcaShots([["pdv-3-formulario", "Formulario Alta de Punto de Venta, con el campo Sistema marcado",
+              "En el ejemplo de ARCA dice <i>Factura en Línea - Monotributo</i>: esa es para Comprobantes en Línea. "
+              + "Vos elegí la de la tabla de arriba.", SISTEMA_FIX]])}</li>
+          <li>Confirmá y anotá el número: lo cargás en el paso 3.</li>
+        </ol></li>
+      <li><h4>Delegá Facturación Electrónica en nuestro CUIT</h4>
+        <ol>
+          <li>En ARCA, abrí <b>Administrador de Relaciones de Clave Fiscal</b> y elegí tu CUIT.
+            ${arcaShots([["del-1-administrador", "Menú superior del sitio de ARCA con Administrador de relaciones marcado",
+              "Está en el menú de arriba, después de entrar con tu Clave Fiscal."]])}</li>
+          <li>Tocá <b>Nueva Relación</b> (no <i>Adherir servicio</i>, que es para usarlo vos).
+            ${arcaShots([["del-2-nueva-relacion", "Pantalla del Administrador de Relaciones con el botón Nueva Relación marcado"]])}</li>
+          <li>En Servicio: <b>Buscar</b>, <b>ARCA</b>, <b>WebServices</b> y <b>Facturación Electrónica</b>.
+            ${arcaShots([
+              ["del-3-buscar-servicio", "Incorporar nueva Relación con el botón Buscar del servicio", "Primero <b>Buscar</b>, en la fila Servicio."],
+              ["del-4-arca-webservices", "Listado de organismos: ARCA, con Servicios Interactivos y WebServices",
+               "Después <b>ARCA</b> y, adentro, <b>WebServices</b> (no Servicios Interactivos).", "", 300],
+              ["del-5-facturacion-electronica", "Listado de WebServices con Facturación Electrónica marcado",
+               "Y en la lista, <b>Facturación Electrónica</b>.", "", 480],
+            ])}</li>
+          <li>En Representante: <b>Buscar</b> y escribí nuestro CUIT <span class="copy">${esc(cuit)}</span>
+            <button class="btn sm" type="button" data-copy>Copiar</button>${s.platform_name
+              ? ` ARCA lo muestra como <b>${esc(s.platform_name)}</b>.` : ""}
+            ${arcaShots([["del-6-representante", "Selección del Representante a autorizar, con un CUIT cargado y el botón Buscar",
+              `En el ejemplo de ARCA el representante es otra empresa: vos escribí nuestro CUIT, ${esc(cuit)}.`]])}</li>
+          <li><b>Confirmar</b> dos veces. ARCA genera el formulario F. 3283/E: con eso está.
+            ${arcaShots([["del-7-confirmar", "Incorporar nueva Relación con Facturación Electrónica y el representante, y el botón Confirmar",
+              "Antes de confirmar, revisá que diga Facturación Electrónica y nuestro nombre como representante."]])}</li>
+        </ol></li>
+      <li><h4>Mandanos tus datos</h4>
+        <p class="fhelp" style="margin:0 0 8px">Con esto registramos a la óptica y armamos el comprobante impreso.
+          Todo hace falta para enviar, salvo el nombre de fantasía.</p>
+        <div data-form></div>
+        ${writable ? `<div class="toolbar" style="margin:14px 0 0">
+          ${resend ? "" : `<button class="btn" type="button" data-save>Guardar</button>`}
+          <button class="btn primary" type="button" data-send><svg class="ic"><use href="#i-check"/></svg>${resend ? "Enviar de nuevo" : "Ya delegué, enviar"}</button>
+        </div>` : `<p class="fhelp">Para enviarlo hace falta permiso para editar la empresa.</p>`}
+      </li>
+    </ol>`;
+
+  const form = await buildForm(fields, values, true);
+  if (!writable) $$("input,select,textarea", form).forEach(i => { i.disabled = true; });
+  $("[data-form]", card).appendChild(form);
+  const condition = form.querySelector('[name="iva_condition"]');
+  const pick = () => $$("tr[data-cond]", card).forEach(tr => tr.classList.toggle("pick", tr.dataset.cond === condition.value));
+  condition.addEventListener("change", pick);
+  pick();
+  $("[data-copy]", card).addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(s.platform_cuit); toast("CUIT copiado", "ok"); }
+    catch { toast(`Copialo a mano: ${cuit}`); }
+  });
+
+  const save = async (submit) => {
+    const fresh = await api("PUT", "/api/invoicing/setup", { ...form.read(), submit });
+    onSaved(fresh);
+    return fresh;
+  };
+  const saveBtn = $("[data-save]", card);
+  if (saveBtn) saveBtn.addEventListener("click", async () => {
+    try { await save(false); toast("Guardado. Podés seguir cuando quieras.", "ok"); } catch (e) { toast(e.message, "err"); }
+  });
+  const sendBtn = $("[data-send]", card);
+  if (sendBtn) sendBtn.addEventListener("click", () => {
+    const p = form.read();
+    if (!p.iva_condition) return toast("Elegí la condición frente al IVA.", "err");
+    openModal({
+      title: "Enviar los datos",
+      body: el(`<div style="font-size:13.5px">
+        <p style="margin:0 0 10px">Vamos a registrar la óptica como <b>${esc(condicionLabel(p.iva_condition))}</b>,
+          con el CUIT <b class="mono">${esc(p.cuit || "")}</b> y el punto de venta <b>${esc(String(p.point_of_sale ?? ""))}</b>.</p>
+        <p class="fwarn" style="font-size:13px;padding:8px 10px">La condición frente al IVA no se puede cambiar después:
+          revisala con tu contador si tenés dudas.</p>
+        <p class="fhelp" style="font-size:13px">Antes de enviar, confirmá que hiciste los pasos 1 y 2 en ARCA.</p></div>`),
+      confirmLabel: resend ? "Enviar de nuevo" : "Enviar",
+      onConfirm: async (close) => {
+        try { await save(true); close(); toast("Enviado. Te avisamos por email cuando esté activa.", "ok"); }
+        catch (e) { toast(e.message, "err"); }
+      },
+    });
+  });
+}
+
 async function companyView(view) {
   const writable = can("company:write");
   const company = await api("GET", "/api/company");
@@ -5301,6 +5755,11 @@ async function companyView(view) {
       try { await api("PUT","/api/company/settings", sForm.read()); toast("Guardado","ok"); } catch(err){ toast(err.message,"err"); } }); card2.appendChild(row); }
     wrap.appendChild(card2);
   }
+
+  // Full width, below: the guide reads as steps, not as a form beside a form.
+  const card3 = el(`<div class="card pad" id="facturacion" style="grid-column:1/-1"></div>`);
+  wrap.appendChild(card3);
+  invoicingSetupCard(card3, company);
 }
 
 /* ------------------------------- boot ---------------------------------- */

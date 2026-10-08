@@ -59,6 +59,26 @@ class Settings(BaseSettings):
     invitation_ttl_hours: int = 168  # 7 days
     password_reset_ttl_hours: int = 1
 
+    # --- Facturación electrónica (arca-api) -------------------------------
+    # http | fake (tests). With http, invoicing stays off until both the URL
+    # and the key are set: a fresh checkout never talks to ARCA by accident.
+    arca_api_backend: str = "http"
+    # One arca-api deployment serves one ARCA environment: point a local SGI
+    # at homologación and production at producción, never the other way.
+    arca_api_url: str = ""
+    arca_api_key: str = ""   # "ak_...", from arca-api's `project:create`
+    # arca-api can take minutes in its worst case (login, lock wait, retries).
+    # Past this SGI stops waiting; the comprobante stays pending under the
+    # same key and is asked about again later.
+    arca_api_timeout_seconds: float = 30.0
+    # The CUIT shops delegate "Facturación Electrónica" to: ours, the one
+    # arca-api's platform certificate belongs to. The setup guide in Empresa
+    # shows it, and stays hidden until it is set.
+    arca_platform_cuit: str = ""
+    # How ARCA names that CUIT when a shop searches it, so they can tell they
+    # picked the right representative. Optional.
+    arca_platform_name: str = ""
+
 
 @lru_cache
 def get_settings() -> Settings:

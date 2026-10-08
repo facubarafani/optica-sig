@@ -1,7 +1,7 @@
 """Branches (sucursales). Stock, sales and movements are scoped to a branch."""
 from __future__ import annotations
 
-from sqlalchemy import String, UniqueConstraint
+from sqlalchemy import Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -17,3 +17,6 @@ class Branch(IDMixin, CompanyMixin, TimestampMixin, SoftDeleteMixin, Base):
     address: Mapped[str | None] = mapped_column(String(255))
     phone: Mapped[str | None] = mapped_column(String(50))
     email: Mapped[str | None] = mapped_column(String(150))
+    # ARCA punto de venta for comprobantes issued here. Empty uses the
+    # company's (arca_issuers.point_of_sale).
+    point_of_sale: Mapped[int | None] = mapped_column(Integer)

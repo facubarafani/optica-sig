@@ -74,3 +74,14 @@ services:
         sync: false           # starts with "re_"
       - key: BREVO_API_KEY
         sync: false
+      # --- Facturación electrónica (arca-api) ----------------------------
+      # Off until both are set. Must be the PRODUCCIÓN arca-api, over HTTPS,
+      # with `discount` support deployed first (docs/INVOICING.md).
+      - key: ARCA_API_URL
+        sync: false
+      - key: ARCA_API_KEY
+        sync: false           # starts with "ak_"
+      - key: ARCA_PLATFORM_CUIT
+        sync: false           # ours: shops delegate to it; shows the setup guide
+      - key: ARCA_PLATFORM_NAME
+        sync: false           # how ARCA shows that CUIT (optional)

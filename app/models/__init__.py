@@ -16,13 +16,19 @@ from app.models.branch import Branch
 from app.models.company import Company, CompanySettings
 from app.models.customer import Customer, Prescription, TreatmentHistory
 from app.models.imports import ColorAlias, ImportBatch, color_alias_colors
+from app.models.invoicing import ArcaIssuer, Invoice, InvoicingRequest
 from app.models.journal import Operation, OperationChange
 from app.models.enums import (
     ChangeAction,
     ColorAliasKind,
     DiscountType,
+    DocumentType,
     ExternalWorkStatus,
     ExternalWorkType,
+    InvoiceStatus,
+    InvoiceType,
+    IvaCondition,
+    IvaRate,
     PaymentMethod,
     PlatformAction,
     TokenPurpose,
@@ -62,6 +68,9 @@ __all__ = [
     "Prescription",
     "TreatmentHistory",
     "ImportBatch",
+    "ArcaIssuer",
+    "Invoice",
+    "InvoicingRequest",
     "ColorAlias",
     "color_alias_colors",
     "Operation",
@@ -93,6 +102,11 @@ __all__ = [
     "StockMovementType",
     "TreatmentType",
     "DiscountType",
+    "DocumentType",
+    "InvoiceStatus",
+    "InvoiceType",
+    "IvaCondition",
+    "IvaRate",
     "PaymentMethod",
     "SaleStatus",
     "ExternalWorkType",

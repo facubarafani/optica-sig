@@ -20,6 +20,7 @@ vía `number_sequence`.
 | 6 | Precios y costos | ✅ | `price_list`, `price_category` (escalera AA..ZZ), `cost_history` |
 | 7 | Clientes | ✅ | `customer`, `prescription`, `treatment_history` |
 | 8 | Ventas | ✅ | `sale`, `sale_item`, `sale_payment`, `payment_account` |
+| 8b | Facturación electrónica (vía arca-api) | ✅ | `arca_issuer`, `invoice`, `invoicing_request` (ver `docs/INVOICING.md`) |
 | 9 | Caja | 🟡 | `cash_register_session`, `cash_movement` |
 | 10 | Cuentas corrientes (clientes) | 🟡 | `customer_account`, `account_entry` |
 | 11 | Trabajos externos (lab/taller) | 🟡 | `external_work` |

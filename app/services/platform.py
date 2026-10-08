@@ -8,6 +8,7 @@ data?".
 """
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import datetime, timezone
 
 from sqlalchemy import func, select
@@ -22,10 +23,13 @@ from app.core.security import (
 from app.models.auth import User
 from app.models.company import Company
 from app.models.enums import PlatformAction
+from app.models.invoicing import ArcaIssuer, Invoice, InvoicingRequest
 from app.models.platform import PlatformAuditLog, PlatformUser
 from app.models.product import Product
 from app.models.sales import Sale
-from app.services import invitations, provisioning
+from app.schemas.invoicing import FiscalData, TenantInvoicingLink, TenantInvoicingUpdate
+from app.core.config import settings
+from app.services import arca, email, email_templates, invitations, provisioning
 
 # An impersonation token is a key to someone else's shop. It expires in half an
 # hour regardless of the configured session length, so a forgotten support tab
@@ -211,6 +215,7 @@ def list_tenants(db: Session, *, include_suspended: bool = True) -> list[dict]:
     users = _count_by_company(db, User)
     products = _count_by_company(db, Product)
     sales = _count_by_company(db, Sale, only_active=False)
+    invoicing = _invoicing_states(db)
 
     return [
         {
@@ -218,9 +223,27 @@ def list_tenants(db: Session, *, include_suspended: bool = True) -> list[dict]:
             "user_count": users.get(c.id, 0),
             "product_count": products.get(c.id, 0),
             "sale_count": sales.get(c.id, 0),
+            "invoicing": invoicing.get(c.id),
         }
         for c in companies
     ]
+
+
+def _invoicing_states(db: Session) -> dict[int, str]:
+    """Each shop's place in the invoicing setup, for the list's badge.
+
+    ``submitted`` is the one that needs us: the shop finished its steps at
+    ARCA and waits for the delegation to be accepted and activated.
+    """
+    states = {
+        company_id: ("submitted" if submitted_at else "draft")
+        for company_id, submitted_at in db.execute(
+            select(InvoicingRequest.company_id, InvoicingRequest.submitted_at)
+        )
+    }
+    for company_id, is_active in db.execute(select(ArcaIssuer.company_id, ArcaIssuer.is_active)):
+        states[company_id] = "active" if is_active else "paused"
+    return states
 
 
 def get_tenant(db: Session, company_id: int) -> Company:
@@ -443,3 +466,280 @@ def resend_invitation(
     if not user.is_active:
         raise PlatformError("El usuario está desactivado.")
     return send_invitation(db, platform_user, company, user)
+
+
+# --- facturación electrónica ------------------------------------------------
+# Linking a shop to an arca-api issuer is ours to do, never the shop's: the
+# link decides whose CUIT its sales are invoiced under. In delegated mode it
+# also needs our own steps at ARCA (accepting the delegation, authorizing the
+# certificate), so it belongs on this side anyway.
+FISCAL_FIELDS = {
+    "commercial_address": "commercialAddress",
+    "gross_income_tax": "grossIncomeTax",
+    "activity_start_date": "activityStartDate",
+    "trade_name": "tradeName",
+}
+
+
+def _issuer_link(db: Session, company_id: int) -> ArcaIssuer | None:
+    return db.execute(
+        select(ArcaIssuer).where(ArcaIssuer.company_id == company_id)
+    ).scalar_one_or_none()
+
+
+def _arca_error(reply: arca.Reply) -> str:
+    if reply.unreachable:
+        return reply.unreachable
+    body = reply.body or {}
+    return body.get("detail") or f"error {reply.status} de arca-api"
+
+
+def _fiscal_body(data: FiscalData) -> dict:
+    body = {}
+    for field, key in FISCAL_FIELDS.items():
+        value = getattr(data, field)
+        if value is not None:
+            body[key] = value.isoformat() if hasattr(value, "isoformat") else value
+    return body
+
+
+def _invoicing_request(db: Session, company_id: int) -> InvoicingRequest | None:
+    return db.execute(
+        select(InvoicingRequest).where(InvoicingRequest.company_id == company_id)
+    ).scalar_one_or_none()
+
+
+def tenant_invoicing(db: Session, company_id: int) -> dict:
+    """The shop's link, and what arca-api says about the issuer behind it.
+
+    Before activation it carries what the shop declared in its guide and what
+    ARCA's padrón says about that CUIT: the IVA condition can never change
+    once the issuer exists, so it is worth comparing with the source first.
+    """
+    get_tenant(db, company_id)
+    link = _issuer_link(db, company_id)
+    request = _invoicing_request(db, company_id)
+    out: dict = {"linked": link is not None, "configured": arca.configured(), "request": request}
+    if link is None:
+        if request is not None and request.cuit and arca.configured():
+            reply = arca.lookup_taxpayer(request.cuit)
+            if reply.ok:
+                out["taxpayer"] = reply.body
+            elif reply.status == 404:
+                out["taxpayer_error"] = ("ARCA no tiene ese CUIT en su padrón. En homologación es "
+                                         "normal: el padrón de prueba es sintético.")
+            else:
+                out["taxpayer_error"] = f"No se pudo consultar el padrón: {_arca_error(reply)}"
+        return out
+    out.update(
+        issuer_id=link.issuer_id, cuit=link.cuit, legal_name=link.legal_name,
+        iva_condition=link.iva_condition, point_of_sale=link.point_of_sale,
+        is_active=link.is_active,
+    )
+    reply = arca.get_issuer(link.issuer_id)
+    if reply.ok:
+        out["issuer"] = reply.body
+    else:
+        out["error"] = _arca_error(reply)
+    return out
+
+
+def link_tenant_invoicing(
+    db: Session, platform_user: PlatformUser, company_id: int, data: TenantInvoicingLink
+) -> dict:
+    """Turn invoicing on: register the shop's CUIT in arca-api, or link the
+    issuer it already has there."""
+    company = get_tenant(db, company_id)
+    if not arca.configured():
+        raise PlatformError(
+            "arca-api no está configurado en este servidor (ARCA_API_URL y ARCA_API_KEY)."
+        )
+    link = _issuer_link(db, company_id)
+    if link is not None and db.execute(
+        select(Invoice.id).where(Invoice.company_id == company_id).limit(1)
+    ).first():
+        raise PlatformError(
+            "Esta óptica ya emitió comprobantes con su emisor actual: no se puede "
+            "cambiar. Para pausarla, desactivá la facturación."
+        )
+
+    fiscal = _fiscal_body(data)
+    if data.issuer_id:
+        reply = arca.get_issuer(data.issuer_id)
+        if not reply.ok:
+            raise PlatformError(f"arca-api no encontró el emisor {data.issuer_id}: {_arca_error(reply)}")
+        issuer = reply.body
+    else:
+        cuit = data.cuit or "".join(ch for ch in (company.tax_id or "") if ch.isdigit())
+        if len(cuit) != 11:
+            raise PlatformError("Falta el CUIT de la óptica: 11 dígitos, sin guiones.")
+        if data.iva_condition is None:
+            raise PlatformError("Indicá la condición frente al IVA de la óptica.")
+        reply = arca.create_issuer({
+            "cuit": cuit,
+            "legalName": data.legal_name or company.legal_name or company.name,
+            "ivaCondition": data.iva_condition.value.upper(),
+            "credentialMode": "delegated",
+            **fiscal,
+        })
+        fiscal = {}   # sent with the registration
+        if reply.status == 201:
+            issuer = reply.body
+        elif (reply.body or {}).get("code") == "ISSUER_EXISTS":
+            # Registered before (an earlier attempt, or by hand): link that one.
+            listed = arca.list_issuers()
+            matches = [i for i in ((listed.body or {}).get("data") or []) if i.get("cuit") == cuit]
+            if not matches:
+                raise PlatformError(f"arca-api dice que el CUIT ya existe pero no lo lista: {_arca_error(reply)}")
+            issuer = matches[0]
+            # The condition can never change in arca-api, and it decides every
+            # comprobante's class: linking one registered otherwise would
+            # quietly invoice the shop as something it is not.
+            registered = issuer["ivaCondition"].lower()
+            if registered != data.iva_condition.value:
+                raise PlatformError(
+                    f"arca-api ya tiene el CUIT {cuit} registrado como {registered.replace('_', ' ')}, "
+                    f"no como {data.iva_condition.value.replace('_', ' ')}. Revisá la condición; si la "
+                    f"registrada es la correcta, vinculá ese emisor por su id ({issuer['id']})."
+                )
+        else:
+            raise PlatformError(f"arca-api no registró el emisor: {_arca_error(reply)}")
+
+    clash = db.execute(
+        select(ArcaIssuer.company_id).where(
+            ArcaIssuer.issuer_id == issuer["id"], ArcaIssuer.company_id != company_id
+        )
+    ).scalar_one_or_none()
+    if clash is not None:
+        raise PlatformError(f"El emisor {issuer['id']} ya está vinculado a la empresa #{clash}.")
+    if fiscal:
+        reply = arca.update_issuer(issuer["id"], fiscal)
+        if not reply.ok:
+            raise PlatformError(f"arca-api no guardó los datos fiscales: {_arca_error(reply)}")
+
+    link = link or ArcaIssuer(company_id=company_id)
+    link.issuer_id = issuer["id"]
+    link.cuit = issuer["cuit"]
+    link.legal_name = issuer["legalName"]
+    link.iva_condition = issuer["ivaCondition"].lower()
+    link.point_of_sale = data.point_of_sale
+    link.is_active = True
+    db.add(link)
+    record(
+        db, platform_user, PlatformAction.TENANT_INVOICING_LINK, company_id=company_id,
+        detail=f"{link.issuer_id} CUIT {link.cuit} {link.iva_condition} PdV {link.point_of_sale}",
+        commit=False,
+    )
+    request = _invoicing_request(db, company_id)
+    if request is not None:
+        request.provider_note = None   # answered: it is active now
+    db.commit()
+    if request is not None:
+        _mail_submitter(db, company, request, lambda user: email_templates.invoicing_active(
+            full_name=user.full_name, company_name=company.name, link=_guide_link()))
+    return tenant_invoicing(db, company_id)
+
+
+def update_tenant_invoicing(
+    db: Session, platform_user: PlatformUser, company_id: int, data: TenantInvoicingUpdate
+) -> dict:
+    """Punto de venta, pausing invoicing, and the issuer's fiscal data."""
+    get_tenant(db, company_id)
+    link = _issuer_link(db, company_id)
+    if link is None:
+        raise PlatformError("Esta óptica no tiene la facturación vinculada.")
+    changed = []
+    if data.point_of_sale is not None and data.point_of_sale != link.point_of_sale:
+        link.point_of_sale = data.point_of_sale
+        changed.append(f"punto de venta {data.point_of_sale}")
+    if data.is_active is not None and data.is_active != link.is_active:
+        link.is_active = data.is_active
+        changed.append("activada" if data.is_active else "pausada")
+    fiscal = _fiscal_body(data)
+    if fiscal:
+        reply = arca.update_issuer(link.issuer_id, fiscal)
+        if not reply.ok:
+            raise PlatformError(f"arca-api no guardó los datos fiscales: {_arca_error(reply)}")
+        changed.extend(sorted(fiscal))
+    if changed:
+        record(
+            db, platform_user, PlatformAction.TENANT_INVOICING_UPDATE,
+            company_id=company_id, detail=", ".join(changed), commit=False,
+        )
+    db.commit()
+    return tenant_invoicing(db, company_id)
+
+
+def tenant_invoicing_health(db: Session, company_id: int) -> dict:
+    """arca-api's own check: ARCA up, the ticket valid, the CUIT represented."""
+    get_tenant(db, company_id)
+    link = _issuer_link(db, company_id)
+    if link is None:
+        raise PlatformError("Esta óptica no tiene la facturación vinculada.")
+    reply = arca.issuer_health(link.issuer_id)
+    if not reply.ok:
+        raise PlatformError(f"arca-api no respondió el chequeo: {_arca_error(reply)}")
+    return reply.body
+
+
+def set_invoicing_note(
+    db: Session, platform_user: PlatformUser, company_id: int, note: str | None
+) -> dict:
+    """Answer a shop's request from here ("todavía no vemos la delegación").
+
+    The note shows in its guide and is mailed to whoever sent it. An empty
+    note clears it.
+    """
+    company = get_tenant(db, company_id)
+    request = _invoicing_request(db, company_id)
+    if request is None:
+        raise PlatformError("Esta óptica todavía no empezó la guía de facturación.")
+    note = (note or "").strip() or None
+    request.provider_note = note
+    record(
+        db, platform_user, PlatformAction.TENANT_INVOICING_NOTE, company_id=company_id,
+        detail=note or "nota borrada", commit=False,
+    )
+    db.commit()
+    if note:
+        _mail_submitter(db, company, request, lambda user: email_templates.invoicing_note(
+            full_name=user.full_name, company_name=company.name, note=note, link=_guide_link()))
+    return tenant_invoicing(db, company_id)
+
+
+def notify_invoicing_request(db: Session, company_id: int) -> int:
+    """Tell every provider operator that a shop is waiting for activation.
+
+    Returns how many messages went out. Never raises: the shop's request is
+    saved either way, and /admin lists it whether or not the mail arrived.
+    """
+    company = get_tenant(db, company_id)
+    request = _invoicing_request(db, company_id)
+    if request is None or request.submitted_at is None:
+        return 0
+    condition = (request.iva_condition or "").replace("_", " ")
+    message = email_templates.invoicing_request(
+        company_name=company.name, cuit=request.cuit or "", condition=condition,
+        point_of_sale=request.point_of_sale or 0,
+        link=f"{settings.public_base_url.rstrip('/')}/admin",
+    )
+    sent = 0
+    for operator in db.execute(
+        select(PlatformUser).where(PlatformUser.is_active.is_(True))
+    ).scalars():
+        sent += email.send(replace(message, to=operator.email))
+    return sent
+
+
+def _guide_link() -> str:
+    return f"{settings.public_base_url.rstrip('/')}/app#/company"
+
+
+def _mail_submitter(db: Session, company: Company, request: InvoicingRequest, build) -> bool:
+    """Mail whoever sent the guide, if they still can receive it."""
+    if request.submitted_by_user_id is None:
+        return False
+    user = db.get(User, request.submitted_by_user_id)
+    if user is None or not user.is_active or user.company_id != company.id:
+        return False
+    return email.send(replace(build(user), to=user.email))

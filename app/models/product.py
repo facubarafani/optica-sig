@@ -43,6 +43,9 @@ class ProductType(IDMixin, CompanyMixin, TimestampMixin, SoftDeleteMixin, Base):
 
     name: Mapped[str] = mapped_column(String(80), nullable=False)
     description: Mapped[str | None] = mapped_column(String(255))
+    # IvaRate value for a Responsable Inscripto's facturas A and B. Empty is
+    # the general 21%. Set with the shop's contador; class C ignores it.
+    iva_rate: Mapped[str | None] = mapped_column(String(8))
 
 
 class Brand(IDMixin, CompanyMixin, TimestampMixin, SoftDeleteMixin, Base):
