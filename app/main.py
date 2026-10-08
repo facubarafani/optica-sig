@@ -3,8 +3,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import FastAPI, Request, status
-from fastapi.staticfiles import StaticFiles
+import re
+
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from sqlalchemy.exc import IntegrityError
 
@@ -84,10 +85,20 @@ def web_console() -> FileResponse:
 
 
 # Screenshots of ARCA's own screens for the facturación setup guide (Empresa),
-# cropped from ARCA's published instructivos. The one thing the console loads
-# besides its own file: images, same origin, fetched only when a step of the
-# guide is opened, so index.html stays the whole console.
-app.mount("/app/guia", StaticFiles(directory=WEB_DIR / "guia"), name="guia")
+# cropped from ARCA's published instructivos: the one thing the console loads
+# besides its own file. The type is stated rather than guessed: python:3.12
+# (the production image) has no media type for .webp, and a guessed one came
+# out text/plain there while 3.13 got it right.
+GUIDE_DIR = WEB_DIR / "guia"
+GUIDE_IMAGE = re.compile(r"[a-z0-9-]+\.webp")
+
+
+@app.get("/app/guia/{name}", include_in_schema=False)
+def guide_image(name: str) -> FileResponse:
+    path = GUIDE_DIR / name
+    if not GUIDE_IMAGE.fullmatch(name) or not path.is_file():
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    return FileResponse(path, media_type="image/webp")
 
 
 # --- Provider admin console ----------------------------------------------

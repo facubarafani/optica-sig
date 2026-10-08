@@ -184,7 +184,8 @@ conventions worth knowing before editing it:
   menu via `openRowMenu(anchor, items)`.
 - **The one file it loads besides itself:** the facturación guide's
   screenshots of ARCA's own screens, in `app/web/guia/` (served at
-  `/app/guia/`, mounted in `main.py`). They are cropped from ARCA's published
+  `/app/guia/` by `main.py::guide_image`, which states `image/webp` because
+  python:3.12 cannot guess it). They are cropped from ARCA's published
   instructivos, as rendered, never from the PDFs' raw images, which can hold
   personal data ARCA covered with shapes drawn on top. They show under their
   step, always (a "show screenshot" toggle was tried and read as hidden):
