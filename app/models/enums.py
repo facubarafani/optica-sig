@@ -92,7 +92,8 @@ class PaymentMethod(str, enum.Enum):
 
     CASH = "cash"                 # efectivo
     TRANSFER = "transfer"         # transferencia
-    CARD = "card"                 # tarjeta
+    CREDIT_CARD = "credit_card"   # tarjeta de crédito (en cuotas o en un pago)
+    DEBIT_CARD = "debit_card"     # tarjeta de débito
 
 
 class DiscountType(str, enum.Enum):

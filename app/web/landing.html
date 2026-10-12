@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mi Óptica Digital: gestión para ópticas</title>
-<meta name="description" content="Sistema de gestión para ópticas de uno o dos locales. Catálogo, stock por color, ventas en el mostrador, clientes y cuentas pendientes, desde el navegador. Sin instalar nada.">
+<meta name="description" content="El sistema de gestión para tu óptica. Stock, ventas y clientes en un solo lugar, desde la compu o el celular. Sin instalar nada.">
 <meta name="theme-color" content="#F8F9FC">
 <meta property="og:title" content="Mi Óptica Digital">
-<meta property="og:description" content="Tu óptica en orden, sin instalar nada. Stock por color, ventas en el mostrador y quién te debe, desde el navegador.">
+<meta property="og:description" content="Tu óptica en orden, sin instalar nada. Stock, ventas y clientes en un solo lugar.">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="es_AR">
 <link rel="icon" href="data:image/svg+xml,%3Csvg width='64' height='64' viewBox='8 8 84 84' aria-hidden='true'%3E%3Cdefs%3E%3ClinearGradient id='fv-h0' gradientUnits='userSpaceOnUse' x1='79.14' y1='67.51' x2='35.26' y2='80.64'%3E%3Cstop offset='0' stop-color='%2322D3EE'/%3E%3Cstop offset='1' stop-color='%2338BDF8'/%3E%3C/linearGradient%3E%3ClinearGradient id='fv-h1' gradientUnits='userSpaceOnUse' x1='36.55' y1='81.23' x2='17.89' y2='38.82'%3E%3Cstop offset='0' stop-color='%2338BDF8'/%3E%3Cstop offset='1' stop-color='%233B82F6'/%3E%3C/linearGradient%3E%3ClinearGradient id='fv-h2' gradientUnits='userSpaceOnUse' x1='17.45' y1='40.17' x2='57.47' y2='16.83'%3E%3Cstop offset='0' stop-color='%233B82F6'/%3E%3Cstop offset='1' stop-color='%234F46E5'/%3E%3C/linearGradient%3E%3ClinearGradient id='fv-h3' gradientUnits='userSpaceOnUse' x1='56.08' y1='16.55' x2='83.87' y2='52.96'%3E%3Cstop offset='0' stop-color='%234F46E5'/%3E%3Cstop offset='1' stop-color='%237C3AED'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M 79.14 67.51 A 34.0 34.0 0 0 1 35.26 80.64' fill='none' stroke='url(%23fv-h0)' stroke-width='12' stroke-linecap='butt'/%3E%3Cpath d='M 36.55 81.23 A 34.0 34.0 0 0 1 17.89 38.82' fill='none' stroke='url(%23fv-h1)' stroke-width='12' stroke-linecap='butt'/%3E%3Cpath d='M 17.45 40.17 A 34.0 34.0 0 0 1 57.47 16.83' fill='none' stroke='url(%23fv-h2)' stroke-width='12' stroke-linecap='butt'/%3E%3Cpath d='M 56.08 16.55 A 34.0 34.0 0 0 1 83.87 52.96' fill='none' stroke='url(%23fv-h3)' stroke-width='12' stroke-linecap='butt'/%3E%3C/svg%3E">
@@ -25,6 +25,8 @@
     --rim:#DCE2EF;        /* filetes y aros */
     --indigo:#4F46E5;     /* el único color de botón, el mismo que en la consola */
     --indigo-press:#4338CA;
+    --indigo-soft:#EEF2FF;
+    --indigo-line:#C7D2FE;
     --carey:#A5602A;      /* acetato havana: lo físico, lo que se vende */
     --carey-deep:#5A2E0E;
     --carey-light:#D59A5C;
@@ -36,11 +38,11 @@
   }
   *{box-sizing:border-box}
   html{-webkit-text-size-adjust:100%}
-  body{margin:0;font-family:var(--sans);font-size:17px;line-height:1.55;color:var(--ink);background:var(--paper)}
+  body{margin:0;font-family:var(--brand);font-size:16px;line-height:1.6;color:var(--ink);background:var(--paper)}
   a{color:inherit}
   p{margin:0 0 1em}
   p:last-child{margin-bottom:0}
-  h1,h2,h3{font-family:var(--brand);font-weight:600;line-height:1.15;letter-spacing:-.01em;margin:0 0 .5em}
+  h1,h2,h3{font-family:var(--brand);font-weight:600;line-height:1.15;letter-spacing:-.01em;margin:0 0 .5em;text-wrap:balance}
   h2{font-size:clamp(26px,3.2vw,34px);max-width:18em}
   .wrap{max-width:1040px;margin:0 auto;padding:0 20px}
   :focus-visible{outline:3px solid rgba(79,70,229,.45);outline-offset:3px;border-radius:6px}
@@ -48,6 +50,7 @@
   .btn:hover{background:var(--indigo-press)}
   .btn.light{background:var(--white);color:var(--ink)}
   .btn.light:hover{background:#E9ECF5}
+  .btn .wa{flex:0 0 auto}
   .lnk{font-weight:600;text-decoration:none;padding:12px 6px;border-radius:6px}
   .lnk:hover{text-decoration:underline;text-underline-offset:4px}
 
@@ -62,12 +65,12 @@
   }
 
   /* ---- barra ---- */
-  .nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 0}
+  .nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:18px}
   .nav .acts{display:flex;align-items:center;gap:10px}
   .nav .btn{min-height:44px;padding:10px 18px;font-size:16px}
 
   /* ---- hero: la cartilla ---- */
-  .hero{padding:56px 0 72px;text-align:center}
+  .hero{padding-block:56px 72px;text-align:center}
   .chart{margin:0 auto 40px;font-family:var(--brand);font-weight:600;line-height:1;letter-spacing:.14em;text-indent:.14em}
   .chart .row{display:block;margin:0 auto}
   .chart .r1{font-size:clamp(40px,14vw,148px);margin-bottom:.22em}
@@ -80,13 +83,30 @@
   .chart .r2{animation-delay:.45s}
   .chart .r3{animation-delay:.9s}
   @media (prefers-reduced-motion:reduce){.chart .row{animation:none}}
-  .hero .lead{max-width:34em;margin:0 auto 32px;font-size:19px;color:var(--ink)}
+
+  /* al bajar, cada bloque entra en foco como la cartilla del hero. Solo con JS
+     (la clase .js la pone el <head>), así que sin script todo se ve igual. */
+  .js .rv{opacity:0;filter:blur(6px);transform:translateY(22px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),filter .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1);transition-delay:var(--d,0ms)}
+  .js .rv.in{opacity:1;filter:none;transform:none}
+  .js .rv.now{transition:none}
+  .js .i-ok.rv{transform:scale(.6);transition-timing-function:cubic-bezier(.3,1.6,.5,1)}
+  .js .i-ok.rv.in{transform:none}
+  @media (prefers-reduced-motion:reduce){.js .rv{opacity:1;filter:none;transform:none;transition:none}}
+  .hero .lead{max-width:34em;margin:0 auto 32px;font-size:18px;color:var(--ink)}
   .hero .ctas{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px 20px}
 
   /* ---- secciones ---- */
-  .sec{padding:64px 0}
-  .prose{max-width:60ch}
-  .band{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center;padding:56px 0}
+  .sec{padding-block:64px}
+  /* "hoy": tres renglones grandes que dicen dónde vive cada cosa, y el cuarto
+     dónde queda. Lo apagado es la situación; en tinta, el lugar. */
+  .today .eyebrow{font-size:14px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--indigo);margin:0 0 22px}
+  .today .line{max-width:20em;margin:0 0 .3em;font-family:var(--brand);font-weight:600;font-size:clamp(20px,5.4vw,38px);line-height:1.2;letter-spacing:-.015em;color:var(--dim)}
+  /* cada mitad es un bloque: la línea solo puede cortarse entre la situación y el lugar */
+  .today .line span,.today .line em{display:inline-block;white-space:nowrap}
+  .today .line em{font-style:normal;color:var(--ink)}
+  .today .answer{margin-top:.9em;color:var(--ink)}
+  .today .answer em{color:var(--indigo)}
+  .band{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center;padding-block:56px}
   .band .txt{max-width:48ch}
   .band.flip .art{order:-1}
   .art{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
@@ -112,13 +132,6 @@
   .sku .zero{color:var(--carey)}
 
   /* fragmentos de pantalla y papel: cada uno con su forma, no una tarjeta */
-  .ticket{width:100%;max-width:340px;background:var(--white);border:1px solid var(--rim);border-bottom:0;padding:18px 20px 22px;font-size:15px;position:relative;box-shadow:0 1px 0 var(--rim)}
-  .ticket::after{content:"";position:absolute;left:0;right:0;bottom:-8px;height:8px;background:linear-gradient(-45deg,transparent 5.6px,var(--white) 0) 0 0/16px 8px repeat-x,linear-gradient(45deg,transparent 5.6px,var(--white) 0) 8px 0/16px 8px repeat-x;}
-  .t-head{font-size:13px;color:var(--dim);margin-bottom:12px;display:flex;justify-content:space-between}
-  .t-row{display:grid;grid-template-columns:1fr auto auto;gap:14px;padding:5px 0}
-  .t-row span:last-child{font-variant-numeric:tabular-nums}
-  .t-row.total{border-top:1px solid var(--rim);margin-top:6px;padding-top:10px;font-weight:600}
-  .t-warn{margin-top:14px;padding:10px 12px;background:var(--carey-soft);color:var(--carey-deep);font-size:14px;border-left:3px solid var(--carey)}
 
   .sheet{width:100%;max-width:360px;background:var(--white);border:1px solid var(--rim);font-size:14px;font-variant-numeric:tabular-nums}
   .sheet .r{display:grid;grid-template-columns:28px 1.3fr 1fr .9fr}
@@ -134,10 +147,14 @@
   .prod .p-col{grid-column:1/-1;display:flex;align-items:center;gap:8px}
   .sw{display:inline-block;width:16px;height:16px;border-radius:50%;border:1px solid rgba(18,28,60,.18)}
 
-  .keys{display:flex;gap:18px;align-items:center}
-  .keys kbd{display:inline-flex;align-items:center;justify-content:center;min-width:88px;height:84px;padding:0 18px;background:var(--white);border:1px solid var(--rim);border-radius:12px;box-shadow:0 5px 0 #CBD2E1,0 6px 0 1px var(--rim);font-family:var(--brand);font-weight:600;font-size:26px;color:var(--ink)}
-  .keys .plus{font-size:26px;color:var(--dim)}
 
+  .inv{width:100%;max-width:360px;background:var(--white);border:1px solid var(--rim);border-radius:12px;padding:16px 18px 18px;font-size:15px;font-variant-numeric:tabular-nums}
+  .i-head{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:10px;margin-bottom:6px;border-bottom:1px solid var(--rim)}
+  .i-head span{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--dim);font-size:13px}
+  .i-row{display:flex;justify-content:space-between;gap:12px;padding:5px 0}
+  .i-row.total{border-top:1px solid var(--rim);margin-top:6px;padding-top:10px;font-weight:600}
+  .i-cae{display:flex;justify-content:space-between;gap:12px;margin-top:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--dim);font-size:12px}
+  .i-ok{display:inline-flex;align-items:center;gap:6px;margin-top:12px;padding:5px 11px;border-radius:999px;background:#E9F7EF;color:#17663A;font-weight:600;font-size:13px}
   .home{width:100%;max-width:360px;background:var(--white);border:1px solid var(--rim);border-radius:12px;overflow:hidden;font-size:15px}
   .h-bar{padding:10px 16px;background:#F1F3F8;border-bottom:1px solid var(--rim);font-weight:600;font-size:14px}
   .h-lab{padding:14px 16px 4px;color:var(--carey);font-weight:600;font-size:14px}
@@ -148,11 +165,18 @@
   .h-more{padding:0 16px 14px;color:var(--dim);font-size:14px}
 
   /* además + cómo arrancás */
-  .more{max-width:60ch}
-  .more p{padding-left:20px;border-left:2px solid var(--rim)}
-  .steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:28px;counter-reset:step}
-  .steps li{counter-increment:step}
-  .steps li::before{content:counter(step);display:block;font-family:var(--brand);font-weight:600;font-size:44px;line-height:1;color:var(--carey);margin-bottom:10px}
+  .checks{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,1fr);gap:36px 56px;margin-top:8px}
+  .checks li{position:relative;padding-left:48px;font-size:18px;line-height:1.5;color:var(--ink)}
+  .checks li::before{content:"";position:absolute;left:0;top:-2px;width:32px;height:32px;border-radius:50%;background:var(--indigo) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center/18px no-repeat}
+  .checks b{display:block;font-family:var(--brand);font-size:21px;font-weight:600;line-height:1.3;margin-bottom:4px}
+  /* los pasos son un recorrido: círculos unidos por una línea que se dibuja al bajar */
+  .steps{list-style:none;margin:8px 0 0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:32px;counter-reset:step}
+  .steps li{counter-increment:step;position:relative;color:var(--ink);font-size:17px;line-height:1.5}
+  .steps li::before{content:counter(step);display:flex;align-items:center;justify-content:center;width:48px;height:48px;margin-bottom:18px;border-radius:50%;background:var(--indigo-soft);border:2px solid var(--indigo);color:var(--indigo);font-family:var(--brand);font-weight:600;font-size:20px;position:relative;z-index:1}
+  .steps li:not(:last-child)::after{content:"";position:absolute;top:25px;left:60px;right:-24px;height:2px;background:var(--indigo-line);transform-origin:left;transition:transform .7s cubic-bezier(.2,.7,.2,1) .35s}
+  .js .steps li.rv:not(.in)::after{transform:scaleX(0)}
+  .js .steps li.now::after{transition:none}
+  .steps b{display:block;font-family:var(--brand);font-size:20px;font-weight:600;line-height:1.3;margin-bottom:6px}
 
   /* la banda final: el gabinete */
   .room{background:var(--room);color:var(--white);padding:72px 0}
@@ -162,27 +186,39 @@
   .room .mail{color:#C7CEDF}
   .room .mail a{color:var(--white);text-underline-offset:4px}
 
-  .foot{padding:36px 0 44px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;color:var(--dim);font-size:15px}
+  .foot{padding-block:36px 44px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;color:var(--dim);font-size:15px}
   .foot nav{display:flex;flex-wrap:wrap;gap:6px 22px}
   .foot a{text-decoration:none}
   .foot a:hover{text-decoration:underline;text-underline-offset:4px}
+  .foot .made{display:inline-flex;align-items:center;gap:8px}
+
+  /* en un celular angosto el botón del hero queda justo abajo: el encabezado se queda con Ingresar */
+  @media (max-width:440px){.nav .btn{display:none}}
 
   @media (max-width:760px){
-    body{font-size:16px}
-    .nav .lnk{display:none}
-    .hero{padding:40px 0 56px}
-    .hero .lead{font-size:17px}
+    body{font-size:15px}
+    /* en el celular la primera pantalla es solo el hero: ocupa lo que deja el
+       encabezado (unos 80px) y centra su contenido; lo demás aparece al bajar */
+    .hero{padding-block:24px 32px;min-height:calc(100vh - 80px);min-height:calc(100svh - 80px);display:grid;align-content:center}
+    .hero .lead{font-size:16px}
     .hero .ctas .btn{width:100%}
-    .sec{padding:48px 0}
-    .band{grid-template-columns:1fr;gap:28px;padding:40px 0}
+    .sec{padding-block:48px}
+    .band{grid-template-columns:1fr;gap:28px;padding-block:40px}
     .band.flip .art{order:0}
-    .steps{grid-template-columns:1fr;gap:22px}
-    .steps li::before{font-size:34px}
+    .steps{grid-template-columns:1fr;gap:28px}
+    .steps li{padding:11px 0 0 64px;min-height:48px}
+    .steps li::before{position:absolute;left:0;top:0;margin:0}
+    .steps li:not(:last-child)::after{top:54px;bottom:-22px;left:23px;right:auto;width:2px;height:auto;transform-origin:top}
+    .js .steps li.rv:not(.in)::after{transform:scaleY(0)}
+    .checks{grid-template-columns:1fr;gap:26px}
+    .checks li{font-size:17px}
+    .checks b{font-size:19px}
     .room{padding:56px 0}
     .room .ctas .btn{width:100%}
     .foot{flex-direction:column;align-items:flex-start}
   }
 </style>
+<script>document.documentElement.classList.add("js")</script>
 </head>
 <body>
 
@@ -204,25 +240,41 @@
       <span class="row r2" aria-hidden="true">EN ORDEN</span>
       <span class="row r3" aria-hidden="true">SIN INSTALAR NADA</span>
     </h1>
-    <p class="lead">Un sistema de gestión para ópticas de uno o dos locales. Catálogo, stock por color, ventas en el mostrador, clientes y cuentas pendientes. Se usa desde el navegador, en la compu del local o en el celular.</p>
+    <p class="lead">El sistema de gestión para tu óptica. Stock, ventas y clientes en un solo lugar, desde la compu o el celular.</p>
     <div class="ctas">
       <a class="btn" href="#demo" data-wa>Pedí una demo</a>
-      <a class="lnk" href="https://app.miopticadigital.com.ar">Ingresar</a>
     </div>
   </section>
 
-  <section class="wrap sec">
-    <div class="prose">
-      <h2>Hoy, en muchas ópticas</h2>
-      <p>El stock está en la cabeza de alguien. La plata que te deben, en un cuaderno. La lista nueva del proveedor se carga a mano, fila por fila, un sábado a la tarde. Y si la persona que sabe no vino, la óptica se frena.</p>
-      <p>Mi Óptica Digital está hecho para eso: que lo que pasa en el local quede anotado solo, y lo pueda ver cualquiera del equipo.</p>
-    </div>
+  <section class="wrap sec today">
+    <h2 class="eyebrow">Hoy, en muchas ópticas</h2>
+    <p class="line"><span>Cada venta se anota dos veces:</span> <em>en el local y en ARCA.</em></p>
+    <p class="line"><span>El stock,</span> <em>en una planilla.</em></p>
+    <p class="line"><span>Lo que te deben,</span> <em>en un cuaderno.</em></p>
+    <p class="line answer"><span>Mi Óptica Digital lo junta</span> <em>en un solo lugar.</em></p>
   </section>
 
   <section class="wrap band">
     <div class="txt">
+      <h2>La factura de ARCA, desde la venta.</h2>
+      <p>Cerrás la venta y el sistema genera la factura con su CAE. Sin entrar a la página de ARCA.</p>
+    </div>
+    <div class="art">
+      <div class="inv" role="img" aria-label="Una factura B autorizada por ARCA, con su CAE">
+        <div class="i-head"><b>Factura B</b><span>0003-00001248</span></div>
+        <div class="i-row"><span>Armazón ARM-001-HAV</span><span>$ 85.000</span></div>
+        <div class="i-row"><span>Lente orgánico AR 1.56 x2</span><span>$ 64.000</span></div>
+        <div class="i-row total"><span>Total</span><span>$ 149.000</span></div>
+        <div class="i-cae"><span>CAE 76412839104527</span><span>Vto. 15/10/2026</span></div>
+        <div class="i-ok"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Autorizada por ARCA</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap band flip">
+    <div class="txt">
       <h2>Un armazón es un modelo. Cada color, un artículo.</h2>
-      <p>El mismo armazón en havana, negro y cristal son tres artículos con su propio stock, no uno con una nota en la celda. Cuando se vende el negro, baja el negro. Y cuando el proveedor manda la lista, los colores entran como colores.</p>
+      <p>Cada color tiene su código y su stock. Si vendés el negro, baja el negro.</p>
     </div>
     <div class="art">
       <svg class="frame" data-color="HAV" viewBox="0 0 340 140" role="img" aria-label="Un armazón de acetato que cambia de color">
@@ -258,30 +310,14 @@
         <button class="chip azu" type="button" data-c="AZU" aria-pressed="false" aria-label="Azul"></button>
       </div>
       <div class="sku" aria-live="polite"><span>Código <b id="sku-code">ARM-001-HAV</b></span><span>Stock <b id="sku-stock">3</b></span></div>
-      <p class="cap">Tocá un color: cada uno tiene su código y su stock.</p>
-    </div>
-  </section>
-
-  <section class="wrap band flip">
-    <div class="txt">
-      <h2>Si el stock dice cero y el armazón está en tu mano, la venta sale igual.</h2>
-      <p>El sistema no te frena en el mostrador por un número. Descarga el stock, te avisa qué quedó en negativo y seguís. El cliente que tenés adelante va primero. El conteo se arregla después, con calma.</p>
-    </div>
-    <div class="art">
-      <div class="ticket" role="img" aria-label="Un ticket de venta con un aviso: el armazón quedó en menos uno y la venta salió igual">
-        <div class="t-head"><span>Venta 0001-00000432</span><span>Hoy, 17:42</span></div>
-        <div class="t-row"><span>ARM-001-NEG</span><span>1</span><span>$ 85.000</span></div>
-        <div class="t-row"><span>Lente orgánico AR 1.56</span><span>2</span><span>$ 64.000</span></div>
-        <div class="t-row total"><span>Total</span><span></span><span>$ 149.000</span></div>
-        <div class="t-warn">ARM-001-NEG quedó en -1. La venta salió igual.</div>
-      </div>
+      <p class="cap">Tocá un color.</p>
     </div>
   </section>
 
   <section class="wrap band">
     <div class="txt">
-      <h2>La lista del proveedor entra tal cual viene.</h2>
-      <p>Subís el Excel que te mandaron. Si el código dice "01/1009 C1", el sistema entiende que es el modelo 1009 en el color 1, te pregunta qué color es la primera vez y después se acuerda. Precios, costos y stock se cargan en una sola pasada, con las mismas reglas que una carga a mano.</p>
+      <h2>La lista de precios nueva, sin cargarla a mano.</h2>
+      <p>Subís el Excel que te mandaron y se cargan precios, costos y stock. Si el código trae el color, como "01/1009 C1", te pregunta qué color es la primera vez y después se acuerda.</p>
     </div>
     <div class="art">
       <div class="sheet" role="img" aria-label="Una fila de Excel con el código 01/1009 C1">
@@ -299,19 +335,8 @@
 
   <section class="wrap band flip">
     <div class="txt">
-      <h2>Todo se puede deshacer.</h2>
-      <p>Cambiaste un precio mal, importaste una lista equivocada, ajustaste stock de más. Ctrl+Z lo vuelve atrás, fila por fila, durante 90 días. Y si algo cambió después, te lo dice en vez de pisarlo.</p>
-    </div>
-    <div class="art">
-      <div class="keys" aria-hidden="true"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Z</kbd></div>
-      <p class="cap">Catálogo, precios, stock e importaciones.</p>
-    </div>
-  </section>
-
-  <section class="wrap band">
-    <div class="txt">
-      <h2>El día que vence, aparece en Inicio.</h2>
-      <p>Cada venta con saldo tiene su fecha de pago. Ese día la ves al abrir el sistema, con el nombre y cuánto falta. En la hora de tu óptica, no en la de un servidor en otro país.</p>
+      <h2>Nadie se olvida de cobrar.</h2>
+      <p>Cada venta con saldo queda con su fecha de pago. Ese día aparece en Inicio, con el cliente y cuánto falta.</p>
     </div>
     <div class="art">
       <div class="home" role="img" aria-label="La pantalla de inicio con un pago que vence hoy">
@@ -324,30 +349,31 @@
   </section>
 
   <section class="wrap sec">
-    <div class="more">
-      <h2>Y además</h2>
-      <p>Exportás el catálogo, lo editás en Excel y lo volvés a importar. Actualiza lo que cambió, no duplica.</p>
-      <p>Una cuenta por óptica, cada persona con su usuario y su rol. Quien vende no toca precios si no le corresponde.</p>
-      <p>Se usa desde el navegador. No se instala nada, no hay servidor en el local y no hay backup del que acordarse.</p>
-    </div>
+    <h2>Y además</h2>
+    <ul class="checks">
+      <li><b>La receta de cada cliente.</b>Graduación, médico y fecha, en su ficha.</li>
+      <li><b>Cada uno con su usuario.</b>Y con su rol: quien vende no toca precios.</li>
+      <li><b>Sin instalar nada.</b>Ni servidor en el local, ni backups.</li>
+      <li><b>Tu catálogo, en Excel.</b>Lo exportás, lo editás y lo volvés a subir. Actualiza, no duplica.</li>
+    </ul>
   </section>
 
   <section class="wrap sec">
     <h2>Cómo arrancás</h2>
     <ol class="steps">
-      <li>Pedís la demo por WhatsApp y coordinamos un día.</li>
-      <li>La vemos juntos por videollamada. Si querés, con una lista real de tu proveedor.</li>
-      <li>Cargamos tu catálogo y tu stock desde tus planillas. Vos revisás.</li>
-      <li>Tu equipo entra con su usuario desde cualquier compu o celular.</li>
+      <li><b>Hablamos.</b><span>Nos escribís por WhatsApp.</span></li>
+      <li><b>Te la mostramos.</b><span>Media hora por videollamada.</span></li>
+      <li><b>Cargamos tu óptica.</b><span>Pasamos tus planillas al sistema. Vos revisás.</span></li>
+      <li><b>Empezás a vender.</b><span>Cada uno entra con su usuario, desde donde esté.</span></li>
     </ol>
   </section>
 
   <section class="room" id="demo">
     <div class="wrap">
-      <h2>¿La vemos con tu lista de proveedores?</h2>
-      <p class="lead">Media hora por videollamada, cuando te quede cómodo. Sin compromiso y sin instalar nada.</p>
+      <h2>Coordinemos una demo.</h2>
+      <p class="lead">Sin compromiso. Si querés, traé una lista de tu proveedor y la cargamos en la demo.</p>
       <div class="ctas">
-        <a class="btn light" href="#demo" data-wa>Pedí una demo por WhatsApp</a>
+        <a class="btn light" href="#demo" data-wa>Pedí una demo por WhatsApp<svg class="wa" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg></a>
         <span class="mail">o escribinos a <a href="mailto:hola@miopticadigital.com.ar">hola@miopticadigital.com.ar</a></span>
       </div>
     </div>
@@ -362,7 +388,7 @@
   <nav aria-label="Enlaces">
     <a href="https://app.miopticadigital.com.ar">Ingresar</a>
     <a href="mailto:hola@miopticadigital.com.ar">hola@miopticadigital.com.ar</a>
-    <span>Hecho en Argentina</span>
+    <span class="made"><svg class="flag" width="21" height="14" viewBox="0 0 21 14" role="img" aria-label="Bandera de Argentina"><rect width="21" height="14" rx="2" fill="#74ACDF"/><rect y="4.67" width="21" height="4.67" fill="#fff"/><circle cx="10.5" cy="7" r="1.6" fill="#F6B40E"/><rect x=".5" y=".5" width="20" height="13" rx="1.5" fill="none" stroke="rgba(18,28,60,.15)"/></svg>Hecho en Argentina</span>
   </nav>
 </footer>
 
@@ -370,7 +396,7 @@
   // Para cambiar el contacto, acá y en nada más. El mensaje llega prearmado al
   // chat de WhatsApp; sin JS los botones bajan a la banda final, donde está el
   // mail.
-  const WHATSAPP = "";
+  const WHATSAPP = "5493514076087";
   const MESSAGE = "Hola, tengo una óptica y quiero ver una demo de Mi Óptica Digital.";
   if (WHATSAPP) {
     const href = "https://wa.me/" + WHATSAPP + "?text=" + encodeURIComponent(MESSAGE);
@@ -380,7 +406,7 @@
   }
 
   // El armazón: un modelo, cuatro artículos. El negro está en cero a propósito,
-  // es el que vende el ticket de la sección siguiente.
+  // para que se vea que cada color lleva su propio stock.
   const COLORS = {
     HAV: { acetate: "#A5602A", stock: 3 },
     NEG: { acetate: "#1F2126", stock: 0 },
@@ -401,6 +427,59 @@
       document.querySelectorAll(".chip[data-c]").forEach(o => o.setAttribute("aria-pressed", String(o === chip)));
     });
   });
+
+  // Entrada al bajar: qué se anima y con cuánto retraso (ms) dentro de su grupo.
+  const reveal = (sel, step = 0, base = 0) =>
+    document.querySelectorAll(sel).forEach((el, i) => {
+      el.classList.add("rv");
+      el.style.setProperty("--d", base + i * step + "ms");
+    });
+  reveal(".sec h2");
+  reveal(".today .line", 120, 100);
+  reveal(".band .txt");
+  reveal(".band .art", 0, 150);
+  reveal(".checks li", 90, 100);
+  reveal(".steps li", 110, 100);
+  reveal(".room .wrap");
+  // la factura se arma renglón por renglón y ARCA la autoriza al final
+  reveal(".inv .i-row, .inv .i-cae", 140, 450);
+  reveal(".inv .i-ok", 0, 1150);
+
+  // Solo se anima lo que entra desde abajo. Lo que quedó arriba (un salto a
+  // #demo, el navegador que recuerda la posición al recargar) aparece ya en
+  // foco: si no, al volver a subir se ve vacío y sube al revés.
+  const items = [...document.querySelectorAll(".rv")];
+  const show = (el, instant) => {
+    if (el.classList.contains("in")) return;
+    if (instant) el.classList.add("now");
+    el.classList.add("in");
+  };
+  const settleAbove = () => {
+    for (const el of items) {
+      if (!el.classList.contains("in") && el.getBoundingClientRect().top < 0) show(el, true);
+    }
+  };
+  if ("IntersectionObserver" in window) {
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        show(e.target, e.boundingClientRect.top < 0);
+        io.unobserve(e.target);
+      });
+    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.12 });
+    items.forEach(el => io.observe(el));
+    let queued = false;
+    const onScroll = () => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => { queued = false; settleAbove(); });
+    };
+    addEventListener("scroll", onScroll, { passive: true });
+    addEventListener("load", settleAbove);
+    settleAbove();
+  } else {
+    items.forEach(el => show(el, true));
+  }
 </script>
 </body>
 </html>

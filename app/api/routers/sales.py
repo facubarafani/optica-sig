@@ -14,6 +14,7 @@ from app.models.auth import User
 from app.models.enums import SaleStatus
 from app.models.sales import PaymentAccount
 from app.schemas.sales import (
+    InstallmentRateIn,
     PaymentAccountCreate,
     PaymentAccountRead,
     PaymentAccountUpdate,
@@ -23,25 +24,49 @@ from app.schemas.sales import (
     SaleListRead,
     SalePreview,
     SaleRead,
+    SalesStats,
     SaleUpdate,
 )
 from app.services import invoicing
 from app.services import sales as sales_service
+from app.services import sales_stats
 
 router = APIRouter()
+accounts = CRUDBase(PaymentAccount)
 
 # --- cuentas (Santander, MercadoPago, caja...) ------------------------------
 router.include_router(
     build_crud_router(
         prefix="/payment-accounts",
         tags=["sales"],
-        crud=CRUDBase(PaymentAccount),
+        crud=accounts,
         create_schema=PaymentAccountCreate,
         update_schema=PaymentAccountUpdate,
         read_schema=PaymentAccountRead,
         permission="sales",
     )
 )
+
+
+
+@router.put("/payment-accounts/{account_id}/installment-rates",
+            response_model=PaymentAccountRead, tags=["sales"])
+def set_installment_rates(
+    account_id: int,
+    rates: list[InstallmentRateIn],
+    db: Session = Depends(get_db),
+    company_id: int = Depends(get_company_id),
+    _: object = Depends(require_permission("sales:write")),
+):
+    """Replace the account's recargos por cuotas, the whole table at once."""
+    account = accounts.get(db, account_id, company_id=company_id)
+    if account is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Cuenta inexistente.")
+    try:
+        return sales_service.set_installment_rates(db, account, rates, company_id=company_id)
+    except sales_service.SaleError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
+
 
 sales = APIRouter(prefix="/sales", tags=["sales"])
 
@@ -89,6 +114,18 @@ def pending_summary(
 ):
     """Headline figures for the cuentas-pendientes screen."""
     return sales_service.pending_summary(db, company_id=company_id)
+
+
+@sales.get("/stats", response_model=SalesStats)
+def sales_summary(
+    period: str = Query("month", pattern="^(day|week|month|year)$"),
+    db: Session = Depends(get_db),
+    company_id: int = Depends(get_company_id),
+    _: object = Depends(require_permission("sales:read")),
+):
+    """How the day, week, month or year is going, against the same stretch of
+    the one before. Feeds the sales summary on Inicio."""
+    return sales_stats.summary(db, company_id=company_id, period=period)
 
 
 @sales.post("/preview", response_model=SalePreview)

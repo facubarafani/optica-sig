@@ -196,6 +196,40 @@ def test_a_responsable_inscripto_issues_b_to_a_consumidor_final(
     assert [i["ivaRate"] for i in body["items"]] == [21, 10.5]
 
 
+def test_a_recargo_por_cuotas_is_invoiced_as_its_own_line(
+    client, auth_headers, catalog, link, db
+):
+    """Taxed like the largest line (the lenses here), and the comprobante
+    still adds up to the sale's total."""
+    link("RESPONSABLE_INSCRIPTO")
+    sale = sell(client, auth_headers, catalog,
+                [line(catalog, "ARM-1", "1000"), line(catalog, "CRI-1", "3000")], pay=False,
+                payments=[{"amount": "4000", "method": "credit_card", "installments": 6,
+                           "surcharge_type": "percent", "surcharge_value": "15"}])
+    assert sale["total"] == "4600.00"
+    inv = facturar(client, auth_headers, sale["id"]).json()
+    assert Decimal(inv["total"]) == Decimal("4600")
+    body = sent(db, inv["id"])
+    assert body["items"][-1] == {"description": "Recargo por financiación", "quantity": 1,
+                                 "unitPrice": 600, "ivaRate": 10.5}
+    assert sum(Decimal(str(i["unitPrice"])) * Decimal(str(i["quantity"]))
+               for i in body["items"]) == Decimal("4600")
+
+    # Once invoiced, a later recargo would need a nota de débito.
+    buyer = customer(client, auth_headers)
+    owed = sell(client, auth_headers, catalog, [line(catalog, "ARM-1", "1000")],
+                customer_id=buyer, pay=False)
+    facturar(client, auth_headers, owed["id"])
+    resp = client.post(f"/api/sales/{owed['id']}/payments", headers=auth_headers, json={
+        "amount": "1000", "method": "credit_card", "installments": 3,
+        "surcharge_type": "percent", "surcharge_value": "10"})
+    assert resp.status_code == 400
+    assert "facturada" in resp.json()["detail"]
+    resp = client.post(f"/api/sales/{owed['id']}/payments", headers=auth_headers,
+                       json={"amount": "1000", "method": "credit_card", "installments": 3})
+    assert resp.status_code == 200, resp.text
+
+
 def test_a_responsable_inscripto_issues_a_to_an_ri_with_cuit(
     client, auth_headers, catalog, link, db
 ):

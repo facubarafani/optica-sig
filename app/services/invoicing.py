@@ -274,10 +274,26 @@ def _items(db: Session, sale: Sale, klass: str) -> list[dict]:
         if discount:
             item["discount"] = _number(Decimal(discount) / 100)
         if klass != "C":
-            rate = line.product.product_type.iva_rate or IvaRate.RATE_21.value
-            item["ivaRate"] = ARCA_RATES[rate]
+            item["ivaRate"] = ARCA_RATES[_line_rate(line)]
         items.append(item)
+    if Decimal(sale.surcharge_amount) > 0:
+        # The recargo por financiación is part of the price, so it is invoiced
+        # as a line of its own, taxed like the main thing sold (the largest
+        # line), as an accessory to it.
+        recargo: dict[str, Any] = {
+            "description": "Recargo por financiación",
+            "quantity": 1,
+            "unitPrice": _number(Decimal(sale.surcharge_amount)),
+        }
+        if klass != "C":
+            main = max(lines, key=lambda line: Decimal(line.line_total))
+            recargo["ivaRate"] = ARCA_RATES[_line_rate(main)]
+        items.append(recargo)
     return items
+
+
+def _line_rate(line: SaleItem) -> str:
+    return line.product.product_type.iva_rate or IvaRate.RATE_21.value
 
 
 def _sale_condition(sale: Sale) -> str:
@@ -451,6 +467,11 @@ def credit_note_if_invoiced(
     except InvoicingError:
         logger.exception("Could not request the credit note for sale %s", sale.id)
         return None
+
+
+def has_factura(sale: Sale) -> bool:
+    """Whether a factura states this sale's total, authorized or still with ARCA."""
+    return any(i.type in FACTURAS and i.status != REJECTED for i in sale.invoices)
 
 
 def assert_cancellable(db: Session, sale: Sale) -> None:

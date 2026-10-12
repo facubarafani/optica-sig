@@ -67,8 +67,14 @@ not built yet.
     now only governs manual movements. Totals are **stored
     snapshots**, never recomputed on read. Money is corrected by cancelling and
     re-issuing, not by editing a sale: `SaleUpdate` only exposes status, the
-    reminder and the notes. The form's running total comes from
-    `POST /api/sales/preview`, so screen and database use the same arithmetic.
+    reminder and the notes. A tarjeta is always `CREDIT_CARD` or `DEBIT_CARD`. A
+    credit payment in cuotas may carry a recargo (per-account table in
+    `installment_rates`, or typed): it raises `sale.total` and is stored in
+    `surcharge_amount` on the sale and the payment, so the payments cover
+    `total - surcharge_amount` and the factura gets a "Recargo por
+    financiación" line. Once a sale has a factura a new recargo is refused.
+    The form's running total comes from `POST /api/sales/preview`, so screen
+    and database use the same arithmetic.
 11. **A product is a style; each colour it is sold in is its own article.**
     `products.parent_id` links a colour back to the style it belongs to, in the
     same table — so everything that references a product (stock levels and
@@ -184,7 +190,8 @@ conventions worth knowing before editing it:
   menu via `openRowMenu(anchor, items)`.
 - **The one file it loads besides itself:** the facturación guide's
   screenshots of ARCA's own screens, in `app/web/guia/` (served at
-  `/app/guia/`, mounted in `main.py`). They are cropped from ARCA's published
+  `/app/guia/` by `main.py::guide_image`, which states `image/webp` because
+  python:3.12 cannot guess it). They are cropped from ARCA's published
   instructivos, as rendered, never from the PDFs' raw images, which can hold
   personal data ARCA covered with shapes drawn on top. They show under their
   step, always (a "show screenshot" toggle was tried and read as hidden):
@@ -236,8 +243,9 @@ The public page at the root of `miopticadigital.com.ar` (and `www.`), served
 by `main.py::root` only on those hosts; every other host keeps redirecting `/`
 to a console, and `/landing` previews it anywhere. Same rules as the consoles:
 one self-contained file, no external requests, no em dashes, Poppins embedded
-(the same Latin subset the console carries) and used only for the lockup, the
-hero chart and headings; reading text is the system font. Its one interaction
+(the same Latin subset the console carries) and used for everything, body
+text included: the 400 and 600 weights cover the full Latin subset, so there
+is no system-font fallback on the reading text either. Its one interaction
 is the frame that recolours per article, which is rule 11 drawn. The WhatsApp
 number is the `WHATSAPP` constant at the top of its `<script>` (empty makes
 every "Pedí una demo" fall back to the final band, where the email is); the
@@ -311,6 +319,12 @@ anywhere else it refuses a default password and prints the CLI command instead.
 - Test both paths before shipping a migration: `upgrade head` on an empty DB,
   and on a copy of the old schema (to exercise the data backfill).
 - `alembic/env.py` reads `DATABASE_URL` from the environment, not `alembic.ini`.
+- **Production is backed up nightly** from a separate, private repo,
+  `facubarafani/optica-sig-backups`, because this one is public. It runs
+  `pg_dump`, encrypts the dump with age and keeps it 30 days as a workflow
+  artifact. GitHub holds only the public key, so the repo can write backups
+  but never read them. Restore steps are in that repo's README. If the
+  database password or Postgres major version changes, update that repo too.
 
 ## Tests
 

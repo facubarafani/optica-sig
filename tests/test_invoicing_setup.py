@@ -239,11 +239,20 @@ def test_verificar_catches_a_point_of_sale_arca_does_not_list(client, auth_heade
 
 # --- ARCA's screenshots in the guide ------------------------------------------------------
 
-def test_the_guide_screenshots_are_served(client):
+def test_the_guide_screenshots_are_served(client, monkeypatch):
+    # As on python:3.12 (production), which has no media type for .webp: the
+    # route states it instead of guessing.
+    import mimetypes
+    monkeypatch.setattr(mimetypes, "guess_type", lambda *a, **k: (None, None))
     resp = client.get("/app/guia/pdv-3-formulario.webp")
     assert resp.status_code == 200
     assert resp.headers["content-type"] == "image/webp"
-    assert client.get("/app/guia/../index.html").status_code == 404
+    assert resp.content[:4] == b"RIFF"
+
+
+@pytest.mark.parametrize("name", ["nope.webp", "..%2Findex.html", "pdv-3-formulario.png", "%2Fetc%2Fpasswd"])
+def test_only_the_guide_images_are_served(client, name):
+    assert client.get(f"/app/guia/{name}").status_code == 404
 
 
 def test_every_screenshot_the_guide_names_exists():

@@ -346,13 +346,135 @@ def test_several_payments_add_up_and_clear_the_reminder(
 
     settled = client.post(
         f"/api/sales/{sale['id']}/payments",
-        json={"amount": "20000", "method": "card"}, headers=auth_headers,
+        json={"amount": "20000", "method": "debit_card"}, headers=auth_headers,
     ).json()
     assert settled["balance"] == "0.00"
     # Nothing left to chase, so the promise is dropped.
     assert settled["promised_payment_date"] is None
     assert len(settled["payments"]) == 3
-    assert {p["method"] for p in settled["payments"]} == {"cash", "transfer", "card"}
+    assert {p["method"] for p in settled["payments"]} == {"cash", "transfer", "debit_card"}
+
+
+def test_credit_and_debit_are_told_apart_and_credit_carries_cuotas(
+    client, auth_headers, shop, customer_id
+):
+    sale = make_sale(client, auth_headers, shop, customer_id=customer_id, payments=[
+        {"amount": "30000", "method": "credit_card", "installments": 6},
+        {"amount": "10000", "method": "debit_card"},
+    ]).json()
+    assert sale["balance"] == "10000.00"
+    by_method = {p["method"]: p for p in sale["payments"]}
+    assert by_method["credit_card"]["installments"] == 6
+    assert by_method["debit_card"]["installments"] is None
+
+    later = client.post(
+        f"/api/sales/{sale['id']}/payments",
+        json={"amount": "10000", "method": "credit_card", "installments": 3},
+        headers=auth_headers,
+    ).json()
+    assert later["balance"] == "0.00"
+    assert sorted(p["installments"] or 0 for p in later["payments"]) == [0, 3, 6]
+
+
+def test_cuotas_are_only_for_credit(client, auth_headers, shop, customer_id):
+    for method in ("debit_card", "cash", "transfer"):
+        resp = make_sale(client, auth_headers, shop, customer_id=customer_id,
+                         payments=[{"amount": "1000", "method": method, "installments": 3}])
+        assert resp.status_code == 422, method
+        resp = make_sale(client, auth_headers, shop, customer_id=customer_id,
+                         payments=[{"amount": "1000", "method": method,
+                                    "surcharge_type": "percent", "surcharge_value": "10"}])
+        assert resp.status_code == 422, method
+    # A tarjeta is crédito or débito; there is no third kind.
+    resp = make_sale(client, auth_headers, shop, customer_id=customer_id,
+                     payments=[{"amount": "1000", "method": "card"}])
+    assert resp.status_code == 422
+    resp = make_sale(client, auth_headers, shop, customer_id=customer_id,
+                     payments=[{"amount": "1000", "method": "credit_card", "installments": 0}])
+    assert resp.status_code == 422
+
+
+CREDIT_6 = {"method": "credit_card", "installments": 6,
+            "surcharge_type": "percent", "surcharge_value": "20"}
+
+
+def test_a_recargo_por_cuotas_raises_the_total(client, auth_headers, shop):
+    """$50.000 in 6 cuotas at 20%: the card is charged $60.000 and the sale,
+    recargo included, totals the same, so nothing is left owing."""
+    body = {"items": [{"product_id": shop["products"]["ARM-001"], "quantity": "1"}],
+            "payments": [{"amount": "50000", **CREDIT_6}]}
+    preview = client.post("/api/sales/preview", json=body, headers=auth_headers).json()
+    assert preview["surcharge_amount"] == "10000.00"
+    assert preview["total"] == "60000.00"
+    assert preview["balance"] == "0.00"
+
+    sale = make_sale(client, auth_headers, shop, payments=body["payments"]).json()
+    assert sale["subtotal"] == "50000.00"
+    assert sale["surcharge_amount"] == "10000.00"
+    assert sale["total"] == "60000.00"
+    assert sale["paid_amount"] == "60000.00"
+    assert sale["balance"] == "0.00"
+    [payment] = sale["payments"]
+    assert payment["amount"] == "60000.00"
+    assert payment["surcharge_amount"] == "10000.00"
+    assert payment["installments"] == 6
+
+
+def test_a_recargo_can_be_a_fixed_sum_on_part_of_the_price(
+    client, auth_headers, shop, customer_id
+):
+    sale = make_sale(client, auth_headers, shop, customer_id=customer_id, payments=[
+        {"amount": "10000", "method": "cash"},
+        {"amount": "30000", "method": "credit_card", "installments": 3,
+         "surcharge_type": "amount", "surcharge_value": "1500"},
+    ]).json()
+    assert sale["surcharge_amount"] == "1500.00"
+    assert sale["total"] == "51500.00"
+    # The recargo is paid with the card, so what is owed is the uncovered part.
+    assert sale["balance"] == "10000.00"
+
+    later = client.post(f"/api/sales/{sale['id']}/payments",
+                        json={"amount": "10000", **CREDIT_6}, headers=auth_headers).json()
+    assert later["surcharge_amount"] == "3500.00"
+    assert later["total"] == "53500.00"
+    assert later["balance"] == "0.00"
+
+
+def test_the_recargo_does_not_count_toward_covering_the_price(
+    client, auth_headers, shop, customer_id
+):
+    """What the payments may cover is the price; the recargo comes on top."""
+    resp = make_sale(client, auth_headers, shop, customer_id=customer_id,
+                     payments=[{"amount": "50001", **CREDIT_6}])
+    assert resp.status_code == 400
+    sale = make_sale(client, auth_headers, shop, customer_id=customer_id,
+                     payments=[{"amount": "20000", "method": "cash"}]).json()
+    resp = client.post(f"/api/sales/{sale['id']}/payments",
+                       json={"amount": "30001", **CREDIT_6}, headers=auth_headers)
+    assert resp.status_code == 400
+
+
+def test_installment_rates_belong_to_an_account(client, auth_headers, shop):
+    url = f"/api/payment-accounts/{shop['account_id']}/installment-rates"
+    resp = client.put(url, json=[{"installments": 6, "surcharge_percent": "20"},
+                                 {"installments": 3, "surcharge_percent": "10"}],
+                      headers=auth_headers)
+    assert resp.status_code == 200, resp.text
+    assert [(r["installments"], r["surcharge_percent"]) for r in resp.json()["installment_rates"]] \
+        == [(3, "10.00"), (6, "20.00")]
+    # Saved as a whole: the next save replaces the table.
+    resp = client.put(url, json=[{"installments": 12, "surcharge_percent": "40"}],
+                      headers=auth_headers)
+    assert [r["installments"] for r in resp.json()["installment_rates"]] == [12]
+    listed = client.get("/api/payment-accounts", headers=auth_headers).json()
+    assert next(a for a in listed if a["id"] == shop["account_id"])["installment_rates"][0]["installments"] == 12
+
+    dup = client.put(url, json=[{"installments": 3, "surcharge_percent": "1"},
+                                {"installments": 3, "surcharge_percent": "2"}],
+                     headers=auth_headers)
+    assert dup.status_code == 400
+    assert client.put("/api/payment-accounts/99999/installment-rates", json=[],
+                      headers=auth_headers).status_code == 404
 
 
 def test_overpayment_is_refused(client, auth_headers, shop, customer_id):

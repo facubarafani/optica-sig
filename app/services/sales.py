@@ -10,6 +10,11 @@ Three rules from CLAUDE.md meet here, and none of them may be re-implemented:
 Everything below runs with ``commit=False`` so one sale is one transaction: if
 a line fails, no number is burned and no movement is left behind.
 
+A credit card in cuotas may carry a recargo. It is part of the price, so it
+raises ``sale.total`` (and the factura with it): the payments cover the goods,
+``total - surcharge_amount``, and each stored payment is what the card was
+actually charged, recargo included.
+
 Missing stock is not a failure. A shop sells what is on the counter whether or
 not the system knew it was there (a product created at 0, a delivery nobody
 loaded), so a sale always discharges, stock may go negative, and
@@ -29,8 +34,9 @@ from app.models.company import CompanySettings
 from app.models.customer import Customer
 from app.models.enums import DiscountType, PaymentMethod, SaleStatus, StockMovementType
 from app.models.product import Product
-from app.models.sales import Sale, SaleItem, SalePayment
+from app.models.sales import InstallmentRate, PaymentAccount, Sale, SaleItem, SalePayment
 from app.schemas.sales import (
+    InstallmentRateIn,
     PaymentCreate,
     SaleCreate,
     SaleItemCreate,
@@ -74,6 +80,23 @@ def discount_amount(
         return ZERO
     raw = base * value / Decimal(100) if kind is DiscountType.PERCENT else value
     return min(money(raw), money(base))
+
+
+def payment_surcharge(entry: PaymentCreate) -> Decimal:
+    """The recargo a payment adds on top of the part of the price it covers.
+
+    Read like a discount (a percentage of the amount, or a fixed sum) but not
+    capped: financing can cost more than the goods.
+    """
+    if (
+        entry.method is not PaymentMethod.CREDIT_CARD
+        or entry.surcharge_type is None
+        or not entry.surcharge_value
+    ):
+        return ZERO
+    if entry.surcharge_type is DiscountType.PERCENT:
+        return money(money(entry.amount) * entry.surcharge_value / Decimal(100))
+    return money(entry.surcharge_value)
 
 
 # --- computing a sale (shared by preview and create) -----------------------
@@ -177,7 +200,8 @@ def preview(db: Session, data: SaleCreate, *, company_id: int) -> SalePreview:
         sale_discount_type=data.discount_type,
         sale_discount_value=data.discount_value,
     )
-    paid = money(sum((p.amount for p in data.payments), ZERO))
+    covered = money(sum((p.amount for p in data.payments), ZERO))
+    surcharge = money(sum((payment_surcharge(p) for p in data.payments), ZERO))
     warnings = [] if data.status is SaleStatus.QUOTE else stock_warnings(
         db, data.items, company_id=company_id,
         branch_id=data.branch_id or _default_branch(db, company_id),
@@ -195,9 +219,10 @@ def preview(db: Session, data: SaleCreate, *, company_id: int) -> SalePreview:
         ],
         subtotal=subtotal,
         discount_amount=sale_discount,
-        total=total,
-        paid_amount=paid,
-        balance=money(total - paid),
+        surcharge_amount=surcharge,
+        total=money(total + surcharge),
+        paid_amount=money(covered + surcharge),
+        balance=money(total - covered),
         currency=currency,
     )
 
@@ -306,18 +331,25 @@ def _apply_payments(
     *,
     company_id: int,
     user_id: int | None,
-) -> None:
+) -> Decimal:
+    """Write the payments; returns the recargo they add to the sale."""
+    added = ZERO
     for entry in payments:
+        surcharge = payment_surcharge(entry)
+        added += surcharge
         db.add(SalePayment(
             company_id=company_id,
             sale=sale,
-            amount=money(entry.amount),
+            amount=money(entry.amount) + surcharge,
+            surcharge_amount=surcharge,
             method=entry.method,
             account_id=entry.account_id,
             reference=entry.reference,
+            installments=entry.installments,
             note=entry.note,
             created_by_user_id=user_id,
         ))
+    return money(added)
 
 
 def _resettle(sale: Sale) -> None:
@@ -335,11 +367,14 @@ def create_sale(
         sale_discount_value=data.discount_value,
     )
 
+    # What the payments cover of the price; a recargo comes on top of it.
     paid = money(sum((p.amount for p in data.payments), ZERO))
     if paid > total:
         raise SaleError(
             f"Lo abonado ({paid}) supera el total de la venta ({total})."
         )
+    if data.status is SaleStatus.QUOTE and any(payment_surcharge(p) for p in data.payments):
+        raise SaleError("Un presupuesto no lleva recargo por cuotas.")
     if (
         data.customer_id is None
         and data.status not in NON_DEBT_STATUSES
@@ -381,7 +416,9 @@ def create_sale(
             line_total=line.line_total,
         ))
     db.add(sale)
-    _apply_payments(db, sale, data.payments, company_id=company_id, user_id=user_id)
+    surcharge = _apply_payments(db, sale, data.payments, company_id=company_id, user_id=user_id)
+    sale.surcharge_amount = surcharge
+    sale.total = money(total + surcharge)
     db.flush()
     _resettle(sale)
 
@@ -416,7 +453,16 @@ def add_payment(
         raise SaleError(
             f"El pago ({amount}) supera el saldo pendiente ({sale.balance})."
         )
-    _apply_payments(db, sale, [data], company_id=company_id, user_id=user_id)
+    if payment_surcharge(data) and invoicing.has_factura(sale):
+        # The factura already states the total; a recargo now would need a
+        # nota de débito, which is not issued from here.
+        raise SaleError(
+            "La venta ya está facturada: no se le puede sumar un recargo por cuotas."
+        )
+    surcharge = _apply_payments(db, sale, [data], company_id=company_id, user_id=user_id)
+    if surcharge:
+        sale.surcharge_amount = money(Decimal(sale.surcharge_amount) + surcharge)
+        sale.total = money(Decimal(sale.total) + surcharge)
     db.flush()
     _resettle(sale)
     if sale.balance == ZERO:
@@ -457,6 +503,27 @@ def cancel_sale(
     db.commit()
     db.refresh(sale)
     return sale
+
+
+# --- recargos por cuotas ----------------------------------------------------
+
+def set_installment_rates(
+    db: Session, account: PaymentAccount, rates: list[InstallmentRateIn], *, company_id: int
+) -> PaymentAccount:
+    """Replace an account's whole table of recargos: the form edits it as one."""
+    counts = [r.installments for r in rates]
+    if len(counts) != len(set(counts)):
+        raise SaleError("Cada cantidad de cuotas puede aparecer una sola vez.")
+    account.installment_rates.clear()
+    db.flush()
+    for rate in sorted(rates, key=lambda r: r.installments):
+        account.installment_rates.append(InstallmentRate(
+            company_id=company_id, installments=rate.installments,
+            surcharge_percent=rate.surcharge_percent,
+        ))
+    db.commit()
+    db.refresh(account)
+    return account
 
 
 # --- reading ---------------------------------------------------------------
@@ -584,6 +651,6 @@ def pending_summary(db: Session, *, company_id: int) -> dict:
 
 __all__ = [
     "SaleError", "money", "discount_amount", "preview", "create_sale",
-    "add_payment", "cancel_sale", "list_sales", "get_sale", "pending_summary",
+    "add_payment", "cancel_sale", "payment_surcharge", "set_installment_rates", "list_sales", "get_sale", "pending_summary",
     "PaymentMethod",
 ]
