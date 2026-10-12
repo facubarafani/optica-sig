@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.models.enums import DiscountType, PaymentMethod, SaleStatus
 from app.schemas.common import ORMBase, SoftDeleteRead
@@ -24,21 +24,55 @@ class PaymentAccountUpdate(BaseModel):
     is_active: bool | None = None
 
 
+class InstallmentRateIn(BaseModel):
+    """"6 cuotas, 20% de recargo" on one account."""
+
+    installments: int = Field(ge=1, le=60)
+    surcharge_percent: Decimal = Field(ge=0, le=500)
+
+
+class InstallmentRateRead(ORMBase):
+    installments: int
+    surcharge_percent: Decimal
+
+
 class PaymentAccountRead(SoftDeleteRead):
     name: str
     method: PaymentMethod | None = None
     notes: str | None = None
+    # What paying in cuotas through this account costs, fewest cuotas first.
+    installment_rates: list[InstallmentRateRead] = Field(default_factory=list)
 
 
 # --- payments --------------------------------------------------------------
 class PaymentCreate(BaseModel):
-    """Money received. ``amount`` is what the customer actually handed over."""
+    """Money received.
+
+    ``amount`` is the part of the price it covers. A credit card in cuotas may
+    add a recargo on top (``surcharge_type`` + ``surcharge_value``, read like
+    a discount: a percentage of ``amount`` or a fixed sum). The recargo raises
+    the sale's total, and the stored payment is amount + recargo: what was
+    actually charged.
+    """
 
     amount: Decimal = Field(gt=0)
     method: PaymentMethod = PaymentMethod.CASH
     account_id: int | None = None
     reference: str | None = None
+    # Cuotas: only a credit card is paid in instalments.
+    installments: int | None = Field(default=None, ge=1, le=60)
+    surcharge_type: DiscountType | None = None
+    surcharge_value: Decimal | None = Field(default=None, ge=0)
     note: str | None = None
+
+    @model_validator(mode="after")
+    def _installments_need_credit(self) -> "PaymentCreate":
+        if self.method is not PaymentMethod.CREDIT_CARD:
+            if self.installments is not None:
+                raise ValueError("Las cuotas son sólo para pagos con tarjeta de crédito.")
+            if self.surcharge_value:
+                raise ValueError("El recargo es sólo para pagos con tarjeta de crédito.")
+        return self
 
 
 class PaymentRead(ORMBase):
@@ -49,6 +83,9 @@ class PaymentRead(ORMBase):
     account_id: int | None = None
     paid_at: datetime
     reference: str | None = None
+    installments: int | None = None
+    # The recargo inside ``amount``.
+    surcharge_amount: Decimal = Decimal("0")
     note: str | None = None
 
 
@@ -132,6 +169,7 @@ class SaleRead(ORMBase):
     discount_type: DiscountType | None = None
     discount_value: Decimal | None = None
     discount_amount: Decimal
+    surcharge_amount: Decimal = Decimal("0")
     total: Decimal
     paid_amount: Decimal
     balance: Decimal
@@ -202,9 +240,77 @@ class SalePreview(BaseModel):
     items: list[SalePreviewItem]
     subtotal: Decimal
     discount_amount: Decimal
+    # The recargo the payments sent along would add. total includes it, so
+    # what the payments may cover is total - surcharge_amount.
+    surcharge_amount: Decimal = Decimal("0")
     total: Decimal
     paid_amount: Decimal
     balance: Decimal
     currency: str | None = None
     # Products this sale would leave below zero. Never blocks the sale.
     stock_warnings: list[str] = Field(default_factory=list)
+
+
+# --- the summary on Inicio -------------------------------------------------
+class StatsFigures(BaseModel):
+    revenue: Decimal
+    count: int
+    average_ticket: Decimal
+    collected: Decimal
+
+
+class StatsChange(BaseModel):
+    """Percent change against the same stretch of the previous period; None
+    when that stretch sold nothing, so there is nothing to compare with."""
+
+    revenue: Decimal | None = None
+    count: Decimal | None = None
+    average_ticket: Decimal | None = None
+    collected: Decimal | None = None
+
+
+class StatsBucket(BaseModel):
+    key: str
+    label: str
+    # None for a bar still in the future (later today, later this month).
+    revenue: Decimal | None = None
+    count: int | None = None
+    # The previous period at the same position, all of it.
+    previous: Decimal
+
+
+class StatsMethod(BaseModel):
+    method: PaymentMethod
+    amount: Decimal
+
+
+class StatsVariant(BaseModel):
+    code: str
+    label: str              # its colours, "Carey" or "Negro, Dorado"
+    quantity: Decimal
+    revenue: Decimal
+
+
+class StatsProduct(BaseModel):
+    """A model (style) with what its colours sold, or a plain article."""
+
+    product_id: int
+    code: str
+    description: str | None = None
+    quantity: Decimal
+    revenue: Decimal
+    # Its colours, most sold first. Empty for an article with no family.
+    variants: list[StatsVariant] = Field(default_factory=list)
+
+
+class SalesStats(StatsFigures):
+    period: str
+    start: date
+    previous_start: date
+    # What the period's sales left owing.
+    owed: Decimal
+    previous: StatsFigures
+    change: StatsChange
+    series: list[StatsBucket]
+    methods: list[StatsMethod]
+    top_products: list[StatsProduct]

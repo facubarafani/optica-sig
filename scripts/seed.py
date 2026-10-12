@@ -29,7 +29,7 @@ from app.models.customer import Customer
 from app.models.enums import PaymentMethod, StockMovementType, SupplierType
 from app.models.product import Brand, Color, Product, ProductModel, ProductType
 from app.models.platform import PlatformUser
-from app.models.sales import PaymentAccount
+from app.models.sales import InstallmentRate, PaymentAccount
 from app.models.supplier import Supplier, supplier_brands
 from app.schemas.stock import StockMovementCreate
 from app.services import platform as platform_service
@@ -198,12 +198,18 @@ def run() -> None:
         for name, method in [
             ("Santander", PaymentMethod.TRANSFER),
             ("MercadoPago", PaymentMethod.TRANSFER),
-            ("Posnet Visa/Master", PaymentMethod.CARD),
+            ("Posnet Visa/Master", PaymentMethod.CREDIT_CARD),
         ]:
-            get_or_create(
+            account, created = get_or_create(
                 db, PaymentAccount, defaults={"method": method},
                 company_id=cid, name=name,
             )
+            if created and method is PaymentMethod.CREDIT_CARD:
+                # Demo recargos, so the sale form has cuotas to pick from.
+                for cuotas, pct in ((3, "10"), (6, "20"), (12, "40")):
+                    account.installment_rates.append(InstallmentRate(
+                        company_id=cid, installments=cuotas, surcharge_percent=Decimal(pct),
+                    ))
 
         db.commit()
 

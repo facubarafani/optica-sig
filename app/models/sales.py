@@ -21,6 +21,7 @@ from sqlalchemy import (
     DateTime,
     Enum as SAEnum,
     ForeignKey,
+    Integer,
     Numeric,
     String,
     UniqueConstraint,
@@ -62,6 +63,30 @@ class PaymentAccount(IDMixin, CompanyMixin, TimestampMixin, SoftDeleteMixin, Bas
     method: Mapped[PaymentMethod | None] = mapped_column(PAYMENT_METHOD)
     notes: Mapped[str | None] = mapped_column(String(255))
 
+    installment_rates: Mapped[list["InstallmentRate"]] = relationship(
+        cascade="all, delete-orphan", lazy="selectin",
+        order_by="InstallmentRate.installments",
+    )
+
+
+class InstallmentRate(IDMixin, CompanyMixin, Base):
+    """The recargo an account charges for paying by credit card in N cuotas.
+
+    Per account because each processor (a bank's posnet, MercadoPago) sets its
+    own. It only pre-fills the sale form: the seller can always type another.
+    """
+
+    __tablename__ = "installment_rates"
+    __table_args__ = (
+        UniqueConstraint("account_id", "installments", name="uq_installment_rate"),
+    )
+
+    account_id: Mapped[int] = mapped_column(
+        ForeignKey("payment_accounts.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    installments: Mapped[int] = mapped_column(Integer, nullable=False)
+    surcharge_percent: Mapped[Decimal] = mapped_column(Numeric(6, 2), nullable=False)
+
 
 class Sale(IDMixin, CompanyMixin, TimestampMixin, SoftDeleteMixin, Base):
     __tablename__ = "sales"
@@ -96,6 +121,12 @@ class Sale(IDMixin, CompanyMixin, TimestampMixin, SoftDeleteMixin, Base):
     discount_value: Mapped[Decimal | None] = mapped_column(MONEY)
     # What that discount worked out to in money, so a receipt never re-derives it.
     discount_amount: Mapped[Decimal] = mapped_column(MONEY, default=0, nullable=False)
+    # Recargo por financiación: what paying in cuotas added, the sum of its
+    # payments' surcharges. Part of the total, so the factura carries it too.
+    surcharge_amount: Mapped[Decimal] = mapped_column(
+        MONEY, default=0, server_default="0", nullable=False
+    )
+    # subtotal - discount_amount + surcharge_amount.
     total: Mapped[Decimal] = mapped_column(MONEY, default=0, nullable=False)
     paid_amount: Mapped[Decimal] = mapped_column(MONEY, default=0, nullable=False)
     balance: Mapped[Decimal] = mapped_column(MONEY, default=0, nullable=False)
@@ -173,6 +204,13 @@ class SalePayment(IDMixin, CompanyMixin, Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     reference: Mapped[str | None] = mapped_column(String(80))
+    # Cuotas of a credit-card payment. Empty on every other method.
+    installments: Mapped[int | None] = mapped_column(Integer)
+    # The recargo inside ``amount``: amount - surcharge_amount is the part of
+    # the price this payment covered.
+    surcharge_amount: Mapped[Decimal] = mapped_column(
+        MONEY, default=0, server_default="0", nullable=False
+    )
     note: Mapped[str | None] = mapped_column(String(255))
     created_by_user_id: Mapped[int | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL")

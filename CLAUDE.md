@@ -67,8 +67,14 @@ not built yet.
     now only governs manual movements. Totals are **stored
     snapshots**, never recomputed on read. Money is corrected by cancelling and
     re-issuing, not by editing a sale: `SaleUpdate` only exposes status, the
-    reminder and the notes. The form's running total comes from
-    `POST /api/sales/preview`, so screen and database use the same arithmetic.
+    reminder and the notes. A tarjeta is always `CREDIT_CARD` or `DEBIT_CARD`. A
+    credit payment in cuotas may carry a recargo (per-account table in
+    `installment_rates`, or typed): it raises `sale.total` and is stored in
+    `surcharge_amount` on the sale and the payment, so the payments cover
+    `total - surcharge_amount` and the factura gets a "Recargo por
+    financiación" line. Once a sale has a factura a new recargo is refused.
+    The form's running total comes from `POST /api/sales/preview`, so screen
+    and database use the same arithmetic.
 11. **A product is a style; each colour it is sold in is its own article.**
     `products.parent_id` links a colour back to the style it belongs to, in the
     same table — so everything that references a product (stock levels and
