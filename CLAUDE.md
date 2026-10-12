@@ -313,6 +313,12 @@ anywhere else it refuses a default password and prints the CLI command instead.
 - Test both paths before shipping a migration: `upgrade head` on an empty DB,
   and on a copy of the old schema (to exercise the data backfill).
 - `alembic/env.py` reads `DATABASE_URL` from the environment, not `alembic.ini`.
+- **Production is backed up nightly** from a separate, private repo,
+  `facubarafani/optica-sig-backups`, because this one is public. It runs
+  `pg_dump`, encrypts the dump with age and keeps it 30 days as a workflow
+  artifact. GitHub holds only the public key, so the repo can write backups
+  but never read them. Restore steps are in that repo's README. If the
+  database password or Postgres major version changes, update that repo too.
 
 ## Tests
 
