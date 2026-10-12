@@ -237,8 +237,9 @@ The public page at the root of `miopticadigital.com.ar` (and `www.`), served
 by `main.py::root` only on those hosts; every other host keeps redirecting `/`
 to a console, and `/landing` previews it anywhere. Same rules as the consoles:
 one self-contained file, no external requests, no em dashes, Poppins embedded
-(the same Latin subset the console carries) and used only for the lockup, the
-hero chart and headings; reading text is the system font. Its one interaction
+(the same Latin subset the console carries) and used for everything, body
+text included: the 400 and 600 weights cover the full Latin subset, so there
+is no system-font fallback on the reading text either. Its one interaction
 is the frame that recolours per article, which is rule 11 drawn. The WhatsApp
 number is the `WHATSAPP` constant at the top of its `<script>` (empty makes
 every "Pedí una demo" fall back to the final band, where the email is); the
