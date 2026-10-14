@@ -482,7 +482,7 @@ erDiagram
   misma transacción. Las transferencias generan dos movimientos `transfer`.
 - **Numeración**: ventas/presupuestos/órdenes/arreglos usan `number_sequence`
   (prefijos `V-`, `P-`, `OT-`, `AR-`).
-- **Ventas (implementado)**: el módulo construido difiere del diagrama en tres
+- **Ventas (implementado)**: el módulo construido difiere del diagrama en cuatro
   puntos, porque el diagrama no los contemplaba:
   - **Descuentos** en dos niveles (`discount_type` + `discount_value`, importe o
     porcentaje): por línea y sobre el subtotal. El importe resultante se guarda
@@ -493,6 +493,10 @@ erDiagram
     "cuentas pendientes". Es deliberadamente más simple que
     `account_entry.estimated_collection_date`: la cuenta corriente completa
     (módulo 10) sigue pendiente y sustituirá esto cuando se construya.
+  - **`payment_reminder`** guarda cada recordatorio de pago que se le escribió
+    al cliente por WhatsApp: tono, número, texto, quién y cuándo. Lo manda la
+    óptica desde su propio WhatsApp con un enlace wa.me, así que registra que
+    el mensaje se abrió, no que llegó.
   - `total`/`paid_amount`/`balance` son **snapshots** que escribe
     `services.sales`; nunca se recalculan al leer, así un cambio de precio no
     reescribe lo que se le cobró a un cliente.

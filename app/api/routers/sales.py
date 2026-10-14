@@ -19,7 +19,10 @@ from app.schemas.sales import (
     PaymentAccountRead,
     PaymentAccountUpdate,
     PaymentCreate,
+    PaymentReminderRead,
     PendingSummary,
+    ReminderDraft,
+    ReminderSend,
     SaleCreate,
     SaleListRead,
     SalePreview,
@@ -27,7 +30,7 @@ from app.schemas.sales import (
     SalesStats,
     SaleUpdate,
 )
-from app.services import invoicing
+from app.services import invoicing, payment_reminders
 from app.services import sales as sales_service
 from app.services import sales_stats
 
@@ -209,6 +212,43 @@ def add_payment(
             db, sale, data, company_id=company_id, user_id=current_user.id
         )
     except sales_service.SaleError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
+
+
+@sales.get("/{sale_id}/whatsapp", response_model=ReminderDraft)
+def whatsapp_draft(
+    sale_id: int,
+    db: Session = Depends(get_db),
+    company_id: int = Depends(get_company_id),
+    _: User = Depends(require_permission("sales:write")),
+):
+    """The payment reminder for this sale in each tone, and the customer's
+    registered phone as WhatsApp takes it. Asks for sales:write because it
+    exists only to send one."""
+    sale = _get_or_404(db, sale_id, company_id)
+    try:
+        return payment_reminders.draft(db, sale, company_id=company_id)
+    except payment_reminders.ReminderError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
+
+
+@sales.post("/{sale_id}/whatsapp", response_model=PaymentReminderRead,
+            status_code=status.HTTP_201_CREATED)
+def whatsapp_sent(
+    sale_id: int,
+    data: ReminderSend,
+    db: Session = Depends(get_db),
+    company_id: int = Depends(get_company_id),
+    current_user: User = Depends(require_permission("sales:write")),
+):
+    """Record the reminder the console just opened in WhatsApp. The number is
+    the customer's, read from their file, never one sent along."""
+    sale = _get_or_404(db, sale_id, company_id)
+    try:
+        return payment_reminders.record(
+            db, sale, data, company_id=company_id, user_id=current_user.id
+        )
+    except payment_reminders.ReminderError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
 
 

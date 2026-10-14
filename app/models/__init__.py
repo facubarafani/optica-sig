@@ -31,6 +31,7 @@ from app.models.enums import (
     IvaRate,
     PaymentMethod,
     PlatformAction,
+    ReminderTone,
     TokenPurpose,
     SaleStatus,
     StockMovementType,
@@ -47,7 +48,14 @@ from app.models.product import (
     ProductType,
     product_colors,
 )
-from app.models.sales import InstallmentRate, PaymentAccount, Sale, SaleItem, SalePayment
+from app.models.sales import (
+    InstallmentRate,
+    PaymentAccount,
+    PaymentReminder,
+    Sale,
+    SaleItem,
+    SalePayment,
+)
 from app.models.stock import StockLevel, StockMovement
 from app.models.token import UserToken
 from app.models.supplier import Supplier, supplier_brands
@@ -96,6 +104,7 @@ __all__ = [
     "Sale",
     "SaleItem",
     "SalePayment",
+    "PaymentReminder",
     # enums
     "ChangeAction",
     "ColorAliasKind",
@@ -113,5 +122,6 @@ __all__ = [
     "ExternalWorkType",
     "ExternalWorkStatus",
     "PlatformAction",
+    "ReminderTone",
     "TokenPurpose",
 ]

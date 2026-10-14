@@ -6,7 +6,8 @@ Guidance for AI assistants and contributors working in this repository.
 
 Backend for a **Sistema de Gestión Integral para ópticas** (optics-store ERP),
 Argentina. This codebase implements the **master-data backbone** plus the first
-transactional module, **Ventas** (sales, payments, pending accounts), with its
+transactional module, **Ventas** (sales, payments, pending accounts and their
+WhatsApp reminders), with its
 **facturación electrónica** through our own arca-api gateway. The
 remaining transactional modules — caja, cuentas corrientes, trabajos externos,
 arreglos, cuentas a pagar, reportes — are designed in `docs/ER_DIAGRAM.md` but
@@ -171,6 +172,20 @@ not built yet.
     and activate it, after checking the declared IVA condition against ARCA's
     padrón. Comprobante numbers are ARCA's, not `services.numbering`'s, and
     fiscal rows are never edited or deleted. See `docs/INVOICING.md`.
+20. **A payment reminder goes to the phone on the customer's file, from the
+    shop's own WhatsApp.** `services/payment_reminders.py` words it in three
+    tones (Amable, Formal de usted, Firme), each for before and after the
+    promised date, and suggests one by how late it is; the seller may edit
+    it. The console opens a wa.me link and the seller presses Enviar, so
+    there is no WhatsApp Business account, no template to approve and no
+    cost per message; `POST /api/sales/{id}/whatsapp` then records it in
+    `payment_reminders` (tone, number, text, who), which is how the lists say
+    "WhatsApp ayer". The number is re-read from the customer on the server,
+    never taken from the request, and `services/whatsapp.py` is the one place
+    that turns a typed phone (`011 15 5555-0000`) into WhatsApp's `549…`: a
+    number without its area code is refused with the reason, never guessed.
+    Sending on a schedule would need the WhatsApp Business API and a job
+    runner; it is not built.
 
 ## Web console (`app/web/index.html`)
 

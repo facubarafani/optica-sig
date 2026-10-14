@@ -103,6 +103,18 @@ class DiscountType(str, enum.Enum):
     PERCENT = "percent"           # porcentaje (%)
 
 
+class ReminderTone(str, enum.Enum):
+    """How a payment reminder by WhatsApp is worded (services.payment_reminders).
+
+    Stored as ``String(20)``, like :class:`TokenPurpose`: a new tone is one
+    more message to write, and should not need a migration too.
+    """
+
+    FRIENDLY = "friendly"         # amable
+    FORMAL = "formal"             # formal, de usted
+    FIRM = "firm"                 # firme
+
+
 # --- Facturación electrónica (services.invoicing) ---------------------------
 # The three lists below are stored as plain strings, like Currency: ARCA adds
 # conditions and rates now and then, and a Postgres enum would turn each one

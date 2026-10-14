@@ -1,9 +1,9 @@
 """Ventas: the sale, its lines, the money received and where it landed.
 
-Shapes follow ``docs/ER_DIAGRAM.md`` (SALE / SALE_ITEM / PAYMENT), with three
+Shapes follow ``docs/ER_DIAGRAM.md`` (SALE / SALE_ITEM / PAYMENT), with four
 additions the diagram did not cover: discounts (per line and per sale), the
-account a payment landed in, and the promise-to-pay reminder that drives the
-"cuentas pendientes" screen.
+account a payment landed in, the promise-to-pay reminder that drives the
+"cuentas pendientes" screen, and the WhatsApp messages that chase it.
 
 Money is never recomputed on read: ``subtotal``/``total``/``paid_amount``/
 ``balance`` are stored snapshots, written by ``services.sales`` whenever a sale
@@ -24,6 +24,7 @@ from sqlalchemy import (
     Integer,
     Numeric,
     String,
+    Text,
     UniqueConstraint,
     func,
 )
@@ -34,6 +35,7 @@ from app.models.base import CompanyMixin, IDMixin, SoftDeleteMixin, TimestampMix
 from app.models.enums import DiscountType, PaymentMethod, SaleStatus
 
 if TYPE_CHECKING:
+    from app.models.auth import User
     from app.models.invoicing import Invoice
     from app.models.product import Product
 
@@ -147,6 +149,14 @@ class Sale(IDMixin, CompanyMixin, TimestampMixin, SoftDeleteMixin, Base):
     invoices: Mapped[list["Invoice"]] = relationship(
         back_populates="sale", order_by="Invoice.id", lazy="selectin"
     )
+    # The WhatsApp reminders it got, newest first.
+    payment_reminders: Mapped[list["PaymentReminder"]] = relationship(
+        back_populates="sale", order_by="PaymentReminder.id.desc()", lazy="selectin"
+    )
+
+    @property
+    def last_payment_reminder(self) -> "PaymentReminder | None":
+        return self.payment_reminders[0] if self.payment_reminders else None
 
 
 class SaleItem(IDMixin, CompanyMixin, Base):
@@ -217,3 +227,39 @@ class SalePayment(IDMixin, CompanyMixin, Base):
     )
 
     sale: Mapped["Sale"] = relationship(back_populates="payments")
+
+
+class PaymentReminder(IDMixin, CompanyMixin, Base):
+    """A WhatsApp message the shop sent a customer about what a sale still owes.
+
+    The console opens WhatsApp with the message written (a wa.me link) and the
+    shop's own phone sends it, so a row says the message was prepared and
+    opened, not that it was delivered. It is a record of what was said, to
+    whom and by whom: never edited, never deleted.
+    """
+
+    __tablename__ = "payment_reminders"
+
+    sale_id: Mapped[int] = mapped_column(
+        ForeignKey("sales.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    # ReminderTone value, stored as a string (see the enum).
+    tone: Mapped[str] = mapped_column(String(20), nullable=False)
+    # Where it went, as wa.me takes it ("5491155550000"): the customer's phone
+    # at the time, which the customer row may no longer say.
+    phone: Mapped[str] = mapped_column(String(20), nullable=False)
+    # What was sent, as the seller left it after editing.
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    sent_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    sent_by_user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL")
+    )
+
+    sale: Mapped["Sale"] = relationship(back_populates="payment_reminders")
+    sent_by: Mapped["User | None"] = relationship(lazy="joined")
+
+    @property
+    def sent_by_name(self) -> str | None:
+        return self.sent_by.full_name if self.sent_by else None
