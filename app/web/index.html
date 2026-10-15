@@ -529,6 +529,17 @@
   .fwarn{font-size:11.5px;color:var(--warn);background:var(--warn-50);border:1px solid #fde68a;border-radius:6px;padding:5px 8px;margin-top:5px}
   .fok{font-size:12.5px;color:var(--ok);background:var(--ok-50);border:1px solid #bbf7d0;border-radius:6px;padding:7px 10px;margin-top:8px}
   .fbad{font-size:12.5px;color:var(--danger);background:var(--danger-50);border:1px solid var(--danger-200);border-radius:6px;padding:7px 10px;margin-top:8px}
+  /* ---------- recordatorio de pago por WhatsApp ---------- */
+  .wa-to{margin-bottom:14px;font-size:13.5px}
+  .wa-to .fhelp{margin-top:2px}
+  .wa-num{display:flex;align-items:center;gap:7px;margin-top:6px;font-weight:600;font-variant-numeric:tabular-nums}
+  .wa-num .fhelp{margin:0;font-weight:400}
+  .wa-fix{display:flex;gap:8px;align-items:center;margin-top:8px}
+  .wa-fix input{flex:1;min-width:0}
+  .wa-tones{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  /* .btn pone display:inline-flex, que le gana al atributo hidden. */
+  .wa-tones .btn[hidden]{display:none}
+  .wa textarea{display:block;min-height:150px;margin-top:10px;line-height:1.5}
   /* ---------- facturación electrónica: la guía de alta ---------- */
   /* A reading width: long lines and a form stretched over a wide screen are
      hard to follow, and the captures (680 px) set the column anyway. */
@@ -884,6 +895,7 @@
 <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
 <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></symbol>
 <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+<symbol id="i-message" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></symbol>
 <symbol id="i-dollar" viewBox="0 0 24 24"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></symbol>
 <symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></symbol>
 <symbol id="i-rotate" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol>
@@ -950,6 +962,8 @@ const ENUM_ES = {
     credit_note_a: "Nota de crédito A", credit_note_b: "Nota de crédito B", credit_note_c: "Nota de crédito C",
   },
   invoice_status: { pending: "En trámite", authorized: "Autorizada", rejected: "Rechazada" },
+  // Los tonos del recordatorio de pago por WhatsApp.
+  reminder_tone: { friendly: "Amable", formal: "Formal", firm: "Firme" },
 };
 const PAYMENT_METHOD_OPTIONS = Object.entries(ENUM_ES.payment_method)
   .map(([value, label]) => ({ value, label }));
@@ -1092,18 +1106,19 @@ function wireFilters(scope, bag, reload) {
 }
 
 /* Fetch with the bag as the query string and paint the rows. `onRowClick`
-   makes the whole row open something (a sale, say). */
-function resultsInto(body, endpoint, bag, columns, empty, onRowClick) {
+   makes the whole row open something (a sale, say); a click on one of the
+   `rowActions` buttons is the button's, not the row's. */
+function resultsInto(body, endpoint, bag, columns, empty, onRowClick, rowActions) {
   body.innerHTML = `<div class="loading">Cargando…</div>`;
   return api("GET", endpoint + queryString(bag))
     .then(rows => {
       body.innerHTML = rows.length
-        ? renderTable(columns, rows)
+        ? renderTable(columns, rows, rowActions)
         : `<div class="empty">${esc(empty)}</div>`;
       if (!onRowClick) return;
       $$("tbody tr", body).forEach((tr, i) => {
         tr.style.cursor = "pointer";
-        tr.addEventListener("click", () => onRowClick(rows[i]));
+        tr.addEventListener("click", (e) => { if (!e.target.closest("button")) onRowClick(rows[i]); });
       });
     })
     .catch(e => body.innerHTML = `<div class="card error">${esc(e.message)}</div>`);
@@ -3191,14 +3206,20 @@ async function dashboardView(view) {
     <div class="page-head"><div><h2>Hola, ${esc((state.user.full_name||"").split(" ")[0] || state.user.email)}</h2>
       <div class="sub">${esc(state.company?.name || "Mi Óptica")} · ${esc(state.currency)}</div></div></div>
     ${can("sales:read") ? `<div id="ventasPanel"></div>` : ""}
-    ${overdueHtml}
+    <div id="cobrosPanel">${overdueHtml}</div>
     <div class="stats">${stats || '<div class="stat"><div class="k">Sin permisos de lectura</div></div>'}</div>
     ${lowStockHtml}`;
   const vp = $("#ventasPanel", view);
   if (vp) ventasPanel(vp);
+  // Después de un WhatsApp se repinta sólo "Pagos a cobrar", así se recorre la
+  // lista de a uno sin que el inicio entero se vuelva a cargar.
+  const cobros = $("#cobrosPanel", view);
+  const repintarCobros = async () => { if (cobros.isConnected) cobros.innerHTML = await cobrosHtml(); };
   view.addEventListener("click", (e) => {
     const b = e.target.closest('[data-act="venta"]');
     if (b) saleDetailModal(Number(b.dataset.id), () => route());
+    const w = e.target.closest('[data-act="whatsapp"]');
+    if (w) whatsappModal(Number(w.dataset.id), repintarCobros);
   });
 }
 
@@ -3241,11 +3262,14 @@ async function cobrosHtml() {
         if (!c) return esc("#" + v);
         return `${esc(`${c.last_name}, ${c.first_name}`)}${c.phone ? `<div class="fhelp">${esc(c.phone)}</div>` : ""}`; } },
     { key:"number", label:"Venta", mono:true, priority:2 },
-    { key:"promised_payment_date", label:"Prometió pagar", render:(v) => `${fmtDate(v)} ${cuando(v)}` },
+    { key:"promised_payment_date", label:"Prometió pagar",
+      render:(v, r) => `${fmtDate(v)} ${cuando(v)}${avisoHtml(r.last_payment_reminder)}` },
     { key:"reminder_note", label:"Recordatorio", trunc:true,
       render:(v) => v ? `<span title="${esc(v)}">${esc(v)}</span>` : "-" },
     { key:"balance", label:"Debe", align:"right", render:(v) => `<b style="color:var(--danger)">${fmtMoney(v)}</b>` },
-  ], shown, (r) => `<button class="btn sm" data-act="venta" data-id="${r.id}"><svg class="ic"><use href="#i-eye"/></svg>Ver</button>`);
+  ], shown, (r) => (can("sales:write") && r.customer_id
+      ? `<button class="btn sm" data-act="whatsapp" data-id="${r.id}"><svg class="ic"><use href="#i-message"/></svg>WhatsApp</button>` : "")
+    + `<button class="btn sm" data-act="venta" data-id="${r.id}"><svg class="ic"><use href="#i-eye"/></svg>Ver</button>`);
   const mas = rows.length > shown.length
     ? `<a href="#/pending" class="btn sm ghost" style="margin-top:10px">Ver las ${rows.length} en Cuentas pendientes</a>`
     : `<a href="#/pending" class="btn sm ghost" style="margin-top:10px">Ir a Cuentas pendientes</a>`;
@@ -5169,9 +5193,11 @@ async function saleDetailModal(id, onDone) {
     </tbody></table>` : `<div class="fhelp">Sin pagos registrados.</div>`}
     ${sale.promised_payment_date ? `<div class="fwarn" style="margin-top:12px">
       Prometió pagar el ${fmtDate(sale.promised_payment_date)}${sale.reminder_note ? " · " + esc(sale.reminder_note) : ""}</div>` : ""}
+    ${(sale.payment_reminders || []).length ? `<div class="fhelp" style="margin-top:8px">Avisos por WhatsApp: ${esc(avisosTxt(sale.payment_reminders))}</div>` : ""}
     <div class="toolbar" style="margin:16px 0 0">
       ${writable && owes ? `<button class="btn primary" id="payBtn"><svg class="ic"><use href="#i-dollar"/></svg>Registrar pago</button>` : ""}
       ${writable && owes ? `<button class="btn" id="remBtn"><svg class="ic"><use href="#i-clock"/></svg>Recordatorio</button>` : ""}
+      ${writable && owes && sale.customer_id ? `<button class="btn" id="waBtn"><svg class="ic"><use href="#i-message"/></svg>WhatsApp</button>` : ""}
       ${writable && sale.status !== "cancelled" ? `<button class="btn danger" id="cancelBtn"><svg class="ic"><use href="#i-ban"/></svg>Anular</button>` : ""}
     </div>
   </div>`);
@@ -5191,6 +5217,8 @@ async function saleDetailModal(id, onDone) {
   if (pay) pay.addEventListener("click", () => paymentModal(sale, accounts, done));
   const rem = $("#remBtn", body);
   if (rem) rem.addEventListener("click", () => reminderModal(sale, done));
+  const wa = $("#waBtn", body);
+  if (wa) wa.addEventListener("click", () => whatsappModal(sale.id, done));
   const cancel = $("#cancelBtn", body);
   if (cancel) cancel.addEventListener("click", () => confirmDanger({
     title: "Anular venta",
@@ -5380,6 +5408,124 @@ function reminderModal(sale, onDone) {
   });
 }
 
+/* =======================================================================
+   RECORDATORIO DE PAGO POR WHATSAPP
+   El servidor redacta el mensaje en tres tonos, para el teléfono de la ficha
+   del cliente (services/payment_reminders.py). El vendedor elige el tono, lo
+   retoca si quiere, y se abre WhatsApp con el mensaje escrito: lo manda la
+   óptica desde su número, tocando Enviar. La venta guarda que se le escribió.
+   ======================================================================= */
+const TONOS = ["friendly", "formal", "firm"];
+
+// Cuándo se le escribió, en días de calendario: "hoy", "ayer", "hace 3 días".
+function avisadoCuando(iso) {
+  const d = new Date(iso);
+  const n = Math.round((parseDay(todayISO()) - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 86400000);
+  return n <= 0 ? "hoy" : n === 1 ? "ayer" : `hace ${n} días`;
+}
+// La línea que va debajo de la fecha prometida en las listas.
+const avisoHtml = (r) => r ? `<div class="fhelp">WhatsApp ${esc(avisadoCuando(r.sent_at))}</div>` : "";
+// "13/10/26 12:05 (Amable, Ana) · 10/10/26 18:30 (Formal, Ana)"
+const avisosTxt = (list, max = 3) => list.slice(0, max).map(r =>
+  `${fmtDateTime(r.sent_at)} (${ENUM_ES.reminder_tone[r.tone] || r.tone}${r.sent_by_name ? ", " + r.sent_by_name : ""})`).join(" · ")
+  + (list.length > max ? ` y ${list.length - max} más` : "");
+
+async function whatsappModal(saleId, onDone) {
+  let draft;
+  try { draft = await api("GET", `/api/sales/${saleId}/whatsapp`); }
+  catch (e) { return toast(e.message, "err"); }
+  // Lo que el vendedor escribe en un tono queda ahí si pasa a otro y vuelve.
+  const original = Object.fromEntries(draft.messages.map(m => [m.tone, m.text]));
+  const texts = { ...original };
+  let tone = draft.suggested_tone;
+
+  const body = el(`<div class="wa">
+    <div class="wa-to"></div>
+    <div class="wa-tones">
+      <div class="seg" role="radiogroup" aria-label="Tono del mensaje">${TONOS.map(t =>
+        `<button type="button" role="radio" data-tone="${t}">${esc(ENUM_ES.reminder_tone[t])}</button>`).join("")}</div>
+      <button type="button" class="btn sm ghost" data-reset hidden><svg class="ic"><use href="#i-rotate"/></svg>Volver al sugerido</button>
+    </div>
+    <textarea rows="7" maxlength="2000" aria-label="Mensaje"></textarea>
+    <div class="fhelp">Se abre WhatsApp con el mensaje escrito: revisalo y tocá Enviar.</div>
+    ${draft.reminders.length ? `<div class="fhelp" style="margin-top:10px">Ya se le escribió: ${esc(avisosTxt(draft.reminders))}</div>` : ""}
+  </div>`);
+  const ta = $("textarea", body), reset = $("[data-reset]", body);
+
+  const paintTone = () => {
+    $$("[data-tone]", body).forEach(b => {
+      b.classList.toggle("on", b.dataset.tone === tone);
+      b.setAttribute("aria-checked", String(b.dataset.tone === tone));
+    });
+    ta.value = texts[tone];
+    reset.hidden = texts[tone] === original[tone];
+  };
+  body.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-tone]");
+    if (b) { tone = b.dataset.tone; paintTone(); }
+  });
+  ta.addEventListener("input", () => { texts[tone] = ta.value; reset.hidden = texts[tone] === original[tone]; });
+  reset.addEventListener("click", () => { texts[tone] = original[tone]; paintTone(); ta.focus(); });
+
+  let send = null;
+  // A quién va. El número es siempre el de la ficha: si no sirve, se corrige
+  // ahí mismo (queda guardado en el cliente) y se vuelve a pedir el mensaje.
+  const paintTo = () => {
+    const to = $(".wa-to", body);
+    const deuda = `Debe ${fmtMoney(draft.balance)}`
+      + (draft.promised_payment_date ? `, prometió pagar el ${fmtDate(draft.promised_payment_date)}` : "");
+    const head = `<div><b>${esc(draft.customer_name)}</b><div class="fhelp">${esc(deuda)}</div></div>`;
+    if (draft.whatsapp_number) {
+      to.innerHTML = `${head}<div class="wa-num"><svg class="ic"><use href="#i-message"/></svg>${esc(draft.whatsapp_display)}
+        <span class="fhelp">el teléfono de su ficha</span></div>`;
+    } else {
+      to.innerHTML = `${head}<div class="fwarn">${esc(draft.phone_problem)}</div>
+        ${can("customers:write") ? `<div class="wa-fix">
+          <input class="inp-sm" value="${esc(draft.phone || "")}" placeholder="11 5555-0000" aria-label="Teléfono del cliente">
+          <button type="button" class="btn sm" data-save>Guardar en la ficha</button></div>`
+          : `<div class="fhelp">Pedí que lo corrijan en la ficha del cliente.</div>`}`;
+      const save = $("[data-save]", to);
+      if (save) save.addEventListener("click", async () => {
+        save.disabled = true;
+        try {
+          await api("PUT", `/api/customers/${draft.customer_id}`, { phone: $("input", to).value.trim() || null });
+          draft = await api("GET", `/api/sales/${saleId}/whatsapp`);
+          paintTo();
+          if (draft.whatsapp_number) toast("Teléfono guardado en la ficha", "ok");
+        } catch (e) { toast(e.message, "err"); save.disabled = false; }
+      });
+    }
+    if (send) send.disabled = !draft.whatsapp_number;
+  };
+
+  const close = openModal({
+    title: `WhatsApp · ${draft.sale_number}`, body, confirmLabel: "Abrir WhatsApp",
+    onConfirm: async (cerrar) => {
+      const text = ta.value.trim();
+      if (!draft.whatsapp_number) return toast(draft.phone_problem, "err");
+      if (!text) return toast("El mensaje está vacío.", "err");
+      const url = `https://wa.me/${draft.whatsapp_number}?text=${encodeURIComponent(text)}`;
+      // Se abre en el clic mismo, antes de hablar con el servidor: después de
+      // esperar una respuesta, el bloqueador de ventanas ya no la deja abrir.
+      const w = window.open(url, "_blank");
+      if (w) w.opener = null;
+      try {
+        await api("POST", `/api/sales/${saleId}/whatsapp`, { tone, message: text });
+        if (w) toast(`Mensaje listo en WhatsApp para ${draft.customer_name}: tocá Enviar.`, "ok");
+        else toast("El navegador no dejó abrir WhatsApp.", "err",
+          { label: "Abrir WhatsApp", onClick: () => window.open(url, "_blank") });
+      } catch (e) {
+        toast(`Se abrió WhatsApp, pero el aviso no quedó guardado: ${e.message}`, "err");
+      }
+      cerrar(); onDone && onDone();
+    },
+  });
+  send = body.closest(".modal").querySelector("footer .btn.primary");
+  paintTo();
+  paintTone();
+  return close;
+}
+
 // `arg` "2026-10-05~2026-10-05": open on the sales of those days (from Inicio).
 async function salesView(view, arg) {
   renderTabs(view, "Ventas", [
@@ -5487,16 +5633,25 @@ async function pendingView(view) {
     { key:"paid_amount", label:"Abonado", type:"money", align:"right", priority:2 },
     { key:"balance", label:"Debe", align:"right",
       render:(v)=>`<b style="color:var(--danger)">${fmtMoney(v)}</b>` },
-    { key:"promised_payment_date", label:"Promete pagar", render:(v)=>{
-        if (!v) return `<span class="fhelp">sin fecha</span>`;
+    { key:"promised_payment_date", label:"Promete pagar", render:(v, r)=>{
+        const aviso = avisoHtml(r.last_payment_reminder);
+        if (!v) return `<span class="fhelp">sin fecha</span>${aviso}`;
         const late = v < todayISO(), today = v === todayISO();
-        return `${fmtDate(v)} ${late ? badge("vencido","red") : today ? badge("hoy","amber") : ""}`; } },
+        return `${fmtDate(v)} ${late ? badge("vencido","red") : today ? badge("hoy","amber") : ""}${aviso}`; } },
     { key:"reminder_note", label:"Recordatorio", priority:2, trunc:true,
       render:(v)=>v ? `<span title="${esc(v)}">${esc(v)}</span>` : "—" },
-  ], "Nada pendiente 👍", (row) => saleDetailModal(row.id, () => refreshAll()));
+  ], "Nada pendiente 👍", (row) => saleDetailModal(row.id, () => refreshAll()),
+  can("sales:write") ? (r) => r.customer_id
+    ? `<button class="btn sm" data-act="whatsapp" data-id="${r.id}"><svg class="ic"><use href="#i-message"/></svg>WhatsApp</button>` : ""
+    : null);
 
   async function refreshAll() { await pendingView(view); }
 
+  // Un aviso no cambia ningún total: alcanza con repintar la lista.
+  body.addEventListener("click", (e) => {
+    const w = e.target.closest('[data-act="whatsapp"]');
+    if (w) whatsappModal(Number(w.dataset.id), reload);
+  });
   wireFilters(view, f, reload);
   $("#dueToday", view).addEventListener("click", () => {
     f.due_from = f.due_to = todayISO();

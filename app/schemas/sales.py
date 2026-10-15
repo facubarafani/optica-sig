@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from app.models.enums import DiscountType, PaymentMethod, SaleStatus
+from app.models.enums import DiscountType, PaymentMethod, ReminderTone, SaleStatus
 from app.schemas.common import ORMBase, SoftDeleteRead
 from app.schemas.invoicing import InvoiceRead
 
@@ -121,6 +121,59 @@ class SaleItemRead(ORMBase):
     product_description: str | None = None
 
 
+# --- payment reminders by WhatsApp (services.payment_reminders) ------------
+class PaymentReminderRead(ORMBase):
+    id: int
+    tone: ReminderTone
+    # The number it went to, as wa.me takes it.
+    phone: str
+    sent_at: datetime
+    sent_by_name: str | None = None
+
+
+class ReminderMessage(BaseModel):
+    tone: ReminderTone
+    text: str
+
+
+class ReminderDraft(BaseModel):
+    """What the WhatsApp button opens with: the message in each tone, and the
+    customer's registered phone as WhatsApp takes it."""
+
+    sale_id: int
+    sale_number: str
+    balance: Decimal
+    promised_payment_date: date | None = None
+    customer_id: int
+    customer_name: str
+    # As typed on the customer's file.
+    phone: str | None = None
+    # For the wa.me link; None when the phone cannot be read, and then
+    # phone_problem says why.
+    whatsapp_number: str | None = None
+    whatsapp_display: str | None = None
+    phone_problem: str | None = None
+    suggested_tone: ReminderTone
+    messages: list[ReminderMessage]
+    # The ones already sent for this sale, newest first.
+    reminders: list[PaymentReminderRead] = Field(default_factory=list)
+
+
+class ReminderSend(BaseModel):
+    """The message the seller is sending. No number: it is the customer's."""
+
+    tone: ReminderTone
+    message: str = Field(max_length=2000)
+
+    @field_validator("message")
+    @classmethod
+    def _not_blank(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("El mensaje está vacío.")
+        return v
+
+
 # --- sales -----------------------------------------------------------------
 class SaleCreate(BaseModel):
     customer_id: int | None = None
@@ -181,6 +234,8 @@ class SaleRead(ORMBase):
     payments: list[PaymentRead] = Field(default_factory=list)
     # Its comprobantes, oldest first, rejected attempts included.
     invoices: list[InvoiceRead] = Field(default_factory=list)
+    # The WhatsApp reminders it got, newest first.
+    payment_reminders: list[PaymentReminderRead] = Field(default_factory=list)
     # Only on the response that created the sale: lines it sold below zero.
     stock_warnings: list[str] = Field(default_factory=list)
 
@@ -201,6 +256,8 @@ class SaleListRead(ORMBase):
     reminder_note: str | None = None
     is_active: bool
     invoices: list[InvoiceRead] = Field(default_factory=list)
+    # So a list of debts says who was already written to.
+    last_payment_reminder: PaymentReminderRead | None = None
 
 
 class PendingSummary(BaseModel):
