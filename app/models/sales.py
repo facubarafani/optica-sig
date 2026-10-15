@@ -36,6 +36,7 @@ from app.models.enums import DiscountType, PaymentMethod, SaleStatus
 
 if TYPE_CHECKING:
     from app.models.auth import User
+    from app.models.customer import Customer
     from app.models.invoicing import Invoice
     from app.models.product import Product
 
@@ -153,10 +154,23 @@ class Sale(IDMixin, CompanyMixin, TimestampMixin, SoftDeleteMixin, Base):
     payment_reminders: Mapped[list["PaymentReminder"]] = relationship(
         back_populates="sale", order_by="PaymentReminder.id.desc()", lazy="selectin"
     )
+    # Who it was sold to and by, for naming them on a list row. Loaded only
+    # where a list asks for them (services.sales.list_sales).
+    customer: Mapped["Customer | None"] = relationship()
+    salesperson: Mapped["User | None"] = relationship()
 
     @property
     def last_payment_reminder(self) -> "PaymentReminder | None":
         return self.payment_reminders[0] if self.payment_reminders else None
+
+    @property
+    def customer_name(self) -> str | None:
+        c = self.customer
+        return f"{c.last_name}, {c.first_name}" if c else None
+
+    @property
+    def salesperson_name(self) -> str | None:
+        return self.salesperson.full_name if self.salesperson else None
 
 
 class SaleItem(IDMixin, CompanyMixin, Base):

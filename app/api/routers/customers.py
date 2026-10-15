@@ -6,11 +6,12 @@ from sqlalchemy.orm import Session
 
 from app.core.crud import CRUDBase
 from app.core.database import get_db
-from app.core.deps import get_company_id, require_permission
+from app.core.deps import get_company_id, has_permission, require_permission
 from app.models.auth import User
 from app.models.customer import Customer, Prescription, TreatmentHistory
 from app.schemas.customer import (
     CustomerCreate,
+    CustomerListRead,
     CustomerRead,
     CustomerUpdate,
     PrescriptionCreate,
@@ -18,25 +19,39 @@ from app.schemas.customer import (
     TreatmentHistoryCreate,
     TreatmentHistoryRead,
 )
+from app.services import sales as sales_service
 
 router = APIRouter(prefix="/customers", tags=["customers"])
 crud = CRUDBase(Customer)
 
 
 # --- customers ------------------------------------------------------------
-@router.get("", response_model=list[CustomerRead])
+@router.get("", response_model=list[CustomerListRead])
 def list_customers(
     skip: int = 0,
     limit: int = 100,
     include_inactive: bool = False,
+    owing_only: bool = False,
     db: Session = Depends(get_db),
     company_id: int = Depends(get_company_id),
-    _: object = Depends(require_permission("customers:read")),
+    current_user: User = Depends(require_permission("customers:read")),
 ):
-    return crud.list(
+    """Each row carries what the customer owes and its semáforo, for whoever
+    may see sales: a debt is sales data, not part of the customer's file.
+    ``owing_only`` keeps the customers who owe something."""
+    sees_debts = has_permission(current_user, "sales:read")
+    rows = crud.list(
         db, company_id=company_id, skip=skip, limit=limit,
         include_inactive=include_inactive,
+        extra_where=[Customer.id.in_(sales_service.owing_customer_ids(company_id))]
+        if owing_only and sees_debts else None,
     )
+    if sees_debts:
+        debts = sales_service.customer_debts(
+            db, company_id=company_id, customer_ids=[c.id for c in rows])
+        for customer in rows:
+            customer.debt = debts.get(customer.id)
+    return rows
 
 
 @router.post("", response_model=CustomerRead, status_code=status.HTTP_201_CREATED)

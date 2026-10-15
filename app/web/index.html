@@ -422,7 +422,7 @@
   .vz-note{font-size:12px;color:var(--warn);margin-top:3px;font-weight:600}
   .vz-chart{margin-bottom:14px}
   .vz-chead{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:6px}
-  .vz-chart h4,.vz-two h4{margin:0;font-size:14px;color:var(--ink)}
+  .vz-chart h4,.vz-two h4,.vz-team h4{margin:0;font-size:14px;color:var(--ink)}
   .vz-two h4{margin-bottom:12px}
   .vz-legend{display:flex;align-items:center;gap:14px;font-size:12px;color:var(--muted)}
   .vz-legend span{display:inline-flex;align-items:center;gap:6px}
@@ -470,6 +470,150 @@
   .vz-tipfoot{color:var(--on-ink-faint);font-size:11px;margin-top:4px}
   .key.line.cur{background:var(--primary)}
   .vz-hname small{display:block;color:var(--muted);font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* Vendedores en Inicio: una fila por vendedor, lo vendido con su barra, y el
+     pie es la óptica entera. La barra es contra el que más vendió, no contra
+     el total: así se ven las distancias entre ellos. */
+  .vz-team{margin-bottom:14px}
+  .vz-team .tbl-wrap{border:1px solid var(--border);margin-top:10px}
+  .vz-more{margin-top:14px}
+  table.tm td{max-width:none}
+  table.tm tbody tr.tm-go{cursor:pointer}
+  table.tm tbody tr.tm-go:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--primary-200)}
+  table.tm tfoot td{padding:9px 10px;border-top:1px solid var(--border);background:#f8fafc;font-weight:600;white-space:nowrap}
+  table.tm td .fhelp{margin-top:1px}
+  .tm-who{display:flex;align-items:center;gap:10px}
+  .tm-av{width:28px;height:28px;border-radius:50%;background:var(--primary-50);color:var(--primary);display:grid;place-items:center;font-weight:700;font-size:11.5px;flex:none}
+  .tm-name{font-weight:600;color:var(--text)}
+  .tm-sold small{color:var(--muted);font-weight:500;margin-left:6px;display:inline-block;min-width:38px}
+  .tm-bar{height:5px;background:var(--press);border-radius:3px;margin-top:5px;min-width:140px}
+  .tm-bar span{display:block;height:100%;background:var(--primary);border-radius:3px}
+  .tm-chg{font-weight:700;font-variant-numeric:tabular-nums}
+  .tm-chg.up{color:var(--ok)}
+  .tm-chg.down{color:var(--danger)}
+  .tm-chg.new{color:var(--primary);font-weight:600}
+  td.tm-warn{color:var(--warn);font-weight:700}
+  td.tm-warn .fhelp{color:var(--warn);font-weight:500}
+  .fhelp.tm-bad{color:var(--danger)}
+  tr.tm-none td{color:var(--muted)}
+  tr.tm-none .tm-av{background:var(--press);color:var(--muted)}
+  .tm-empty{display:flex;gap:14px;align-items:flex-start;margin-top:12px;padding:14px 16px;border:1px dashed var(--border);border-radius:var(--radius);color:var(--text);font-size:13px}
+  .tm-empty>.ic{color:var(--muted);flex:none;margin-top:1px}
+  .tm-empty p{margin:0}
+  .tm-empty p.fhelp{font-size:12.5px;margin-top:4px}
+  /* On a phone a seller is a block: name and change, what they sold with its
+     bar, then the rest in a line, each figure with its name. */
+  @media (max-width: 600px){
+    .vz-team .tbl-wrap{border:0;margin-top:2px;overflow:visible}
+    table.tm thead{display:none}
+    table.tm,table.tm tbody,table.tm tfoot{display:block}
+    table.tm tr{display:flex;flex-wrap:wrap;align-items:center;column-gap:14px;row-gap:4px;padding:12px 0;border-bottom:1px solid #f1f5f9}
+    table.tm td,table.tm tfoot td{display:block;padding:0;border:0;background:none;text-align:left;white-space:nowrap}
+    table.tm td.tm-cwho{flex:1 1 0;min-width:0}
+    table.tm td.tm-vs{order:1}
+    table.tm td.tm-sold{order:2;flex:1 1 100%}
+    table.tm td.tm-stat{order:3;font-size:12.5px}
+    table.tm td.tm-stat::before{content:attr(data-label) " ";color:var(--muted);font-weight:500}
+    /* display:block above outranks the column priorities: hide them again. */
+    table.tm td.col-p2,table.tm td.col-p3{display:none}
+    table.tm td .fhelp{display:inline;margin:0 0 0 4px}
+    table.tm tfoot tr{border:0;background:#f8fafc;border-radius:8px;padding:12px 10px;margin-top:8px}
+    .tm-bar{min-width:0}
+  }
+  @media (max-width: 600px){
+    .tbl-wrap.stack{overflow:visible}
+    .tbl-wrap.stack thead{display:none}
+    .tbl-wrap.stack table,.tbl-wrap.stack tbody{display:block}
+    .tbl-wrap.stack tr{display:flex;flex-wrap:wrap;column-gap:14px;row-gap:3px;padding:10px 12px;border-bottom:1px solid #f1f5f9}
+    .tbl-wrap.stack td{display:block;padding:0;border:0;max-width:none;white-space:normal;text-align:left}
+    .tbl-wrap.stack td:first-child{flex:1 1 100%;font-weight:600}
+    .tbl-wrap.stack td:first-child .fhelp{font-weight:400}
+    .tbl-wrap.stack td[data-label]:not(:first-child)::before{content:attr(data-label) ": ";color:var(--muted);font-size:11.5px}
+    .tbl-wrap.stack td.actions{flex:1 1 100%;text-align:left;margin-top:6px}
+    .tbl-wrap.stack td.actions .btn{margin:0 6px 0 0}
+    .tbl-wrap.stack td.col-p2,.tbl-wrap.stack td.col-p3{display:none}
+  }
+  /* A day's sales beside Inicio: a panel from the right, Inicio dimmed but in
+     view behind it, with its bar marked on the chart. A phone gets it whole. */
+  .dw-overlay{position:fixed;inset:0;z-index:50;background:rgba(15,23,42,.18);animation:fade .12s ease}
+  .dw{position:absolute;top:0;right:0;bottom:0;width:440px;max-width:100%;background:var(--panel);
+    box-shadow:var(--shadow-lg);display:flex;flex-direction:column;outline:none;animation:dw-in .16s ease}
+  @keyframes dw-in{from{transform:translateX(28px);opacity:0}to{transform:none;opacity:1}}
+  .dw header{display:flex;align-items:center;gap:4px;padding:12px 10px;border-bottom:1px solid var(--border)}
+  .dw-title{flex:1;min-width:0;text-align:center}
+  .dw-title h3{font-size:15px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dw-title .fhelp{margin-top:1px}
+  .dw-icon{border:0;background:none;color:var(--muted);cursor:pointer;width:34px;height:34px;border-radius:8px;display:grid;place-items:center;flex:none}
+  .dw-icon:hover:not(:disabled){background:var(--press);color:var(--text)}
+  .dw-icon:disabled{opacity:.35;cursor:default}
+  .dw-icon.dw-x{margin-left:6px}
+  .dw-sum{display:flex;flex-wrap:wrap;gap:6px 22px;padding:12px 18px;border-bottom:1px solid var(--border);background:var(--hover)}
+  .dw-sum .k{font-size:11.5px;color:var(--muted);font-weight:600}
+  .dw-sum .v{font-size:17px;font-weight:750;font-variant-numeric:tabular-nums}
+  .dw-notes{flex:1 1 100%;display:flex;gap:14px;font-size:12px;font-weight:600}
+  .dw-notes .warn{color:var(--warn)}
+  .dw-notes .bad{color:var(--danger)}
+  .dw-body{flex:1;overflow:auto;transition:opacity .15s}
+  .dw-body.loading{opacity:.5}
+  .dw-row{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:1px 10px;align-items:baseline;width:100%;
+    padding:9px 18px;border:0;border-bottom:1px solid #f1f5f9;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer}
+  .dw-row:hover{background:var(--hover)}
+  .dw-row:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--primary-200)}
+  .dw-row .t{color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-nums}
+  .dw-row .c{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dw-row .a{font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+  .dw-row .m{grid-column:2 / 4;font-size:12px;color:var(--muted);font-family:inherit}
+  .dw-row .m .debe{display:inline-flex;align-items:center;gap:5px;margin-left:6px;white-space:nowrap;vertical-align:bottom}
+  .dw-row.off .c,.dw-row.off .a{color:var(--muted);text-decoration:line-through}
+  .dw-empty{padding:28px 18px;text-align:center;color:var(--muted);font-size:13px}
+  .dw footer{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-top:1px solid var(--border)}
+  .dw footer .btn .ic{margin:0 0 0 2px}
+  .vz-sel{fill:var(--primary-50);stroke:var(--primary-200);stroke-width:1}
+  @media (max-width: 600px){ .dw{width:100%} }
+  @media (prefers-reduced-motion: reduce){ .dw,.dw-overlay{animation:none} }
+  /* Ventas opened from Inicio's panel: the way back, above the title. */
+  .backbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 12px}
+  .backbar span{color:var(--muted);font-size:13px}
+  /* The owner's look at one seller: the seller's own Inicio, in a window. */
+  .modal.xwide{width:1000px}
+  .vz-seller .vz{margin-bottom:0}
+  /* El semáforo de una deuda, como se eligió en el lienzo (variante D): un
+     punto grande con halo, en su propia columna, y junto a la fecha el porqué
+     en negrita y en su color. El color nunca va solo: el texto dice lo mismo,
+     y el punto lo lleva en su title. */
+  .light{--halo:4px;display:inline-block;width:16px;height:16px;border-radius:50%;vertical-align:middle;flex:none;
+    box-shadow:0 0 0 var(--halo) var(--glow)}
+  .light.red{background:#dc2626;--glow:rgba(220,38,38,.18)}
+  .light.yellow{background:#eab308;--glow:rgba(234,179,8,.28)}
+  .light.green{background:#16a34a;--glow:rgba(22,163,74,.18)}
+  .light.sm{--halo:3px;width:10px;height:10px}
+  td.col-light,th.col-light{width:16px;padding-left:16px;padding-right:20px;text-align:center}
+  /* The dot sits in a box one text line tall and is centred in it, so it lines
+     up with the line beside it by construction: on a line of its own,
+     vertical-align put it a few pixels low. */
+  .lt-line{display:flex;align-items:center;justify-content:center;height:1.45em}
+  .lt-why{font-size:12.5px;font-weight:700;white-space:nowrap}
+  .lt-why.red{color:#b91c1c}
+  .lt-why.yellow{color:#a16207}
+  .lt-why.green{color:#15803d}
+  .stat-btn .k .light{margin:0 4px 0 2px}
+  @media (max-width: 600px){
+    /* Stacked, the dot opens the row's first line, beside what names it. */
+    .tbl-wrap.stack td.col-light:first-child{flex:0 0 auto;padding:0}
+    .tbl-wrap.stack td.col-light + td{flex:1 1 calc(100% - 44px);font-weight:600}
+    .tbl-wrap.stack td.col-light + td[data-label]::before{content:none}
+  }
+  /* Tiles that filter: Cuentas pendientes' semáforo, four across the width. */
+  .stats.stats-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+  @media (max-width: 760px){ .stats.stats-4{grid-template-columns:repeat(2,minmax(0,1fr))} }
+  .stat-btn{font:inherit;color:inherit;text-align:left;cursor:pointer;transition:border-color .12s,box-shadow .12s}
+  .stat-btn:hover{border-color:var(--primary-200)}
+  .stat-btn.on{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary)}
+  /* A filter that came with the link (Inicio's "your sales of that day"),
+     with the cross that drops it. */
+  .fchip{display:inline-flex;align-items:center;gap:4px;padding:3px 4px 3px 11px;border:1px solid var(--primary-200);
+    background:var(--primary-50);color:var(--primary-700);border-radius:var(--radius-pill);font-size:12.5px;font-weight:600}
+  .fchip button{border:0;background:none;color:inherit;cursor:pointer;display:grid;place-items:center;padding:2px;border-radius:50%}
+  .fchip button:hover{background:var(--primary-200)}
   /* A phone: two tiles a row, and each bar under its name. */
   @media (max-width: 600px){
     .vz-tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
@@ -911,6 +1055,8 @@
 <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol>
 <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
 <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+<symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+<symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
 <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
 <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></symbol>
 <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></symbol>
@@ -1108,12 +1254,12 @@ function wireFilters(scope, bag, reload) {
 /* Fetch with the bag as the query string and paint the rows. `onRowClick`
    makes the whole row open something (a sale, say); a click on one of the
    `rowActions` buttons is the button's, not the row's. */
-function resultsInto(body, endpoint, bag, columns, empty, onRowClick, rowActions) {
+function resultsInto(body, endpoint, bag, columns, empty, onRowClick, rowActions, opts) {
   body.innerHTML = `<div class="loading">Cargando…</div>`;
   return api("GET", endpoint + queryString(bag))
     .then(rows => {
       body.innerHTML = rows.length
-        ? renderTable(columns, rows, rowActions)
+        ? renderTable(columns, rows, rowActions, null, opts)
         : `<div class="empty">${esc(empty)}</div>`;
       if (!onRowClick) return;
       $$("tbody tr", body).forEach((tr, i) => {
@@ -2269,12 +2415,15 @@ function stepMap(labels, i) {
   </div>`;
 }
 
-function renderTable(columns, rows, rowActions, ctx) {
+/* `opts.stack`: on a phone each row becomes a block, every cell under its
+   column's name, so a short list (Inicio's) reads without scrolling sideways.
+   A column's `tdClass` goes on its header and cells (the semáforo's column). */
+function renderTable(columns, rows, rowActions, ctx, opts = {}) {
   if (!rows || !rows.length) return `<div class="card"><div class="empty">Sin registros.</div></div>`;
   // `when`: a column that only means something for some shops (invoicing).
   columns = columns.filter(c => !c.when || c.when());
   const prio = (c) => c.priority ? ` col-p${c.priority}` : "";
-  const head = columns.map(c => `<th class="${c.align === "right" ? "num" : ""}${prio(c)}">${esc(c.label)}</th>`).join("") + (rowActions ? "<th></th>" : "");
+  const head = columns.map(c => `<th class="${c.align === "right" ? "num" : ""}${prio(c)}${c.tdClass ? " " + c.tdClass : ""}">${esc(c.label)}</th>`).join("") + (rowActions ? "<th></th>" : "");
   const body = rows.map(r => {
     const cells = columns.map(c => {
       let val;
@@ -2286,13 +2435,13 @@ function renderTable(columns, rows, rowActions, ctx) {
       else if (c.type === "datetime") val = fmtDateTime(r[c.key]);
       else if (c.type === "badge") val = badge(c.map ? (c.map[r[c.key]] || TITLECASE(r[c.key])) : TITLECASE(r[c.key]), c.cls || "blue");
       else val = esc(r[c.key] ?? "—");
-      return `<td class="${c.align === "right" || c.type === "money" || c.type === "num" ? "num" : ""} ${c.mono ? "mono" : ""} ${c.trunc ? "trunc" : ""}${prio(c)}">${val}</td>`;
+      return `<td class="${c.align === "right" || c.type === "money" || c.type === "num" ? "num" : ""} ${c.mono ? "mono" : ""} ${c.trunc ? "trunc" : ""}${prio(c)}${c.tdClass ? " " + c.tdClass : ""}"${opts.stack ? ` data-label="${esc(c.label)}"` : ""}>${val}</td>`;
     }).join("");
     const acts = rowActions ? `<td class="actions">${rowActions(r)}</td>` : "";
     const cls = ("is_active" in r && !r.is_active) ? "inactive" : "";
     return `<tr class="${cls}">${cells}${acts}</tr>`;
   }).join("");
-  return `<div class="card tbl-wrap"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+  return `<div class="card tbl-wrap${opts.stack ? " stack" : ""}"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
 }
 
 /* =======================================================================
@@ -3168,70 +3317,111 @@ document.addEventListener("keydown", (e) => {
 });
 
 /* =======================================================================
-   DASHBOARD
+   INICIO
+   Two of them, chosen by reports:read. Whoever holds it (the owner, by
+   default) opens on the whole shop: how it is selling, how each seller and
+   branch is doing, what is owed and what is running out. Everyone else opens
+   on their own day: the debts and presupuestos of theirs to chase, and how
+   their sales are going against their own last period, never the shop's.
    ======================================================================= */
 async function dashboardView(view) {
-  const want = [
-    ["products:read", "Productos", "/api/products"],
-    ["customers:read", "Clientes", "/api/customers"],
-    ["suppliers:read", "Proveedores", "/api/suppliers"],
-    ["branches:read", "Sucursales", "/api/branches"],
-    ["pricing:read", "Listas de precios", "/api/price-lists"],
-    ["users:read", "Usuarios", "/api/users"],
-  ].filter(([p]) => can(p));
-  const counts = await Promise.all(want.map(([, , ep]) => api("GET", ep).then(r => r.length).catch(() => "—")));
-  const stats = want.map(([, label], i) => `<div class="stat"><div class="k">${esc(label)}</div><div class="v">${counts[i]}<small> ${counts[i] === 100 ? "+ (máx)" : ""}</small></div></div>`).join("");
+  return can("reports:read") ? ownerHome(view) : sellerHome(view);
+}
 
-  let lowStockHtml = "";
-  if (can("stock:read")) {
-    try {
-      // Let the API decide what "low" means — it compares against the branch
-      // override *or* the product default, which the old client-side filter on
-      // min_stock alone could not see (it is almost always null).
-      const low = await api("GET", "/api/stock/levels?low_only=true");
-      const bmap = can("branches:read") ? await idMap("/api/branches") : {};
-      lowStockHtml = `<div class="card pad"><h3 style="margin-bottom:12px">Stock bajo / agotado ${low.length ? badge(low.length, "amber") : badge("0","green")}</h3>` +
-        (low.length ? renderTable(
-          [ { key:"product_id", label:"Producto", render:(v, r)=>esc(productLabel(r)) },
-            { key:"branch_id", label:"Sucursal", render:(v)=>esc(bmap[v] || ("#"+v)) },
-            { key:"quantity", label:"Cantidad", type:"num", align:"right", render:(v, r)=>stockQty(v, r.effective_min_stock) },
-            { key:"effective_min_stock", label:"Stock mínimo", type:"num", align:"right" } ], low)
-        : `<div class="empty" style="padding:14px">Todo por encima del mínimo 👍</div>`) + `</div>`;
-    } catch {}
-  }
+const firstName = () => (state.user.full_name || "").split(" ")[0] || state.user.email;
+// "miércoles, 14 de octubre": today, the way the shop says it.
+const todayLong = () => new Date().toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" });
 
-  const overdueHtml = can("sales:read") ? await cobrosHtml() : "";
-
+async function ownerHome(view) {
+  const [cobros, low] = await Promise.all([
+    can("sales:read") ? cobrosHtml() : "",
+    lowStockHtml(),
+  ]);
   view.innerHTML = `
-    <div class="page-head"><div><h2>Hola, ${esc((state.user.full_name||"").split(" ")[0] || state.user.email)}</h2>
-      <div class="sub">${esc(state.company?.name || "Mi Óptica")} · ${esc(state.currency)}</div></div></div>
-    ${can("sales:read") ? `<div id="ventasPanel"></div>` : ""}
-    <div id="cobrosPanel">${overdueHtml}</div>
-    <div class="stats">${stats || '<div class="stat"><div class="k">Sin permisos de lectura</div></div>'}</div>
-    ${lowStockHtml}`;
-  const vp = $("#ventasPanel", view);
-  if (vp) ventasPanel(vp);
-  // Después de un WhatsApp se repinta sólo "Pagos a cobrar", así se recorre la
-  // lista de a uno sin que el inicio entero se vuelva a cargar.
+    <div class="page-head"><div><h2>Hola, ${esc(firstName())}</h2>
+      <div class="sub">${esc(state.company?.name || "Mi Óptica")} · ${esc(todayLong())}</div></div></div>
+    <div id="ventasPanel"></div>
+    <div id="cobrosPanel">${cobros}</div>
+    ${low}`;
+  ventasPanel($("#ventasPanel", view), { scope: "shop", restore: homeReturn() });
+  wireHome(view, () => cobrosHtml());
+}
+
+async function sellerHome(view) {
+  const ventas = can("sales:read");
+  const [bmap, cobros, quotes, low] = await Promise.all([
+    can("branches:read") && state.user.branch_id ? idMap("/api/branches") : Promise.resolve({}),
+    ventas ? cobrosHtml({ mine: true }) : "",
+    ventas ? quotesHtml() : "",
+    // Someone who does not sell (a stock clerk) still gets something to do.
+    ventas ? "" : lowStockHtml(),
+  ]);
+  const branch = bmap[state.user.branch_id];
+  view.innerHTML = `
+    <div class="page-head"><div><h2>Hola, ${esc(firstName())}</h2>
+      <div class="sub">${branch ? esc(branch) + " · " : ""}${esc(todayLong())}</div></div>
+      ${can("sales:write") ? `<button class="btn primary" type="button" data-act="nueva"><svg class="ic"><use href="#i-plus"/></svg>Nueva venta</button>` : ""}</div>
+    <div id="cobrosPanel">${cobros}</div>
+    ${quotes}
+    ${ventas ? `<div id="ventasPanel"></div>` : ""}
+    ${low}`;
+  if (ventas) ventasPanel($("#ventasPanel", view), { scope: "mine", restore: homeReturn() });
+  wireHome(view, () => cobrosHtml({ mine: true }));
+}
+
+/* What a click on Inicio opens. After a WhatsApp only the debts list is
+   repainted, so it can be worked through one by one without the whole page
+   reloading under the seller. */
+function wireHome(view, cobrosAgain) {
   const cobros = $("#cobrosPanel", view);
-  const repintarCobros = async () => { if (cobros.isConnected) cobros.innerHTML = await cobrosHtml(); };
+  const repintarCobros = async () => { if (cobros && cobros.isConnected) cobros.innerHTML = await cobrosAgain(); };
   view.addEventListener("click", (e) => {
     const b = e.target.closest('[data-act="venta"]');
     if (b) saleDetailModal(Number(b.dataset.id), () => route());
     const w = e.target.closest('[data-act="whatsapp"]');
     if (w) whatsappModal(Number(w.dataset.id), repintarCobros);
+    if (e.target.closest('[data-act="nueva"]')) newSaleModal(() => route());
   });
 }
 
+// Let the API decide what "low" means: it compares against the branch
+// override *or* the product default, which a client-side filter on min_stock
+// alone could not see (it is almost always null).
+async function lowStockHtml() {
+  if (!can("stock:read")) return "";
+  try {
+    const low = await api("GET", "/api/stock/levels?low_only=true");
+    const bmap = can("branches:read") ? await idMap("/api/branches") : {};
+    return `<div class="card pad"><h3 style="margin-bottom:12px">Stock bajo / agotado ${low.length ? badge(low.length, "amber") : badge("0","green")}</h3>` +
+      (low.length ? renderTable(
+        [ { key:"product_id", label:"Producto", render:(v, r)=>esc(productLabel(r)) },
+          { key:"branch_id", label:"Sucursal", render:(v)=>esc(bmap[v] || ("#"+v)) },
+          { key:"quantity", label:"Cantidad", type:"num", align:"right", render:(v, r)=>stockQty(v, r.effective_min_stock) },
+          { key:"effective_min_stock", label:"Stock mínimo", type:"num", align:"right" } ], low, null, null, { stack: true })
+      : `<div class="empty" style="padding:14px">Todo por encima del mínimo 👍</div>`) + `</div>`;
+  } catch { return ""; }
+}
+
+// The calendar day an instant fell on, here (see fmtDate).
+function localDayISO(v) {
+  const d = new Date(v);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+// Both are plain dates read in local time, so the difference is whole days.
+const daysAgo = (iso) => Math.round((parseDay(todayISO()) - parseDay(iso)) / 86400000);
+
 /* Los pagos prometidos que vencieron, los de hoy y los de la semana, del más
    atrasado al más lejano. Sólo aparece si hay alguno: es un aviso, no una
-   sección. Los clientes se piden de a uno porque son pocos y la lista entera
-   viene en páginas de cien. */
+   sección. Con `mine`, los de las ventas de quien mira: el que vendió es el
+   que conoce al cliente, y el que lo persigue. Los clientes se piden de a uno
+   porque son pocos y la lista entera viene en páginas de cien. */
 const VENCIDOS_MAX = 8;
+const MIOS_MAX = 5;
 const COBROS_DIAS = 7;
-async function cobrosHtml() {
+async function cobrosHtml({ mine = false } = {}) {
   let rows;
-  try { rows = await api("GET", `/api/sales?pending_only=true&due_to=${addDaysISO(COBROS_DIAS)}`); }
+  const who = mine ? `&salesperson_id=${state.user.id}` : "";
+  try { rows = await api("GET", `/api/sales?pending_only=true&due_to=${addDaysISO(COBROS_DIAS)}${who}`); }
   catch { return ""; }
   rows = rows.filter(r => r.promised_payment_date);
   if (!rows.length) return "";
@@ -3239,47 +3429,89 @@ async function cobrosHtml() {
   const vencidos = rows.filter(r => r.promised_payment_date < hoy).length;
   const deHoy = rows.filter(r => r.promised_payment_date === hoy).length;
   const proximos = rows.length - vencidos - deHoy;
-  rows.sort((a, b) => a.promised_payment_date.localeCompare(b.promised_payment_date) || a.id - b.id);
+  if (mine) {
+    // A to-do, not a ledger: today's promises first, then the freshest
+    // overdue (the most collectible, where a message still helps), then the
+    // week ahead. Months-old debts sink; the owner's list leads with those.
+    const grupo = (d) => d === hoy ? 0 : d < hoy ? 1 : 2;
+    rows.sort((a, b) => {
+      const ga = grupo(a.promised_payment_date), gb = grupo(b.promised_payment_date);
+      if (ga !== gb) return ga - gb;
+      const by = a.promised_payment_date.localeCompare(b.promised_payment_date);
+      return (ga === 1 ? -by : by) || a.id - b.id;
+    });
+  } else {
+    rows.sort((a, b) => a.promised_payment_date.localeCompare(b.promised_payment_date) || a.id - b.id);
+  }
   const total = rows.reduce((t, r) => t + Number(r.balance), 0);
-  const shown = rows.slice(0, VENCIDOS_MAX);
+  const shown = rows.slice(0, mine ? MIOS_MAX : VENCIDOS_MAX);
   const ids = [...new Set(shown.map(r => r.customer_id).filter(Boolean))];
   const clientes = can("customers:read")
     ? Object.fromEntries(await Promise.all(ids.map(id =>
         api("GET", `/api/customers/${id}`).then(c => [id, c]).catch(() => [id, null]))))
     : {};
-  // Both are plain dates read as UTC midnight, so the difference is whole days.
-  const dias = (iso) => Math.round((new Date(hoy) - new Date(iso)) / 86400000);
-  const cuando = (v) => {
-    const d = dias(v);
-    if (d > 0) return badge(d === 1 ? "hace 1 día" : `hace ${d} días`, "red");
-    if (d === 0) return badge("hoy", "amber");
-    return badge(d === -1 ? "mañana" : `en ${-d} días`, "gray");
-  };
   const table = renderTable([
-    { key:"customer_id", label:"Cliente", render:(v) => {
+    lightCol((r) => [r.debt_light, r.promised_payment_date]),
+    { key:"customer_id", label:"Cliente", render:(v, r) => {
         if (!v) return "Consumidor final";
         const c = clientes[v];
-        if (!c) return esc("#" + v);
+        if (!c) return esc(r.customer_name || "#" + v);
         return `${esc(`${c.last_name}, ${c.first_name}`)}${c.phone ? `<div class="fhelp">${esc(c.phone)}</div>` : ""}`; } },
     { key:"number", label:"Venta", mono:true, priority:2 },
     { key:"promised_payment_date", label:"Prometió pagar",
-      render:(v, r) => `${fmtDate(v)} ${cuando(v)}${avisoHtml(r.last_payment_reminder)}` },
+      render:(v, r) => `${fmtDate(v)} ${dueWhy(r.debt_light, v)}${avisoHtml(r.last_payment_reminder)}` },
     { key:"reminder_note", label:"Recordatorio", trunc:true,
       render:(v) => v ? `<span title="${esc(v)}">${esc(v)}</span>` : "-" },
-    { key:"balance", label:"Debe", align:"right", render:(v) => `<b style="color:var(--danger)">${fmtMoney(v)}</b>` },
+    { key:"balance", label:"Debe", align:"right", render:(v) => `<b>${fmtMoney(v)}</b>` },
   ], shown, (r) => (can("sales:write") && r.customer_id
       ? `<button class="btn sm" data-act="whatsapp" data-id="${r.id}"><svg class="ic"><use href="#i-message"/></svg>WhatsApp</button>` : "")
-    + `<button class="btn sm" data-act="venta" data-id="${r.id}"><svg class="ic"><use href="#i-eye"/></svg>Ver</button>`);
-  const mas = rows.length > shown.length
+    + `<button class="btn sm" data-act="venta" data-id="${r.id}"><svg class="ic"><use href="#i-eye"/></svg>Ver</button>`,
+    null, { stack: true });
+  // Cuentas pendientes lists everyone's: from a seller's own list it is
+  // somewhere to go, not "the rest of these".
+  const resto = rows.length - shown.length;
+  const mas = resto && !mine
     ? `<a href="#/pending" class="btn sm ghost" style="margin-top:10px">Ver las ${rows.length} en Cuentas pendientes</a>`
-    : `<a href="#/pending" class="btn sm ghost" style="margin-top:10px">Ir a Cuentas pendientes</a>`;
+    : `${resto ? `<span class="fhelp" style="margin-right:6px">Y ${resto} más de tus ventas.</span>` : ""}<a href="#/pending" class="btn sm ghost" style="margin-top:10px">Ir a Cuentas pendientes</a>`;
   return `<div class="card pad" style="margin-bottom:16px">
-    <h3 style="margin-bottom:12px">Pagos a cobrar
+    <h3 style="margin-bottom:12px">${mine ? "Pagos a cobrar de tus ventas" : "Pagos a cobrar"}
       ${vencidos ? badge(vencidos === 1 ? "1 vencido" : `${vencidos} vencidos`, "red") : ""}
       ${deHoy ? badge(`${deHoy} hoy`, "amber") : ""}
       ${proximos ? badge(`${proximos} esta semana`, "gray") : ""}
       <span class="fhelp" style="font-weight:400;margin-left:6px">${fmtMoney(total)} a cobrar</span></h3>
     ${table}${mas}</div>`;
+}
+
+/* Presupuestos de quien mira que todavía valen un llamado: de los últimos
+   treinta días, a un cliente que no compró nada después. Un presupuesto no se
+   convierte en la venta (la venta se carga de nuevo), así que lo que dice que
+   se cerró es que el cliente volvió a comprar. Sin cliente no hay a quién
+   llamar, y no aparece. */
+const PRESUPUESTOS_DIAS = 30;
+const PRESUPUESTOS_MAX = 5;
+async function quotesHtml() {
+  let rows;
+  try { rows = await api("GET", `/api/sales/quotes/open?salesperson_id=${state.user.id}&days=${PRESUPUESTOS_DIAS}`); }
+  catch { return ""; }
+  if (!rows.length) return "";
+  const shown = rows.slice(0, PRESUPUESTOS_MAX);
+  const hace = (v) => {
+    const d = daysAgo(localDayISO(v));
+    return d <= 0 ? "hoy" : d === 1 ? "ayer" : `hace ${d} días`;
+  };
+  const table = renderTable([
+    { key:"customer_name", label:"Cliente", render:(v, r) =>
+        `${esc(v)}${r.customer_phone ? `<div class="fhelp">${esc(r.customer_phone)}</div>` : ""}` },
+    { key:"items", label:"Qué pidió", trunc:true, render:(v) => {
+        const txt = (v || []).join(" + ");
+        return txt ? `<span title="${esc(txt)}">${esc(txt)}</span>` : "-"; } },
+    { key:"sold_at", label:"Cuándo", render:(v, r) => `${esc(hace(v))}<div class="fhelp mono">${esc(r.number)}</div>` },
+    { key:"total", label:"Total", type:"money", align:"right" },
+  ], shown, (r) => `<button class="btn sm" data-act="venta" data-id="${r.id}"><svg class="ic"><use href="#i-eye"/></svg>Ver</button>`, null, { stack: true });
+  return `<div class="card pad" style="margin-bottom:16px">
+    <h3 style="margin-bottom:12px">Presupuestos para seguir ${badge(rows.length, "blue")}
+      <span class="fhelp" style="font-weight:400;margin-left:6px">De los últimos ${PRESUPUESTOS_DIAS} días, a clientes que todavía no compraron</span></h3>
+    ${table}${rows.length > shown.length ? `<div class="fhelp" style="margin-top:10px">Y ${rows.length - shown.length} más.</div>` : ""}</div>`;
 }
 
 /* =======================================================================
@@ -3335,13 +3567,211 @@ function vzDays(period, start, key) {
   return [iso(new Date(s.getFullYear(), m, 1)), iso(new Date(s.getFullYear(), m + 1, 0))];
 }
 
-async function ventasPanel(node) {
-  let period = vzGet(VZ_KEY, (v) => !!VZ_PERIODS[v], "month");
+/* Un día de ventas, al costado. Clic en una barra de Inicio: sus ventas en un
+   panel encima, sin salir de Inicio. Esc, la cruz o un clic afuera lo cierran y
+   todo queda donde estaba; ‹ › pasan al día de al lado (al mes, desde Año).
+   "Abrir en Ventas" lleva a la pantalla entera, y la Inicio que se deja
+   recuerda cómo estaba, para que Volver (el de Ventas o el del navegador) la
+   encuentre igual. */
+const HOME_TRIP_KEY = "sgi_home_trip";
+const DIAS_LARGOS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+const MESES_LARGOS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
+  "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+const DW_MAX = 60;
+
+// The days a panel covers, and the day (or month) beside it. Plain local dates.
+function dayRange(day, unit) {
+  if (unit === "day") return [day, day];
+  const d = parseDay(day);
+  return [localDayISO(new Date(d.getFullYear(), d.getMonth(), 1)),
+          localDayISO(new Date(d.getFullYear(), d.getMonth() + 1, 0))];
+}
+function dayStep(day, unit, n) {
+  const d = parseDay(day);
+  return localDayISO(unit === "day" ? new Date(d.getFullYear(), d.getMonth(), d.getDate() + n)
+                                    : new Date(d.getFullYear(), d.getMonth() + n, 1));
+}
+// "martes 7 de octubre" (with the year when it is not this one), "octubre de 2026".
+function dayWords(day, unit) {
+  const d = parseDay(day), year = d.getFullYear() !== new Date().getFullYear() ? ` de ${d.getFullYear()}` : "";
+  if (unit === "month") return `${MESES_LARGOS[d.getMonth()]} de ${d.getFullYear()}`;
+  return `${DIAS_LARGOS[d.getDay()]} ${d.getDate()} de ${MESES_LARGOS[d.getMonth()]}${year}`;
+}
+const capital = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/* Nothing opened later is on top of `node`: the key it hears is its own. */
+const isTopmost = (node) => {
+  for (let n = node.nextElementSibling; n; n = n.nextElementSibling)
+    if (n.matches(".overlay, .dw-overlay")) return false;
+  return true;
+};
+
+/* The Inicio being left remembers how it was (scroll, the seller window, the
+   panel), on its own history entry: Back finds it, a fresh click on Inicio
+   in the menu does not. */
+function rememberHome(extra) {
+  const c = $(".content");
+  try { history.replaceState({ inicio: { scroll: c ? c.scrollTop : 0, ...extra } }, ""); } catch {}
+}
+function homeReturn() {
+  const back = history.state && history.state.inicio;
+  if (back) { try { history.replaceState(null, ""); } catch {} }
+  return back || null;
+}
+
+function openDayPanel({ day, unit = "day", scope = "shop", sellerId = null, sellerName = "",
+                        sellerPeriod = null, onLeave = null, onChange = null, onShow = null }) {
+  const who = scope === "mine" ? state.user.id : scope === "seller" ? sellerId : null;
+  const whose = scope === "mine" ? "Tus ventas" : scope === "seller" ? sellerName : "Toda la óptica";
+  const overlay = el(`<div class="dw-overlay"><aside class="dw" role="dialog" aria-modal="true" tabindex="-1">
+      <header>
+        <button type="button" class="dw-icon" data-step="-1"><svg class="ic lg"><use href="#i-chevron-left"/></svg></button>
+        <div class="dw-title"><h3></h3><div class="fhelp">${esc(whose)}</div></div>
+        <button type="button" class="dw-icon" data-step="1"><svg class="ic lg"><use href="#i-chevron-right"/></svg></button>
+        <button type="button" class="dw-icon dw-x" data-close aria-label="Cerrar" title="Cerrar (Esc)"><svg class="ic lg"><use href="#i-x"/></svg></button>
+      </header>
+      <div class="dw-sum"></div>
+      <div class="dw-body"></div>
+      <footer><span class="fhelp"></span>
+        <button type="button" class="btn sm" data-trip>Abrir en Ventas<svg class="ic"><use href="#i-arrow-right"/></svg></button></footer>
+    </aside></div>`);
+  const pick = (sel) => overlay.querySelector(sel);
+  const panel = pick(".dw"), title = pick("h3"), sum = pick(".dw-sum"), body = pick(".dw-body"), foot = pick("footer .fhelp");
+  const prev = pick('[data-step="-1"]'), next = pick('[data-step="1"]');
+  prev.setAttribute("aria-label", unit === "day" ? "Día anterior" : "Mes anterior");
+  next.setAttribute("aria-label", unit === "day" ? "Día siguiente" : "Mes siguiente");
+  const opener = document.activeElement;
+  let rows = [], asked = 0, dirty = false;
+
+  async function show(d) {
+    day = d;
+    const [from, to] = dayRange(day, unit);
+    const words = dayWords(day, unit), ago = unit === "day" ? daysAgo(day) : null;
+    title.textContent = ago === 0 ? `Hoy, ${words}` : ago === 1 ? `Ayer, ${words}` : capital(words);
+    panel.setAttribute("aria-label", `Ventas: ${title.textContent}`);
+    // The future has no sales to show.
+    next.disabled = dayStep(day, unit, 1) > todayISO();
+    if (onShow) onShow(day, unit);
+    const n = ++asked;
+    body.classList.add("loading");
+    try {
+      rows = await api("GET", `/api/sales?sold_from=${from}&sold_to=${to}&limit=1000${who ? `&salesperson_id=${who}` : ""}`);
+    } catch (e) {
+      if (n === asked) { body.innerHTML = `<div class="dw-empty">${esc(e.message)}</div>`; body.classList.remove("loading"); }
+      return;
+    }
+    if (n !== asked) return;      // a later ‹ › already asked for another day
+    body.classList.remove("loading");
+    paint();
+  }
+
+  function paint() {
+    // What the bar counted: real sales. An anulada stays in its place on the
+    // timeline, struck through and out of the figures; a presupuesto is not a sale.
+    const shown = rows.filter(r => r.status !== "quote")
+      .sort((a, b) => new Date(a.sold_at) - new Date(b.sold_at) || a.id - b.id);
+    const real = shown.filter(r => r.status !== "cancelled");
+    const total = real.reduce((t, r) => t + Number(r.total), 0);
+    const owed = real.reduce((t, r) => t + Number(r.balance), 0);
+    const gone = shown.length - real.length;
+    const fig = (k, v) => `<div><div class="k">${esc(k)}</div><div class="v">${v}</div></div>`;
+    sum.innerHTML = fig("Vendido", esc(vzMoney(total))) + fig("Ventas", String(real.length))
+      + fig("Ticket promedio", real.length ? esc(vzMoney(total / real.length)) : "-")
+      + (owed > 0 || gone ? `<div class="dw-notes">${owed > 0 ? `<span class="warn">${esc(vzMoney(owed))} quedó a cuenta</span>` : ""}
+          ${gone ? `<span class="bad">${gone === 1 ? "1 anulada" : `${gone} anuladas`}</span>` : ""}</div>` : "");
+    if (!shown.length) {
+      body.innerHTML = `<div class="dw-empty">${unit === "day" ? "No hubo ventas este día." : "No hubo ventas este mes."}</div>`;
+      foot.textContent = "";
+      return;
+    }
+    const when = (r) => {
+      const d = new Date(r.sold_at);
+      return unit === "day" ? d.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+                            : `${d.getDate()}/${d.getMonth() + 1}`;
+    };
+    body.innerHTML = shown.slice(0, DW_MAX).map(r => {
+      const off = r.status === "cancelled";
+      const bits = [r.number];
+      if (scope === "shop" && r.salesperson_name) bits.push(r.salesperson_name);
+      return `<button type="button" class="dw-row${off ? " off" : ""}" data-sale="${r.id}">
+        <span class="t">${esc(when(r))}</span>
+        <span class="c">${esc(r.customer_name || "Consumidor final")}</span>
+        <span class="a">${esc(vzMoney(r.total))}</span>
+        <span class="m">${esc(bits.join(" · "))}${off ? ` ${badge("Anulada", "red")}`
+          : Number(r.balance) > 0 ? ` <span class="debe" title="${esc(capital(debtWhen(r.debt_light, r.promised_payment_date)))}"><span class="light sm ${r.debt_light}" aria-hidden="true"></span>${debtWhy(r.debt_light, r.promised_payment_date, `debe ${vzMoney(r.balance)}`)}</span>` : ""}</span>
+      </button>`;
+    }).join("");
+    foot.textContent = shown.length > DW_MAX ? `Y ${shown.length - DW_MAX} más.` : "";
+  }
+
+  function close(leaving = false) {
+    document.removeEventListener("keydown", onKey);
+    overlay.remove();
+    if (onShow) onShow(null);
+    if (dirty && onChange && !leaving) onChange();
+    if (!leaving && opener && opener.isConnected && opener.focus) opener.focus();
+  }
+
+  function trip() {
+    const [from, to] = dayRange(day, unit);
+    const hash = `#/sales/${from}~${to}${who ? `~${who}` : ""}`;
+    const what = unit === "day" ? `del ${dayWords(day, unit)}` : `de ${dayWords(day, unit)}`;
+    const label = scope === "mine" ? `Tus ventas ${what}` : `Ventas ${what}${scope === "seller" ? `, de ${sellerName}` : ""}`;
+    rememberHome({ panel: { day, unit }, seller: scope === "seller" ? { id: sellerId, period: sellerPeriod } : null });
+    try { sessionStorage.setItem(HOME_TRIP_KEY, JSON.stringify({ hash, label })); } catch {}
+    close(true);
+    if (onLeave) onLeave();       // the seller window it was opened from
+    location.hash = hash;
+  }
+
+  function onKey(e) {
+    if (!isTopmost(overlay) || e.altKey || e.ctrlKey || e.metaKey) return;
+    if (e.key === "Escape") { e.preventDefault(); close(); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); show(dayStep(day, unit, -1)); }
+    else if (e.key === "ArrowRight" && !next.disabled) { e.preventDefault(); show(dayStep(day, unit, 1)); }
+  }
+
+  overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) close(); });
+  overlay.addEventListener("click", (e) => {
+    const s = e.target.closest("[data-step]");
+    if (s && !s.disabled) return show(dayStep(day, unit, Number(s.dataset.step)));
+    if (e.target.closest("[data-close]")) return close();
+    if (e.target.closest("[data-trip]")) return trip();
+    const r = e.target.closest("[data-sale]");
+    if (r) saleDetailModal(Number(r.dataset.sale), () => { dirty = true; show(day); });
+  });
+  document.addEventListener("keydown", onKey);
+  document.body.appendChild(overlay);
+  panel.focus();
+  show(day);
+}
+
+/* Whose sales it shows. "shop" is the owner's Inicio: the whole shop, plus who
+   sold it, where and what. "mine" is a seller's own Inicio: their sales, and
+   as "cobrado" the money they took in at the counter. "seller" is the owner
+   looking at one seller, exactly as that seller sees it. */
+const VZ_SCOPES = {
+  shop:   { title: "Ventas",     sold: "Vendido",   took: "Cobrado",   methods: "Cómo cobraron", top: "Más vendidos" },
+  mine:   { title: "Tus ventas", sold: "Vendiste",  took: "Cobraste",  methods: "Cómo cobraste", top: "Lo que más vendiste" },
+  seller: { title: "Ventas",     sold: "Vendió",    took: "Cobró",     methods: "Cómo cobró",    top: "Lo que más vendió" },
+};
+
+async function ventasPanel(node, { scope = "shop", sellerId = null, sellerName = "", period: first = null,
+                                  onLeave = null, restore = null } = {}) {
+  const T = VZ_SCOPES[scope];
+  // The owner's look at one seller opens on the period they were looking at,
+  // and changing it there does not change their own Inicio's.
+  const keep = scope !== "seller";
+  let period = first || vzGet(VZ_KEY, (v) => !!VZ_PERIODS[v], "month");
   let mode = vzGet(VZ_MODE_KEY, (v) => v === "daily" || v === "cumulative", "daily");
   let data = null, showTable = false;
+  // The day (or month) whose sales the side panel shows, marked on the chart.
+  let selected = null;
+  const endpoint = () => scope === "mine" ? `/api/sales/stats/mine?period=${period}`
+    : `/api/sales/stats?period=${period}${scope === "seller" ? `&salesperson_id=${sellerId}` : ""}`;
 
   node.innerHTML = `<div class="vz">
-      <div class="vz-head"><h3>Ventas</h3>
+      <div class="vz-head"><h3>${esc(T.title)}</h3>
         <div class="seg" role="tablist" aria-label="Período">${Object.entries(VZ_PERIODS).map(([k, p]) =>
           `<button type="button" role="tab" data-period="${k}">${p.tab}</button>`).join("")}</div></div>
       <div class="vz-body"></div></div>`;
@@ -3354,7 +3784,7 @@ async function ventasPanel(node) {
     });
     // Refetch keeps the frame: the old numbers dim instead of vanishing.
     $body.classList.add("loading");
-    try { data = await api("GET", `/api/sales/stats?period=${period}`); }
+    try { data = await api("GET", endpoint()); }
     catch (e) { $body.innerHTML = `<div class="fhelp">${esc(e.message)}</div>`; return; }
     finally { $body.classList.remove("loading"); }
     paint();
@@ -3376,11 +3806,11 @@ async function ventasPanel(node) {
     const tile = (k, v, change, now, extra = "") => `<div class="stat vz-tile"><div class="k">${esc(k)}</div>
       <div class="v">${v}</div>${delta(change, now)}${extra}</div>`;
     return `<div class="vz-tiles">
-      ${tile("Vendido", esc(vzMoney(d.revenue)), d.change.revenue, d.revenue,
+      ${tile(T.sold, esc(vzMoney(d.revenue)), d.change.revenue, d.revenue,
         Number(d.owed) > 0 ? `<div class="vz-note">${esc(vzMoney(d.owed))} quedó a cuenta</div>` : "")}
       ${tile("Ventas", String(d.count), d.change.count, d.count)}
       ${tile("Ticket promedio", d.count ? esc(vzMoney(d.average_ticket)) : "-", d.change.average_ticket, d.count)}
-      ${tile("Cobrado", esc(vzMoney(d.collected)), d.change.collected, d.collected)}
+      ${tile(T.took, esc(vzMoney(d.collected)), d.change.collected, d.collected)}
     </div>`;
   }
 
@@ -3419,6 +3849,10 @@ async function ventasPanel(node) {
     const every = Math.max(1, Math.ceil(n / Math.floor(plotW / 44)));
 
     let g = "";
+    if (selected && period !== "day") {
+      const j = s.findIndex(b => { const [f, t] = vzDays(period, data.start, b.key); return f <= selected && selected <= t; });
+      if (j >= 0) g += `<rect class="vz-sel" x="${left + band * j}" y="${top}" width="${band}" height="${plotH}" rx="3"/>`;
+    }
     // What has not happened yet, set back.
     if (today < n - 1) {
       const fx = left + band * (today + 1);
@@ -3478,7 +3912,7 @@ async function ventasPanel(node) {
     s.forEach((b, j) => {
       const past = b.revenue != null, go = b.count > 0;
       g += `<rect class="vz-hit ${go ? "go" : ""}" data-i="${b.i}" data-j="${j}" x="${left + band * j}" y="${top}" width="${band}" height="${plotH}" tabindex="0"
-        ${go ? 'role="link"' : ""} aria-label="${esc(`${b.label}: ${past ? fmtMoney(b.revenue) : "todavía no"}`)}"/>`;
+        ${go ? 'role="button"' : ""} aria-label="${esc(`${b.label}: ${past ? fmtMoney(b.revenue) : "todavía no"}`)}"/>`;
     });
     // Remembered so the tooltip can show running totals and place the crosshair.
     chart.last = { curV, prevV, cum, band, left, cx };
@@ -3526,14 +3960,14 @@ async function ventasPanel(node) {
     const metodos = d.methods.map(m => ({
       name: esc(ENUM_ES.payment_method[m.method] || m.method),
       value: Number(m.amount),
-      val: `${esc(fmtMoney(m.amount))} <small>${totalCobrado ? vzPct(Number(m.amount) * 100 / totalCobrado) : ""}</small>`,
+      val: `${esc(vzMoney(m.amount))} <small>${totalCobrado ? vzPct(Number(m.amount) * 100 / totalCobrado) : ""}</small>`,
     }));
     const productos = d.top_products.map(t => ({
       name: `<span class="mono">${esc(t.code)}</span> ${esc(t.description || "")}`,
       sub: colores(t.variants),
       title: [`${t.code} ${t.description || ""}`, ...t.variants.map(v => `${v.label}: ${fmtNum(v.quantity)} u.`)].join("\n"),
       value: Number(t.revenue),
-      val: `${esc(fmtMoney(t.revenue))} <small>${esc(fmtNum(t.quantity))} u.</small>`,
+      val: `${esc(vzMoney(t.revenue))} <small>${esc(fmtNum(t.quantity))} u.</small>`,
     }));
     const vacio = !d.count && !d.series.some(b => Number(b.previous) > 0);
     $body.innerHTML = `${tiles()}
@@ -3549,11 +3983,118 @@ async function ventasPanel(node) {
           ? `<div class="fhelp vz-empty">Todavía no hay ventas ${esc(p.cur.toLowerCase())}.</div>`
           : showTable ? tableView() : `<div class="vz-plot"></div>`}
       </div>
+      ${scope === "shop" ? team() : ""}
       <div class="vz-two">
-        <div class="card pad"><h4>Cómo cobraron</h4>${hbars(metodos, "Sin cobros en el período.")}</div>
-        <div class="card pad"><h4>Más vendidos</h4>${hbars(productos, "Sin ventas en el período.")}</div>
-      </div>`;
+        <div class="card pad"><h4>${esc(T.methods)}</h4>${hbars(metodos, "Sin cobros en el período.")}</div>
+        <div class="card pad"><h4>${esc(T.top)}</h4>${hbars(productos, "Sin ventas en el período.")}</div>
+      </div>
+      ${scope === "shop" ? breakdowns() : ""}`;
     drawPlot();
+  }
+
+  // ---- the owner's: each seller's period, side by side ---------------------
+  /* Every seller adds up to the shop: the foot is the tiles above. Besides
+     what they sold, what a counter answers for: the discounts it gave (amber
+     when well above the shop's), the sales it cancelled, its presupuestos and
+     how many came back to buy, the prices typed by hand, what it left owing. */
+  function team() {
+    const d = data, rows = d.sellers;
+    // Sellers are listed even at zero, so an empty table means nobody has a
+    // seller's account yet: say how it fills up rather than hide the card,
+    // or the owner never learns it is there.
+    if (!rows.length) return `<div class="card pad vz-team">
+      <div class="vz-chead"><h4>Vendedores</h4></div>
+      <div class="tm-empty"><svg class="ic lg"><use href="#i-users"/></svg><div>
+        <p>Acá vas a ver cuánto vende cada uno de tu equipo, qué descuentos da y cómo le va contra el período anterior.</p>
+        <p class="fhelp">Para eso cada vendedor necesita su propio usuario, con el rol Vendedor: sus ventas quedan a su nombre.</p>
+        ${can("users:read") ? `<a href="#/users" class="btn sm" style="margin-top:10px">Ir a Usuarios y Roles</a>` : ""}</div></div></div>`;
+    const p = VZ_PERIODS[period];
+    const max = Math.max(0, ...rows.map(r => Number(r.revenue)));
+    const shopRate = d.discount_rate == null ? null : Number(d.discount_rate);
+    const generous = (r) => r.discount_rate != null && shopRate != null
+      && Number(r.discount_rate) >= 3 && Number(r.discount_rate) >= shopRate * 1.5;
+    const chg = (change, now) => {
+      if (change == null) return Number(now) > 0 ? `<span class="tm-chg new">nuevo</span>` : "-";
+      const n = Number(change);
+      return `<span class="tm-chg ${n > 0 ? "up" : n < 0 ? "down" : ""}">${n > 0 ? "▲ " : n < 0 ? "▼ " : ""}${vzPct(Math.abs(n))}</span>`;
+    };
+    const initials = (name) => name.split(" ").filter(Boolean).map(w => w[0]).slice(0, 2).join("").toUpperCase();
+    const presup = (q, won) => q
+      ? `${q}<div class="fhelp">${won === 0 ? "ninguno compró" : won === 1 ? "1 compró" : `${won} compraron`}</div>` : "-";
+    const body = rows.map(r => {
+      const warn = generous(r);
+      return `<tr class="${r.user_id ? "tm-go" : "tm-none"}" ${r.user_id ? `data-seller="${r.user_id}" tabindex="0"` : ""}>
+        <td class="tm-cwho"><div class="tm-who"><span class="tm-av">${esc(r.user_id ? initials(r.name) : "?")}</span>
+          <div class="tm-name">${esc(r.name)}${r.is_active ? "" : `<div class="fhelp">Ya no está activo</div>`}</div></div></td>
+        <td class="num tm-sold"><b>${esc(vzMoney(r.revenue))}</b><small>${r.share == null ? "" : vzPct(r.share)}</small>
+          <div class="tm-bar"><span style="width:${max ? (Number(r.revenue) * 100 / max).toFixed(1) : 0}%"></span></div></td>
+        <td class="num tm-stat" data-label="Ventas">${r.count}${r.cancelled ? `<div class="fhelp tm-bad">${r.cancelled === 1 ? "1 anulada" : `${r.cancelled} anuladas`}</div>` : ""}</td>
+        <td class="num tm-stat" data-label="Ticket">${r.count ? esc(vzMoney(r.average_ticket)) : "-"}</td>
+        <td class="num tm-stat${warn ? " tm-warn" : ""}" data-label="Descuentos"${warn ? ` title="${esc(`Bastante más que el promedio de la óptica, ${vzPct(shopRate)}`)}"` : ""}>
+          ${r.discount_rate == null ? "-" : vzPct(r.discount_rate)}${Number(r.discount_amount) > 0 ? `<div class="fhelp">${esc(vzMoney(r.discount_amount))}</div>` : ""}</td>
+        <td class="num tm-vs">${chg(r.change, r.revenue)}</td>
+        <td class="num tm-stat" data-label="Presupuestos">${presup(r.quotes, r.quotes_won)}</td>
+        <td class="num col-p2">${Number(r.owed) > 0 ? esc(vzMoney(r.owed)) : "-"}</td>
+        <td class="num col-p3">${r.price_overrides || "-"}</td>
+      </tr>`;
+    }).join("");
+    const sum = (k) => rows.reduce((t, r) => t + Number(r[k] || 0), 0);
+    return `<div class="card pad vz-team">
+      <div class="vz-chead"><h4>Vendedores</h4><span class="fhelp">Elegí un vendedor para ver sus ventas</span></div>
+      <div class="tbl-wrap"><table class="tm">
+        <thead><tr><th>Vendedor</th><th class="num">Vendido</th><th class="num">Ventas</th><th class="num">Ticket promedio</th>
+          <th class="num" title="Descuentos por línea y por venta, sobre el precio de lista de lo vendido">Descuentos</th>
+          <th class="num" title="${esc(p.vs.replace(/^vs\. /, "Contra "))}">vs. ${esc(p.prev.toLowerCase())}</th>
+          <th class="num" title="Cuántos presupuestos hizo, y en cuántos el cliente volvió a comprar">Presupuestos</th>
+          <th class="num col-p2">Quedó a cuenta</th>
+          <th class="num col-p3" title="Líneas con el precio cambiado a mano">Precio a mano</th></tr></thead>
+        <tbody>${body}</tbody>
+        <tfoot><tr><td class="tm-cwho">Toda la óptica</td>
+          <td class="num tm-sold"><b>${esc(vzMoney(d.revenue))}</b></td>
+          <td class="num tm-stat" data-label="Ventas">${d.count}</td>
+          <td class="num tm-stat" data-label="Ticket">${d.count ? esc(vzMoney(d.average_ticket)) : "-"}</td>
+          <td class="num tm-stat" data-label="Descuentos">${shopRate == null ? "-" : vzPct(shopRate)}</td>
+          <td class="num tm-vs">${chg(d.change.revenue, d.revenue)}</td>
+          <td class="num tm-stat" data-label="Presupuestos">${presup(sum("quotes"), sum("quotes_won"))}</td>
+          <td class="num col-p2">${Number(d.owed) > 0 ? esc(vzMoney(d.owed)) : "-"}</td>
+          <td class="num col-p3">${sum("price_overrides") || "-"}</td></tr></tfoot>
+      </table></div></div>`;
+  }
+
+  // ---- the owner's: where it was sold, and what --------------------------
+  function breakdowns() {
+    const d = data, p = VZ_PERIODS[period];
+    const ventas = (n) => n === 1 ? "1 venta" : `${n} ventas`;
+    // One branch is the shop itself: the card says nothing the tiles do not.
+    const sucursales = d.branches.length > 1 ? d.branches.map(b => {
+      const c = b.change == null ? "" : ` · ${Number(b.change) >= 0 ? "▲" : "▼"} ${vzPct(Math.abs(Number(b.change)))}`;
+      return {
+        name: esc(b.name), sub: esc(`${ventas(b.count)}${c}`),
+        title: `${b.name}: ${ventas(b.count)}, ticket promedio ${vzMoney(b.average_ticket)}`
+          + (b.change == null ? "" : `, ${Number(b.change) >= 0 ? "+" : ""}${vzPct(b.change)} ${p.vs}`),
+        value: Number(b.revenue),
+        val: `${esc(vzMoney(b.revenue))} <small>${b.share == null ? "" : vzPct(b.share)}</small>`,
+      };
+    }) : null;
+    const tipos = d.product_types.map(t => ({
+      name: esc(t.name), sub: esc(`${fmtNum(t.quantity)} u.`),
+      value: Number(t.revenue),
+      val: `${esc(vzMoney(t.revenue))} <small>${t.share == null ? "" : vzPct(t.share)}</small>`,
+    }));
+    return `<div class="vz-two vz-more">
+      ${sucursales ? `<div class="card pad"><h4>Por sucursal</h4>${hbars(sucursales, "")}</div>` : ""}
+      <div class="card pad"><h4>Por tipo de producto</h4>${hbars(tipos, "Sin ventas en el período.")}</div>
+    </div>`;
+  }
+
+  // The owner opens one seller: their period as they see it, in a window.
+  function openSeller(id, p = period, panel = null) {
+    const r = data.sellers.find(x => x.user_id === id);
+    const name = r ? r.name : "Vendedor";
+    const box = el(`<div class="vz-seller"></div>`);
+    const close = openModal({ title: name, body: box, cls: "xwide" });
+    ventasPanel(box, { scope: "seller", sellerId: id, sellerName: name, period: p, onLeave: close,
+                       restore: panel ? { panel } : null });
   }
 
   function drawPlot() {
@@ -3564,7 +4105,9 @@ async function ventasPanel(node) {
 
   // Tooltip: one for the panel, values first, keyed by a short stroke.
   const tip = el(`<div class="vz-tip" hidden></div>`);
-  document.body.appendChild(tip);
+  // First in <body>, not last: last is where Esc looks for the topmost
+  // window, and a tooltip there kept a seller's window from closing.
+  document.body.prepend(tip);
   function showTip(rect) {
     const i = Number(rect.dataset.i), j = Number(rect.dataset.j), b = data.series[i], p = VZ_PERIODS[period];
     const { curV, prevV, cum, cx } = chart.last;
@@ -3598,13 +4141,17 @@ async function ventasPanel(node) {
     tip.hidden = true;
     const hl = $(".vz-hl", $body); if (hl) hl.setAttribute("visibility", "hidden");
   }
-  // A bar that has happened opens its sales, by click or by Enter.
+  // A bar that has happened opens its sales beside Inicio, by click or by Enter.
   function abrir(rect) {
     const b = data.series[Number(rect.dataset.i)];
     if (!(b.count > 0)) return;
-    const [from, to] = vzDays(period, data.start, b.key);
     hideTip();
-    location.hash = `#/sales/${from}~${to}`;
+    openDay(vzDays(period, data.start, b.key)[0], period === "year" ? "month" : "day");
+  }
+  function openDay(day, unit) {
+    openDayPanel({ day, unit, scope, sellerId, sellerName, sellerPeriod: period, onLeave,
+      onChange: () => load(),
+      onShow: (d) => { selected = d; if (data && !showTable) drawPlot(); } });
   }
   $body.addEventListener("pointerover", (e) => { const h = e.target.closest(".vz-hit"); if (h) showTip(h); });
   $body.addEventListener("pointerleave", hideTip);
@@ -3613,10 +4160,14 @@ async function ventasPanel(node) {
   $body.addEventListener("keydown", (e) => {
     const h = e.target.closest(".vz-hit");
     if (h && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); abrir(h); }
+    const who = e.target.closest("[data-seller]");
+    if (who && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openSeller(Number(who.dataset.seller)); }
   });
   $body.addEventListener("click", (e) => {
     const h = e.target.closest(".vz-hit.go");
     if (h) return abrir(h);
+    const who = e.target.closest("[data-seller]");
+    if (who) return openSeller(Number(who.dataset.seller));
     if (e.target.closest('[data-vz="table"]')) { showTable = !showTable; paint(); }
     const m = e.target.closest("[data-mode]");
     if (m && m.dataset.mode !== mode) { mode = m.dataset.mode; vzSet(VZ_MODE_KEY, mode); hideTip(); paint(); }
@@ -3624,7 +4175,7 @@ async function ventasPanel(node) {
   node.addEventListener("click", (e) => {
     const b = e.target.closest("[data-period]"); if (!b || b.dataset.period === period) return;
     period = b.dataset.period;
-    vzSet(VZ_KEY, period);
+    if (keep) vzSet(VZ_KEY, period);
     hideTip(); load();
   });
   // Redrawn to its width; gone with the panel when the view is replaced.
@@ -3639,6 +4190,13 @@ async function ventasPanel(node) {
   watch.observe(document.body, { childList: true, subtree: true });
 
   await load();
+  // Back from Ventas: Inicio as it was left, scroll, seller window and panel.
+  if (restore && node.isConnected) {
+    const c = $(".content");
+    if (c && restore.scroll != null) c.scrollTop = restore.scroll;
+    if (restore.seller && scope === "shop") openSeller(restore.seller.id, restore.seller.period, restore.panel);
+    else if (restore.panel) openDay(restore.panel.day, restore.panel.unit);
+  }
 }
 
 /* =======================================================================
@@ -5430,6 +5988,48 @@ const avisosTxt = (list, max = 3) => list.slice(0, max).map(r =>
   `${fmtDateTime(r.sent_at)} (${ENUM_ES.reminder_tone[r.tone] || r.tone}${r.sent_by_name ? ", " + r.sent_by_name : ""})`).join(" · ")
   + (list.length > max ? ` y ${list.length - max} más` : "");
 
+/* =======================================================================
+   SEMÁFORO DE DEUDAS
+   Cada deuda trae su luz, que decide el servidor con la fecha prometida
+   (services/sales.py, debt_light): roja si ya pasó, amarilla si vence esta
+   semana o no se acordó fecha, verde si falta más. Un cliente muestra la peor
+   de las suyas. Acá sólo se dibuja.
+   ======================================================================= */
+const LIGHTS = {
+  red:    { rank: 0, label: "Vencido" },
+  yellow: { rank: 1, label: "Por vencer o sin fecha" },
+  green:  { rank: 2, label: "Al día" },
+};
+// "vencido hace 4 días", "vence hoy", "vence en 3 días", "sin fecha acordada", "al día, vence 22/8/2026".
+function debtWhen(light, due) {
+  if (!due) return "sin fecha acordada";
+  const d = daysAgo(due);
+  if (d > 0) return d === 1 ? "vencido hace 1 día" : `vencido hace ${d} días`;
+  if (d === 0) return "vence hoy";
+  if (light === "green") return `al día, vence ${fmtDate(due)}`;
+  return d === -1 ? "vence mañana" : `vence en ${-d} días`;
+}
+// The dot; what it means rides along for the mouse and for screen readers.
+function lightDot(light, says) {
+  if (!LIGHTS[light]) return "";
+  const t = says || LIGHTS[light].label;
+  return `<span class="light ${light}" role="img" aria-label="${esc(t)}" title="${esc(t)}"></span>`;
+}
+/* Next to the dot, the reason in bold and in its colour: "Vencido hace 7
+   días", "Vence hoy", "Sin fecha acordada". */
+function debtWhy(light, due, text) {
+  if (!LIGHTS[light]) return "";
+  return `<span class="lt-why ${light}">${esc(text || capital(debtWhen(light, due)))}</span>`;
+}
+// Beside a date already on screen, green needs no date of its own.
+const dueWhy = (light, due) => debtWhy(light, due, light === "green" ? "Al día" : null);
+// The dot's own column, first in a list of debts. `get(row)` gives [light, due].
+// Centred like the row's other cells; the wide gap after it keeps it off the name.
+const lightCol = (get) => ({ key: "_light", label: "", tdClass: "col-light", render: (v, r) => {
+  const [light, due] = get(r);
+  return light ? `<span class="lt-line">${lightDot(light, capital(debtWhen(light, due)))}</span>` : "";
+} });
+
 async function whatsappModal(saleId, onDone) {
   let draft;
   try { draft = await api("GET", `/api/sales/${saleId}/whatsapp`); }
@@ -5532,6 +6132,16 @@ async function salesView(view, arg) {
     { label:"Ventas", render: (n) => salesListTab(n, arg) },
     { label:"Cuentas", render: (n) => resourceView(n, CONFIG.payment_accounts) },
   ]);
+  // Opened from Inicio's side panel: the way back, above the title. Back is
+  // the browser's own, so Inicio comes back as it was left (rememberHome).
+  let trip = null;
+  try { trip = JSON.parse(sessionStorage.getItem(HOME_TRIP_KEY) || "null"); } catch {}
+  if (trip && trip.hash === location.hash) {
+    const bar = el(`<div class="backbar"><button type="button" class="btn sm"><svg class="ic"><use href="#i-arrow-left"/></svg>Volver a Inicio</button>
+      <span>${esc(trip.label)}</span></div>`);
+    $("button", bar).addEventListener("click", () => history.back());
+    view.prepend(bar);
+  }
 }
 
 async function salesListTab(n, arg) {
@@ -5540,9 +6150,18 @@ async function salesListTab(n, arg) {
     can("customers:read") ? idMap("/api/customers", "id", customerLabel) : Promise.resolve({}),
     can("branches:read") ? idMap("/api/branches") : Promise.resolve({}),
   ]);
-  const f = { q:"", status:"", branch_id:"", sold_from:"", sold_to:"", pending_only:false };
-  const [desde, hasta] = /^\d{4}-\d{2}-\d{2}~\d{4}-\d{2}-\d{2}$/.test(arg || "") ? arg.split("~") : ["", ""];
-  f.sold_from = desde; f.sold_to = hasta;
+  const f = { q:"", status:"", branch_id:"", sold_from:"", sold_to:"", pending_only:false, salesperson_id:"" };
+  // From Inicio: "2026-10-05~2026-10-05", and "~7" when it was one seller's bar.
+  const [, desde = "", hasta = "", quien = ""] = /^(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})(?:~(\d+))?$/.exec(arg || "") || [];
+  f.sold_from = desde; f.sold_to = hasta; f.salesperson_id = quien;
+  let vendedor = "";
+  if (quien) {
+    if (Number(quien) === state.user.id) vendedor = "Sólo tus ventas";
+    else {
+      const u = can("users:read") ? await api("GET", `/api/users/${quien}`).catch(() => null) : null;
+      vendedor = u ? `Sólo las de ${u.full_name}` : "Sólo las de un vendedor";
+    }
+  }
 
   n.innerHTML = `
     <div class="toolbar">
@@ -5551,6 +6170,7 @@ async function salesListTab(n, arg) {
       ${filterSelect(f, "status", ENUM_ES.sale_status, "Todos los estados")}
       ${filterSelect(f, "branch_id", bmap, "Todas las sucursales")}
       <label class="switch"><input type="checkbox" data-toggle="pending_only"> Sólo con saldo</label>
+      ${vendedor ? `<span class="fchip">${esc(vendedor)}<button type="button" data-unseller aria-label="Ver las de todos" title="Ver las de todos"><svg class="ic"><use href="#i-x"/></svg></button></span>` : ""}
     </div>
     <div class="toolbar" style="margin-top:-6px">
       <span class="fhelp">Vendidas entre</span>
@@ -5564,7 +6184,7 @@ async function salesListTab(n, arg) {
   const reload = () => resultsInto(body, "/api/sales", f, [
     { key:"number", label:"Número", mono:true },
     { key:"sold_at", label:"Fecha", type:"datetime" },
-    { key:"customer_id", label:"Cliente", render:(v)=>esc(v ? (cmap[v] || ("#"+v)) : "Consumidor final") },
+    { key:"customer_id", label:"Cliente", render:(v, r)=>esc(v ? (cmap[v] || r.customer_name || ("#"+v)) : "Consumidor final") },
     { key:"branch_id", label:"Sucursal", priority:3, render:(v)=>esc(v ? (bmap[v]||"—") : "—") },
     { key:"total", label:"Total", type:"money", align:"right" },
     { key:"paid_amount", label:"Abonado", type:"money", align:"right", priority:2 },
@@ -5579,6 +6199,8 @@ async function salesListTab(n, arg) {
   ], "Ninguna venta coincide con la búsqueda.", (row) => saleDetailModal(row.id, reload));
 
   wireFilters(n, f, reload);
+  const unseller = $("[data-unseller]", n);
+  if (unseller) unseller.addEventListener("click", () => { f.salesperson_id = ""; unseller.parentElement.remove(); reload(); });
   const nb = $("#newSale", n);
   if (nb) nb.addEventListener("click", () => newSaleModal(reload));
   reload();
@@ -5593,28 +6215,30 @@ async function pendingView(view) {
     can("customers:read") ? idMap("/api/customers", "id", customerLabel) : Promise.resolve({}),
     api("GET", "/api/sales/pending/summary"),
   ]);
-  const f = { pending_only: true, q:"", due_from:"", due_to:"", overdue_only:false };
+  const f = { pending_only: true, q:"", due_from:"", due_to:"", light:"" };
 
   // Whole pesos and the count on its own line, like the tiles on Inicio: a
   // six-figure balance with cents and a note beside it ran out of the card.
   const ventas = (n) => n === 1 ? "1 venta" : `${n} ventas`;
-  const stat = (label, value, sub, cls) =>
-    `<div class="stat"><div class="k">${esc(label)}</div>
-      <div class="v fit" ${cls ? `style="color:var(--${cls})"` : ""}>${esc(value)}</div>
-      ${sub ? `<div class="sub">${esc(sub)}</div>` : ""}</div>`;
+  // The tiles are the semáforo's legend and its filter: one shows only its
+  // colour, the total shows them all again.
+  const tile = (light, label, b) =>
+    `<button type="button" class="stat stat-btn" data-light="${light}" aria-pressed="false">
+      <div class="k">${light ? lightDot(light) : ""}${esc(label)}</div>
+      <div class="v fit">${esc(vzMoney(b.amount))}</div>
+      <div class="sub">${esc(light ? ventas(b.count) : `en ${ventas(b.count)}`)}</div></button>`;
 
   view.innerHTML = `
     <div class="page-head"><div><h2>Cuentas pendientes</h2>
       <div class="sub">Ventas con saldo, y el día que cada cliente prometió pagar</div></div></div>
-    <div class="stats">
-      ${stat("Total a cobrar", vzMoney(summary.total_pending), `en ${ventas(summary.count)}`)}
-      ${stat("Vencido", vzMoney(summary.overdue_amount), ventas(summary.overdue_count), summary.overdue_count ? "danger" : null)}
-      ${stat("Vence hoy", vzMoney(summary.due_today_amount), ventas(summary.due_today_count), summary.due_today_count ? "warn" : null)}
-      ${stat("Sin fecha", String(summary.undated_count), summary.undated_count === 1 ? "venta sin recordatorio" : "ventas sin recordatorio")}
+    <div class="stats stats-4">
+      ${tile("", "Total a cobrar", { amount: summary.total_pending, count: summary.count })}
+      ${tile("red", "Vencido", summary.lights.red)}
+      ${tile("yellow", "Por vencer o sin fecha", summary.lights.yellow)}
+      ${tile("green", "Al día", summary.lights.green)}
     </div>
     <div class="toolbar">
       ${searchBox("pq", "", "Buscar por cliente, número o nota…", "320px")}
-      <label class="switch"><input type="checkbox" data-toggle="overdue_only"> Sólo vencidas</label>
       <span class="fhelp">Prometido entre</span>
       <input class="inp-sm" type="date" data-filter="due_from" style="width:auto">
       <span class="fhelp">y</span>
@@ -5626,24 +6250,22 @@ async function pendingView(view) {
 
   const body = $("#pendBody", view);
   const reload = () => resultsInto(body, "/api/sales", f, [
+    lightCol((r) => [r.debt_light, r.promised_payment_date]),
     { key:"number", label:"Número", mono:true },
-    { key:"customer_id", label:"Cliente", render:(v)=>esc(v ? (cmap[v] || ("#"+v)) : "Consumidor final") },
+    { key:"customer_id", label:"Cliente", render:(v, r) =>
+        esc(v ? (cmap[v] || r.customer_name || ("#"+v)) : "Consumidor final") },
     { key:"sold_at", label:"Vendida", type:"date", priority:2 },
     { key:"total", label:"Total", type:"money", align:"right", priority:3 },
     { key:"paid_amount", label:"Abonado", type:"money", align:"right", priority:2 },
-    { key:"balance", label:"Debe", align:"right",
-      render:(v)=>`<b style="color:var(--danger)">${fmtMoney(v)}</b>` },
-    { key:"promised_payment_date", label:"Promete pagar", render:(v, r)=>{
-        const aviso = avisoHtml(r.last_payment_reminder);
-        if (!v) return `<span class="fhelp">sin fecha</span>${aviso}`;
-        const late = v < todayISO(), today = v === todayISO();
-        return `${fmtDate(v)} ${late ? badge("vencido","red") : today ? badge("hoy","amber") : ""}${aviso}`; } },
+    { key:"balance", label:"Debe", align:"right", render:(v)=>`<b>${fmtMoney(v)}</b>` },
+    { key:"promised_payment_date", label:"Promete pagar", render:(v, r) =>
+        `${v ? fmtDate(v) + " " : ""}${dueWhy(r.debt_light, v)}${avisoHtml(r.last_payment_reminder)}` },
     { key:"reminder_note", label:"Recordatorio", priority:2, trunc:true,
       render:(v)=>v ? `<span title="${esc(v)}">${esc(v)}</span>` : "—" },
   ], "Nada pendiente 👍", (row) => saleDetailModal(row.id, () => refreshAll()),
   can("sales:write") ? (r) => r.customer_id
     ? `<button class="btn sm" data-act="whatsapp" data-id="${r.id}"><svg class="ic"><use href="#i-message"/></svg>WhatsApp</button>` : ""
-    : null);
+    : null, { stack: true });
 
   async function refreshAll() { await pendingView(view); }
 
@@ -5653,6 +6275,17 @@ async function pendingView(view) {
     if (w) whatsappModal(Number(w.dataset.id), reload);
   });
   wireFilters(view, f, reload);
+  const tiles = $$("[data-light]", view);
+  const markTiles = () => tiles.forEach(t => {
+    const on = t.dataset.light === f.light;
+    t.classList.toggle("on", on); t.setAttribute("aria-pressed", on);
+  });
+  tiles.forEach(t => t.addEventListener("click", () => {
+    // A colour again, or the total: back to all of them.
+    f.light = t.dataset.light && t.dataset.light !== f.light ? t.dataset.light : "";
+    markTiles(); reload();
+  }));
+  markTiles();
   $("#dueToday", view).addEventListener("click", () => {
     f.due_from = f.due_to = todayISO();
     view.querySelector('[data-filter="due_from"]').value = f.due_from;
@@ -6121,8 +6754,19 @@ function customerFormModal(row, onSaved) {
 
 async function customersView(view) {
   const writable = can("customers:write");
-  let showInactive = false;
-  async function load() { paint(await api("GET", "/api/customers" + (showInactive ? "?include_inactive=true" : ""))); }
+  // What a customer owes is sales data: only whoever sees sales gets it.
+  const debts = can("sales:read");
+  let showInactive = false, owing = false;
+  async function load() {
+    const qs = new URLSearchParams();
+    if (showInactive) qs.set("include_inactive", "true");
+    if (owing) { qs.set("owing_only", "true"); qs.set("limit", "1000"); }
+    let list = await api("GET", "/api/customers" + (qs.toString() ? "?" + qs : ""));
+    // Con deuda reads as who to chase: the worst light first, then the most owed.
+    if (owing) list = list.slice().sort((a, b) =>
+      LIGHTS[a.debt.light].rank - LIGHTS[b.debt.light].rank || Number(b.debt.owed) - Number(a.debt.owed));
+    paint(list);
+  }
   const openForm = (mode, row) => customerFormModal(mode === "edit" ? row : null, load);
   function actions(r) {
     let h = `<button class="btn sm" onclick="location.hash='#/customers/${r.id}'"><svg class="ic"><use href="#i-eye"/></svg>Abrir</button>`;
@@ -6132,18 +6776,27 @@ async function customersView(view) {
   }
   function paint(list) {
     view.innerHTML = `
-      <div class="page-head"><div><h2>Clientes</h2><div class="sub">${list.length} cliente(s)</div></div>
+      <div class="page-head"><div><h2>Clientes</h2><div class="sub">${owing
+          ? `${list.length} con deuda, ${esc(vzMoney(list.reduce((t, c) => t + Number(c.debt.owed), 0)))} a cobrar`
+          : `${list.length} cliente(s)`}</div></div>
         ${writable ? `<button class="btn primary" id="newBtn">+ Nuevo cliente</button>` : ""}</div>
-      <div class="toolbar"><label class="switch"><input type="checkbox" id="inact" ${showInactive?"checked":""}> Ver inactivos</label></div>
+      <div class="toolbar"><label class="switch"><input type="checkbox" id="inact" ${showInactive?"checked":""}> Ver inactivos</label>
+        ${debts ? `<label class="switch"><input type="checkbox" id="owing" ${owing?"checked":""}> Con deuda</label>` : ""}</div>
       ${renderTable([
+        { ...lightCol((r) => r.debt ? [r.debt.light, r.debt.due] : [null, null]), when: () => debts },
         { key:"id", label:"ID" },
-        { key:"last_name", label:"Nombre", render:(v,r)=>esc(`${r.last_name}, ${r.first_name}`) },
+        { key:"last_name", label:"Nombre", render:(v,r) => esc(`${r.last_name}, ${r.first_name}`) },
+        { key:"debt", label:"Cuenta", when:() => debts, render:(v) => v ? debtWhy(v.light, v.due) : "-" },
+        { key:"debt", label:"Debe", align:"right", when:() => debts, render:(v) => v
+            ? `<b>${esc(vzMoney(v.owed))}</b>${v.count > 1 ? `<div class="fhelp">en ${v.count} ventas</div>` : ""}`
+            : "-" },
         { key:"document_number", label:"Documento", render:(v,r)=>esc(r.document_number?`${r.document_type||""} ${r.document_number}`.trim():"—") },
         { key:"phone", label:"Teléfono" }, { key:"email", label:"Email" },
         { key:"is_active", label:"Estado", type:"bool" },
       ], list, actions)}`;
     const nb = $("#newBtn", view); if (nb) nb.addEventListener("click", () => openForm("create"));
     $("#inact", view).addEventListener("change", e => { showInactive = e.target.checked; load(); });
+    $("#owing", view)?.addEventListener("change", e => { owing = e.target.checked; load(); });
     $$("[data-act]", view).forEach(b => b.addEventListener("click", async () => {
       const row = list.find(x => String(x.id) === b.dataset.id);
       if (b.dataset.act === "edit") openForm("edit", row);

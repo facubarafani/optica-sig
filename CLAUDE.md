@@ -186,6 +186,18 @@ not built yet.
     number without its area code is refused with the reason, never guessed.
     Sending on a schedule would need the WhatsApp Business API and a job
     runner; it is not built.
+21. **A debt's semáforo is read, never stored.** `services.sales.debt_light()`
+    decides it from the promised payment date and the shop's today: red once
+    the date has passed, yellow when it falls due within `DUE_SOON_DAYS` (7,
+    today included) or no date was agreed, green when it is further off. A
+    customer shows their worst debt (`customer_debts`). Sale list rows carry
+    `debt_light`, `GET /api/sales?light=` narrows to one colour, the pending
+    summary splits by it, and `/api/customers` rows carry `debt` only for
+    `sales:read` (what someone owes is sales data). The console only draws it,
+    as chosen on a design canvas among six variants: a big dot with a halo in
+    its own first column (`lightCol`, `lightDot`) and the reason in bold in the
+    light's colour (`debtWhy`, "Vencido hace 7 días"). Never re-derive the
+    rule in the browser.
 
 ## Web console (`app/web/index.html`)
 
@@ -198,11 +210,27 @@ conventions worth knowing before editing it:
   third-party dependency. To add an icon, paste one more `<symbol>` into the
   sprite.
 - **Table columns take a `priority`** (`2` or `3`). Priority 3 hides below
-  1460px of viewport, priority 2 below 1250px, so a wide grid degrades by
+  1680px of viewport, priority 2 below 1500px, so a wide grid degrades by
   showing fewer columns instead of scrolling sideways. Mark anything secondary;
   leave the identifying columns unmarked.
 - Row actions: keep at most two labelled buttons and put the rest in the `⋯`
   menu via `openRowMenu(anchor, items)`.
+- **Inicio comes in two, chosen by `reports:read`** (granted to Administrador,
+  never to Vendedor). The owner's (`ownerHome`) is the whole shop from
+  `GET /api/sales/stats`, which also carries the Vendedores table, branches and
+  product types (`sales_stats._breakdowns`); clicking a seller opens their
+  period exactly as they see it. A seller's (`sellerHome`) is their own debts
+  and presupuestos to chase plus `GET /api/sales/stats/mine`, where "cobrado"
+  is the money they took in at the counter, whoever made the sale. Shop-wide
+  totals never reach a seller's Inicio: a new owner-only figure goes into
+  `_breakdowns`, behind the same permission.
+- **A chart bar opens its sales beside Inicio, never away from it.**
+  `openDayPanel` lists that day (a month, from Año) in a side panel; ‹ › step
+  and Esc closes, so exploring days never reloads Inicio. Its "Abrir en
+  Ventas" first calls `rememberHome()`, which stores the scroll, the open
+  seller window and the panel on Inicio's own history entry
+  (`history.replaceState`): Back, the browser's or Ventas' "Volver a Inicio",
+  finds Inicio as it was left, and a fresh click on Inicio in the menu does not.
 - **The one file it loads besides itself:** the facturación guide's
   screenshots of ARCA's own screens, in `app/web/guia/` (served at
   `/app/guia/` by `main.py::guide_image`, which states `image/webp` because

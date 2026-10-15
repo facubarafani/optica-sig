@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from app.models.enums import DiscountType, PaymentMethod, ReminderTone, SaleStatus
+from app.models.enums import DebtLight, DiscountType, PaymentMethod, ReminderTone, SaleStatus
 from app.schemas.common import ORMBase, SoftDeleteRead
 from app.schemas.invoicing import InvoiceRead
 
@@ -249,6 +249,10 @@ class SaleListRead(ORMBase):
     sold_at: datetime
     customer_id: int | None = None
     branch_id: int | None = None
+    salesperson_id: int | None = None
+    # Named on the row, so a list never depends on a customer page of 100.
+    customer_name: str | None = None
+    salesperson_name: str | None = None
     total: Decimal
     paid_amount: Decimal
     balance: Decimal
@@ -256,8 +260,15 @@ class SaleListRead(ORMBase):
     reminder_note: str | None = None
     is_active: bool
     invoices: list[InvoiceRead] = Field(default_factory=list)
+    # The semáforo of what it still owes; None when it owes nothing.
+    debt_light: DebtLight | None = None
     # So a list of debts says who was already written to.
     last_payment_reminder: PaymentReminderRead | None = None
+
+
+class LightFigures(BaseModel):
+    amount: Decimal
+    count: int
 
 
 class PendingSummary(BaseModel):
@@ -269,6 +280,8 @@ class PendingSummary(BaseModel):
 
     count: int
     total_pending: Decimal
+    # The same debts by semáforo colour: red + yellow + green = total_pending.
+    lights: dict[DebtLight, "LightFigures"]
     overdue_amount: Decimal
     overdue_count: int
     due_today_amount: Decimal
@@ -360,6 +373,49 @@ class StatsProduct(BaseModel):
     variants: list[StatsVariant] = Field(default_factory=list)
 
 
+class StatsShare(BaseModel):
+    """One slice of the shop's period (a seller, a branch): its sales, its
+    part of the whole, and how it went against its own same stretch before."""
+
+    revenue: Decimal
+    count: int
+    average_ticket: Decimal
+    # Percent of the shop's revenue; None when the shop sold nothing.
+    share: Decimal | None = None
+    previous_revenue: Decimal
+    change: Decimal | None = None
+
+
+class StatsSeller(StatsShare):
+    # None gathers the sales nobody is named on.
+    user_id: int | None = None
+    name: str
+    is_active: bool = True
+    owed: Decimal
+    # Line and sale discounts, and their percent of the list price sold.
+    discount_amount: Decimal
+    discount_rate: Decimal | None = None
+    # Lines whose price was typed in instead of resolved.
+    price_overrides: int
+    cancelled: int
+    quotes: int
+    # Of those presupuestos, how many the customer went on to buy after.
+    quotes_won: int
+
+
+class StatsBranch(StatsShare):
+    branch_id: int | None = None
+    name: str
+
+
+class StatsProductType(BaseModel):
+    product_type_id: int | None = None
+    name: str
+    revenue: Decimal
+    quantity: Decimal
+    share: Decimal | None = None
+
+
 class SalesStats(StatsFigures):
     period: str
     start: date
@@ -371,3 +427,23 @@ class SalesStats(StatsFigures):
     series: list[StatsBucket]
     methods: list[StatsMethod]
     top_products: list[StatsProduct]
+    # The owner's breakdowns. Empty on a seller's own summary.
+    discount_rate: Decimal | None = None
+    sellers: list[StatsSeller] = Field(default_factory=list)
+    branches: list[StatsBranch] = Field(default_factory=list)
+    product_types: list[StatsProductType] = Field(default_factory=list)
+
+
+class OpenQuote(BaseModel):
+    """A presupuesto whose customer has not bought since: who to call, and
+    what it was for."""
+
+    id: int
+    number: str
+    sold_at: datetime
+    salesperson_id: int | None = None
+    total: Decimal
+    customer_id: int
+    customer_name: str
+    customer_phone: str | None = None
+    items: list[str] = Field(default_factory=list)

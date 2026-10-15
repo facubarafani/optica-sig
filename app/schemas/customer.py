@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, EmailStr, field_validator
 
-from app.models.enums import DocumentType, IvaCondition, TreatmentType
+from app.models.enums import DebtLight, DocumentType, IvaCondition, TreatmentType
 from app.schemas.common import ORMBase, SoftDeleteRead
 
 
@@ -60,6 +60,24 @@ class CustomerUpdate(BaseModel):
 
 class CustomerRead(SoftDeleteRead, CustomerBase):
     pass
+
+
+class CustomerDebt(BaseModel):
+    """What a customer owes, under the light of their worst debt.
+
+    ``due`` is that debt's promised date (the most overdue when red, the
+    soonest due otherwise), or None when it has none.
+    """
+
+    light: DebtLight
+    due: date | None = None
+    owed: Decimal
+    count: int
+
+
+class CustomerListRead(CustomerRead):
+    # Only for whoever may see sales; None also when nothing is owed.
+    debt: CustomerDebt | None = None
 
 
 # --- prescription ---------------------------------------------------------
