@@ -1,7 +1,7 @@
 """Ventas, their payments, and the accounts money lands in."""
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
@@ -11,10 +11,11 @@ from app.core.crud import CRUDBase
 from app.core.database import get_db
 from app.core.deps import get_company_id, require_permission
 from app.models.auth import User
-from app.models.enums import SaleStatus
+from app.models.enums import DebtLight, SaleStatus
 from app.models.sales import PaymentAccount
 from app.schemas.sales import (
     InstallmentRateIn,
+    OpenQuote,
     PaymentAccountCreate,
     PaymentAccountRead,
     PaymentAccountUpdate,
@@ -30,7 +31,7 @@ from app.schemas.sales import (
     SalesStats,
     SaleUpdate,
 )
-from app.services import invoicing, payment_reminders
+from app.services import clock, invoicing, payment_reminders
 from app.services import sales as sales_service
 from app.services import sales_stats
 
@@ -88,8 +89,10 @@ def list_sales(
     sale_status: SaleStatus | None = Query(None, alias="status"),
     customer_id: int | None = None,
     branch_id: int | None = None,
+    salesperson_id: int | None = None,
     pending_only: bool = False,
     overdue_only: bool = False,
+    light: DebtLight | None = None,
     due_from: date | None = None,
     due_to: date | None = None,
     sold_from: date | None = None,
@@ -100,10 +103,12 @@ def list_sales(
     _: object = Depends(require_permission("sales:read")),
 ):
     """``q`` matches the sale number, the customer (name or document) and the
-    reminder note, ignoring case and accents."""
+    reminder note, ignoring case and accents. ``light`` keeps the debts of one
+    semáforo colour (red, yellow, green)."""
     return sales_service.list_sales(
         db, company_id=company_id, q=q, status=sale_status, customer_id=customer_id,
-        branch_id=branch_id, pending_only=pending_only, overdue_only=overdue_only,
+        branch_id=branch_id, salesperson_id=salesperson_id,
+        pending_only=pending_only, overdue_only=overdue_only, light=light,
         due_from=due_from, due_to=due_to, sold_from=sold_from, sold_to=sold_to,
         limit=limit,
     )
@@ -119,16 +124,54 @@ def pending_summary(
     return sales_service.pending_summary(db, company_id=company_id)
 
 
+PERIOD = Query("month", pattern="^(day|week|month|year)$")
+
+
 @sales.get("/stats", response_model=SalesStats)
 def sales_summary(
-    period: str = Query("month", pattern="^(day|week|month|year)$"),
+    period: str = PERIOD,
+    salesperson_id: int | None = None,
+    db: Session = Depends(get_db),
+    company_id: int = Depends(get_company_id),
+    _: object = Depends(require_permission("reports:read")),
+):
+    """How the day, week, month or year is going, against the same stretch of
+    the one before, and how each seller, branch and product type did. Feeds
+    the owner's Inicio. ``salesperson_id`` narrows it to one seller, as they
+    see it themselves."""
+    return sales_stats.summary(
+        db, company_id=company_id, period=period, salesperson_id=salesperson_id
+    )
+
+
+@sales.get("/stats/mine", response_model=SalesStats)
+def my_sales_summary(
+    period: str = PERIOD,
+    db: Session = Depends(get_db),
+    company_id: int = Depends(get_company_id),
+    current_user: User = Depends(require_permission("sales:read")),
+):
+    """The caller's own period: what they sold and what they took in. Feeds a
+    seller's Inicio, which never shows the whole shop's figures."""
+    return sales_stats.summary(
+        db, company_id=company_id, period=period, salesperson_id=current_user.id
+    )
+
+
+@sales.get("/quotes/open", response_model=list[OpenQuote])
+def open_quotes(
+    salesperson_id: int | None = None,
+    days: int = Query(30, ge=1, le=365),
     db: Session = Depends(get_db),
     company_id: int = Depends(get_company_id),
     _: object = Depends(require_permission("sales:read")),
 ):
-    """How the day, week, month or year is going, against the same stretch of
-    the one before. Feeds the sales summary on Inicio."""
-    return sales_stats.summary(db, company_id=company_id, period=period)
+    """Presupuestos of the last ``days`` whose customer has not bought since:
+    the ones still worth a call."""
+    since = clock.today(db, company_id) - timedelta(days=days)
+    return sales_service.open_quotes(
+        db, company_id=company_id, since=since, salesperson_id=salesperson_id
+    )
 
 
 @sales.post("/preview", response_model=SalePreview)

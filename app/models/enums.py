@@ -103,6 +103,18 @@ class DiscountType(str, enum.Enum):
     PERCENT = "percent"           # porcentaje (%)
 
 
+class DebtLight(str, enum.Enum):
+    """The semáforo of a debt, read off its promised payment date
+    (``services.sales.debt_light``). A customer shows their worst one.
+
+    Never stored: it moves with the calendar, so it is worked out on read.
+    """
+
+    RED = "red"         # vencido: the promised date already passed
+    YELLOW = "yellow"   # due today or within the week, or no date agreed
+    GREEN = "green"     # al día: the promised date is more than a week away
+
+
 class ReminderTone(str, enum.Enum):
     """How a payment reminder by WhatsApp is worded (services.payment_reminders).
 

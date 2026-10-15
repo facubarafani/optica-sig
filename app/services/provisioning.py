@@ -67,6 +67,10 @@ PERMISSIONS: list[tuple[str, str]] = [
     ("customers:write", "Administrar clientes"),
     ("sales:read", "Ver ventas y cuentas pendientes"),
     ("sales:write", "Registrar ventas y pagos"),
+    # Whoever holds it opens on the owner's Inicio: how the whole shop is
+    # selling and how each seller is doing. Without it, Inicio shows the
+    # user's own sales and what they have to chase.
+    ("reports:read", "Ver el rendimiento del negocio y de cada vendedor"),
 ]
 
 SALESPERSON_PERMS = {

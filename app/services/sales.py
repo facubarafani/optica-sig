@@ -25,14 +25,14 @@ from __future__ import annotations
 from datetime import date, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
-from sqlalchemy import or_, select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy import and_, exists, or_, select
+from sqlalchemy.orm import Session, aliased, selectinload
 
 from app.core import search
 from app.models.branch import Branch
 from app.models.company import CompanySettings
 from app.models.customer import Customer
-from app.models.enums import DiscountType, PaymentMethod, SaleStatus, StockMovementType
+from app.models.enums import DebtLight, DiscountType, PaymentMethod, SaleStatus, StockMovementType
 from app.models.product import Product
 from app.models.sales import InstallmentRate, PaymentAccount, Sale, SaleItem, SalePayment
 from app.schemas.sales import (
@@ -59,6 +59,95 @@ class SaleError(Exception):
 # A sale only owes money once it is real. A presupuesto has not been agreed to
 # and an anulada has been undone, so neither is a cuenta pendiente.
 NON_DEBT_STATUSES = (SaleStatus.QUOTE, SaleStatus.CANCELLED)
+
+
+# --- the semáforo of a debt -------------------------------------------------
+
+# Yellow reaches this far ahead: what falls due this week needs attention now.
+DUE_SOON_DAYS = 7
+_LIGHT_RANK = {DebtLight.RED: 0, DebtLight.YELLOW: 1, DebtLight.GREEN: 2}
+
+
+def debt_light(promised: date | None, today: date) -> DebtLight:
+    """Red once the promised date has passed; yellow when it falls due this
+    week (today included) or nobody agreed one; green when it is further off."""
+    if promised is None:
+        return DebtLight.YELLOW
+    if promised < today:
+        return DebtLight.RED
+    if promised <= today + timedelta(days=DUE_SOON_DAYS):
+        return DebtLight.YELLOW
+    return DebtLight.GREEN
+
+
+def _owes():
+    """A sale that is a debt: real, and with money still to come."""
+    return (Sale.balance > 0, Sale.status.not_in(NON_DEBT_STATUSES), Sale.is_active.is_(True))
+
+
+def _light_where(light: DebtLight, today: date):
+    """``debt_light`` as SQL, so a list can be narrowed to one colour."""
+    promised = Sale.promised_payment_date
+    if light is DebtLight.RED:
+        return promised < today
+    soon = today + timedelta(days=DUE_SOON_DAYS)
+    if light is DebtLight.YELLOW:
+        return or_(promised.is_(None), and_(promised >= today, promised <= soon))
+    return promised > soon
+
+
+def customer_debts(
+    db: Session, *, company_id: int, customer_ids: list[int] | None = None
+) -> dict[int, dict]:
+    """What each customer owes, and their light: the worst of their debts.
+
+    The debt that decides it also gives the date shown beside the light: the
+    most overdue when red, the soonest due otherwise (a dated one before one
+    with no date, which says less).
+    """
+    today = clock.today(db, company_id)
+    stmt = select(Sale.customer_id, Sale.balance, Sale.promised_payment_date).where(
+        Sale.company_id == company_id, Sale.customer_id.is_not(None), *_owes())
+    if customer_ids is not None:
+        stmt = stmt.where(Sale.customer_id.in_(customer_ids))
+    debts: dict[int, dict] = {}
+    for customer_id, balance, promised in db.execute(stmt):
+        light = debt_light(promised, today)
+        key = (_LIGHT_RANK[light], promised or date.max)
+        d = debts.setdefault(customer_id, {"owed": ZERO, "count": 0, "key": key,
+                                           "light": light, "due": promised})
+        d["owed"] += Decimal(balance)
+        d["count"] += 1
+        if key < d["key"]:
+            d.update(key=key, light=light, due=promised)
+    return {
+        cid: {"light": d["light"], "due": d["due"], "owed": money(d["owed"]), "count": d["count"]}
+        for cid, d in debts.items()
+    }
+
+
+def owing_customer_ids(company_id: int):
+    """The customers with a debt, as a subquery a customer list can filter on."""
+    return select(Sale.customer_id).where(
+        Sale.company_id == company_id, Sale.customer_id.is_not(None), *_owes())
+
+
+def quote_followed():
+    """True for a presupuesto its customer went on to buy after.
+
+    A presupuesto is never turned into the sale itself (the sale is rung up
+    afresh), so what links them is the customer: a real sale of theirs at or
+    after the presupuesto counts, whatever it sold. Without a customer there is
+    nobody to have bought, so it is never followed.
+    """
+    later = aliased(Sale)
+    return exists().where(
+        later.company_id == Sale.company_id,
+        later.customer_id == Sale.customer_id,
+        later.status.not_in(NON_DEBT_STATUSES),
+        later.is_active.is_(True),
+        later.sold_at >= Sale.sold_at,
+    )
 
 
 def money(value: Decimal | int | float | None) -> Decimal:
@@ -549,8 +638,10 @@ def list_sales(
     status: SaleStatus | None = None,
     customer_id: int | None = None,
     branch_id: int | None = None,
+    salesperson_id: int | None = None,
     pending_only: bool = False,
     overdue_only: bool = False,
+    light: DebtLight | None = None,
     due_from: date | None = None,
     due_to: date | None = None,
     sold_from: date | None = None,
@@ -564,7 +655,8 @@ def list_sales(
     """
     stmt = (
         select(Sale)
-        .options(selectinload(Sale.items), selectinload(Sale.payments))
+        .options(selectinload(Sale.items), selectinload(Sale.payments),
+                 selectinload(Sale.customer), selectinload(Sale.salesperson))
         .where(Sale.company_id == company_id)
     )
     if status is not None:
@@ -573,6 +665,8 @@ def list_sales(
         stmt = stmt.where(Sale.customer_id == customer_id)
     if branch_id is not None:
         stmt = stmt.where(Sale.branch_id == branch_id)
+    if salesperson_id is not None:
+        stmt = stmt.where(Sale.salesperson_id == salesperson_id)
     if pending_only:
         # Quotes and cancelled sales owe nothing, whatever their balance says.
         stmt = stmt.where(
@@ -585,6 +679,8 @@ def list_sales(
             Sale.promised_payment_date.is_not(None),
             Sale.promised_payment_date < clock.today(db, company_id),
         )
+    if light is not None:
+        stmt = stmt.where(*_owes(), _light_where(light, clock.today(db, company_id)))
     if due_from is not None:
         stmt = stmt.where(Sale.promised_payment_date >= due_from)
     if due_to is not None:
@@ -610,7 +706,48 @@ def list_sales(
         ))
 
     stmt = stmt.order_by(Sale.sold_at.desc(), Sale.id.desc()).limit(limit)
-    return list(db.execute(stmt).unique().scalars().all())
+    sales = list(db.execute(stmt).unique().scalars().all())
+    # Each debt carries its light. Not a column: it moves with the calendar.
+    today = clock.today(db, company_id)
+    for sale in sales:
+        owes = Decimal(sale.balance) > 0 and sale.status not in NON_DEBT_STATUSES
+        sale.debt_light = debt_light(sale.promised_payment_date, today) if owes else None
+    return sales
+
+
+def open_quotes(
+    db: Session, *, company_id: int, since: date, salesperson_id: int | None = None
+) -> list[dict]:
+    """Presupuestos still worth a call: made since ``since`` to a customer who
+    has bought nothing since (``quote_followed``). Newest first, each with who
+    to call and what it was for."""
+    tz = clock.company_zone(db, company_id)
+    stmt = (
+        select(Sale, Customer)
+        .join(Customer, Customer.id == Sale.customer_id)
+        .options(selectinload(Sale.items))
+        .where(
+            Sale.company_id == company_id,
+            Sale.is_active.is_(True),
+            Sale.status == SaleStatus.QUOTE,
+            Sale.sold_at >= clock.day_start(since, tz),
+            ~quote_followed(),
+        )
+    )
+    if salesperson_id is not None:
+        stmt = stmt.where(Sale.salesperson_id == salesperson_id)
+    stmt = stmt.order_by(Sale.sold_at.desc(), Sale.id.desc())
+    return [
+        {
+            "id": sale.id, "number": sale.number, "sold_at": sale.sold_at,
+            "salesperson_id": sale.salesperson_id, "total": sale.total,
+            "customer_id": customer.id,
+            "customer_name": f"{customer.last_name}, {customer.first_name}",
+            "customer_phone": customer.phone,
+            "items": [item.product_description or item.product_code or "" for item in sale.items],
+        }
+        for sale, customer in db.execute(stmt).unique().all()
+    ]
 
 
 def get_sale(db: Session, sale_id: int, *, company_id: int) -> Sale | None:
@@ -638,7 +775,14 @@ def pending_summary(db: Session, *, company_id: int) -> dict:
     due_today = money(sum(
         (Decimal(r[0]) for r in rows if r[1] == today), ZERO
     ))
+    lights = {light: {"amount": ZERO, "count": 0} for light in DebtLight}
+    for balance, promised in rows:
+        bucket = lights[debt_light(promised, today)]
+        bucket["amount"] += Decimal(balance)
+        bucket["count"] += 1
     return {
+        "lights": {light: {"amount": money(b["amount"]), "count": b["count"]}
+                   for light, b in lights.items()},
         "count": len(rows),
         "total_pending": total,
         "overdue_amount": overdue,
@@ -652,5 +796,6 @@ def pending_summary(db: Session, *, company_id: int) -> dict:
 __all__ = [
     "SaleError", "money", "discount_amount", "preview", "create_sale",
     "add_payment", "cancel_sale", "payment_surcharge", "set_installment_rates", "list_sales", "get_sale", "pending_summary",
+    "open_quotes", "quote_followed", "debt_light", "customer_debts", "owing_customer_ids",
     "PaymentMethod",
 ]
