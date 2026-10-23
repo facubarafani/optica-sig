@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.concurrency import run_in_threadpool
+from python_multipart.exceptions import MultipartParseError
 from sqlalchemy.orm import Session
 from starlette.datastructures import UploadFile
 
@@ -79,7 +80,7 @@ def handoff_photo(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Todavía no llegó la foto.")
     return Response(
         content=row.photo, media_type=row.photo_type,
-        headers={"Cache-Control": "no-store"},
+        headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"},
     )
 
 
@@ -129,7 +130,10 @@ async def upload_photo(request: Request, db: Session = Depends(get_db)) -> dict[
         if len(body) > cap:
             raise too_big
     request._body = bytes(body)  # form() reads it from Starlette's own cache
-    form = await request.form(max_files=1, max_fields=2)
+    try:
+        form = await request.form(max_files=1, max_fields=2)
+    except MultipartParseError:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Falta la foto o el código.")
     try:
         token, photo = form.get("token"), form.get("photo")
         if not isinstance(token, str) or not isinstance(photo, UploadFile):

@@ -1469,7 +1469,8 @@ async function api(method, path, body) {
   const txt = await res.text();
   let data = null;
   if (txt) { try { data = JSON.parse(txt); } catch { data = txt; } }
-  if (!res.ok) throw new Error(errMsg(data, res.status));
+  // The status rides along, so a caller can tell "gone" from "offline".
+  if (!res.ok) throw Object.assign(new Error(errMsg(data, res.status)), { status: res.status });
   return data;
 }
 
@@ -1496,7 +1497,11 @@ async function apiBlob(path) {
   if (state.token) headers["Authorization"] = "Bearer " + state.token;
   const res = await fetch(path, { headers });
   if (res.status === 401) { logout(); throw new Error("La sesión expiró. Iniciá sesión de nuevo."); }
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) {
+    let data = null;
+    try { data = await res.json(); } catch {}
+    throw Object.assign(new Error(errMsg(data, res.status)), { status: res.status });
+  }
   return res.blob();
 }
 
@@ -7245,7 +7250,11 @@ function recetaFoto(st, onCambio) {
       if (!document.body.contains(box)) return soltar();
       let s;
       try { s = await api("GET", `/api/handoffs/${handoff.id}`); }
-      catch { return esperar(); }   // un corte de red no termina la espera
+      catch (e) {
+        // Ya no existe (pasó la media hora, o se borró): hace falta otro código.
+        if (e.status === 404) { vencido = true; return pintar(); }
+        return esperar();         // un corte de red no termina la espera
+      }
       if (!handoff) return;
       if (s.status === "received") return traer();
       if (s.status === "expired") { vencido = true; return pintar(); }
@@ -7257,6 +7266,7 @@ function recetaFoto(st, onCambio) {
     let blob;
     try { blob = await apiBlob(`/api/handoffs/${h.id}/photo`); }
     catch (e) {
+      if (e.status === 410 || e.status === 404) { vencido = true; return pintar(); }
       if (!avisado) toast(e.message || "No se pudo traer la foto.", "err");
       avisado = true;
       return esperar();
@@ -7375,7 +7385,7 @@ async function customersView(view) {
         { key:"debt", label:"Debe", align:"right", when:() => debts, render:(v) => v
             ? `<b>${esc(vzMoney(v.owed))}</b>${v.count > 1 ? `<div class="fhelp">en ${v.count} ventas</div>` : ""}`
             : "-" },
-        { key:"document_number", label:"Documento", priority:2, render:(v,r)=>esc(r.document_number?`${r.document_type||""} ${r.document_number}`.trim():"—") },
+        { key:"document_number", label:"Documento", priority:2, render:(v,r)=>esc(r.document_number?`${r.document_type||""} ${r.document_number}`.trim():"-") },
         { key:"phone", label:"Teléfono" }, { key:"email", label:"Email", priority:2 },
         { key:"is_active", label:"Estado", type:"bool", priority:3 },
       ], list, actions)}`;

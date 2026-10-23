@@ -54,6 +54,7 @@ def test_photo_goes_from_phone_to_pc_and_then_is_gone(client, auth_headers, db):
     assert photo.content == JPEG
     assert photo.headers["content-type"] == "image/jpeg"
     assert photo.headers["cache-control"] == "no-store"
+    assert photo.headers["x-content-type-options"] == "nosniff"
 
     # The PC has the photo, so the row goes with it.
     assert client.delete(f"/api/handoffs/{h['id']}", headers=auth_headers).status_code == 204
@@ -239,6 +240,7 @@ def test_a_short_window_does_not_reset_a_long_one(monkeypatch):
 
     now = [10_000.0]
     monkeypatch.setattr(ratelimit.time, "monotonic", lambda: now[0])
+    monkeypatch.setattr(ratelimit, "_last_sweep", 0.0)   # whatever ran before
     for _ in range(5):
         assert ratelimit.hit("forgot:x", limit=5, window_seconds=3600)
     assert not ratelimit.hit("forgot:x", limit=5, window_seconds=3600)
@@ -246,3 +248,68 @@ def test_a_short_window_does_not_reset_a_long_one(monkeypatch):
     now[0] += 601          # past the upload window, well inside the hour
     assert ratelimit.hit("handoff-upload:1.2.3.4", limit=20, window_seconds=600)
     assert not ratelimit.hit("forgot:x", limit=5, window_seconds=3600)
+
+
+def _run_sweeper(monkeypatch, left):
+    """Run sweep_forever for five ticks; ``left`` is what each sweep finds."""
+    import asyncio
+
+    import pytest
+
+    calls, ticks = [], []
+
+    def sweep_once(*args, **kwargs):
+        calls.append(1)
+        return left.pop(0) if left else 0
+
+    async def sleep(seconds):
+        ticks.append(seconds)
+        if len(ticks) >= 5:
+            raise asyncio.CancelledError
+
+    monkeypatch.setattr(handoffs, "sweep_once", sweep_once)
+    monkeypatch.setattr(handoffs.asyncio, "sleep", sleep)
+    monkeypatch.setattr(handoffs, "_pending", False)
+    with pytest.raises(asyncio.CancelledError):
+        asyncio.run(handoffs.sweep_forever())
+    return len(calls)
+
+
+def test_an_idle_sweeper_stays_off_the_database(monkeypatch):
+    """Nothing pending, nothing queried after startup: an app kept warm must
+    not keep the database from scaling to zero."""
+    assert _run_sweeper(monkeypatch, [0]) == 1
+
+
+def test_a_pending_photo_keeps_the_sweeper_going_until_none_is_left(monkeypatch):
+    assert _run_sweeper(monkeypatch, [2, 1, 0]) == 3
+
+
+def test_handing_out_a_code_wakes_the_sweeper(client, auth_headers, monkeypatch):
+    monkeypatch.setattr(handoffs, "_pending", False)
+    _create(client, auth_headers)
+    assert handoffs._pending is True
+
+
+def test_the_app_starts_the_sweeper(monkeypatch):
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    started = []
+
+    async def sweeper():
+        started.append(True)
+
+    monkeypatch.setattr(handoffs, "sweep_forever", sweeper)
+    with TestClient(app) as c:
+        c.get("/health")
+    assert started == [True]
+
+
+def test_a_malformed_body_is_a_400_not_a_500(client):
+    resp = client.post(
+        "/api/handoffs/upload", content=b"--x\r\nnot a header line\r\n\r\n--x--",
+        headers={"Content-Type": "multipart/form-data; boundary=x"},
+    )
+    assert resp.status_code == 400

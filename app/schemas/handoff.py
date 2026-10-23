@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
-
 from pydantic import BaseModel
+
+from app.models.enums import HandoffStatus
 
 
 class HandoffCreated(BaseModel):
@@ -15,5 +15,5 @@ class HandoffCreated(BaseModel):
 
 
 class HandoffState(BaseModel):
-    status: Literal["waiting", "received", "expired"]
+    status: HandoffStatus
     expires_at: datetime

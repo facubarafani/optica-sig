@@ -28,12 +28,13 @@ from datetime import datetime, timedelta, timezone
 from urllib.parse import quote, urlsplit, urlunsplit
 
 import segno
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import SessionLocal
 from app.models.company import Company
+from app.models.enums import HandoffStatus
 from app.models.handoff import PhotoHandoff
 
 logger = logging.getLogger("app.handoffs")
@@ -42,6 +43,12 @@ TOKEN_BYTES = 32
 TTL_MINUTES = 10
 RETENTION_MINUTES = 30
 SWEEP_MINUTES = 5
+
+# Whether this process may have a photo left behind: set when it hands out a
+# code, cleared when a sweep finds none left. While it is clear the periodic
+# sweep stays off the database, so an idle app (kept warm by a ping, or on a
+# plan that never sleeps) does not keep Neon from scaling to zero.
+_pending = False
 # A phone photo shrunk by the page is a few hundred KB; this leaves room for a
 # browser that sends the original.
 MAX_PHOTO_BYTES = 8 * 1024 * 1024
@@ -81,6 +88,8 @@ def _sniff(data: bytes) -> str | None:
 
 def create(db: Session, *, company_id: int, user_id: int) -> tuple[PhotoHandoff, str]:
     """A new handoff and its raw token, which goes in the QR and nowhere else."""
+    global _pending
+    _pending = True
     sweep(db)
     raw = secrets.token_urlsafe(TOKEN_BYTES)
     row = PhotoHandoff(
@@ -107,17 +116,17 @@ def past_retention(row: PhotoHandoff) -> bool:
     return _aware(row.created_at) < _now() - timedelta(minutes=RETENTION_MINUTES)
 
 
-def state(row: PhotoHandoff) -> str:
+def state(row: PhotoHandoff) -> HandoffStatus:
     """waiting, received or expired. A photo that arrived in time stays
     fetchable after the upload window closes, until the PC deletes it or it
     is RETENTION_MINUTES old, whichever comes first."""
     if past_retention(row):
-        return "expired"
+        return HandoffStatus.EXPIRED
     if row.received_at is not None:
-        return "received"
+        return HandoffStatus.RECEIVED
     if _aware(row.expires_at) < _now():
-        return "expired"
-    return "waiting"
+        return HandoffStatus.EXPIRED
+    return HandoffStatus.WAITING
 
 
 def receive(db: Session, raw_token: str, data: bytes) -> PhotoHandoff:
@@ -174,24 +183,31 @@ def sweep(db: Session) -> None:
     db.execute(delete(PhotoHandoff).where(PhotoHandoff.created_at < cutoff))
 
 
-def sweep_once(session_factory=SessionLocal) -> None:
+def sweep_once(session_factory=SessionLocal) -> int:
+    """Sweep, and say how many handoffs are still on their way (any shop)."""
     db = session_factory()
     try:
         sweep(db)
         db.commit()
+        return db.scalar(select(func.count()).select_from(PhotoHandoff)) or 0
     finally:
         db.close()
 
 
 async def sweep_forever() -> None:
-    """Sweep at startup and every SWEEP_MINUTES while the app runs, so a
-    left-behind photo does not wait for the next QR anyone asks for. While the
-    instance sleeps nothing runs; startup catches up when it wakes."""
+    """Sweep at startup, then every SWEEP_MINUTES while a photo may still be
+    on the server, so one left behind does not wait for the next QR anyone
+    asks for. With none pending it does not query at all. While the instance
+    sleeps nothing runs; startup catches up when it wakes."""
+    global _pending
+    first = True
     while True:
-        try:
-            await asyncio.to_thread(sweep_once)
-        except Exception:  # one failed sweep must not stop the next ones
-            logger.exception("Photo handoff sweep failed")
+        if first or _pending:
+            try:
+                _pending = await asyncio.to_thread(sweep_once) > 0
+            except Exception:  # one failed sweep must not stop the next ones
+                logger.exception("Photo handoff sweep failed")
+        first = False
         await asyncio.sleep(SWEEP_MINUTES * 60)
 
 

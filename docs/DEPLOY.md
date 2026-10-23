@@ -72,7 +72,10 @@ Create. The container migrates the DB, seeds demo data, then serves on Render's
 
 **Quirk:** Render's *free* web service sleeps after ~15 min idle → first hit after
 a quiet spell takes ~30–60 s to wake. Fine for a demo; warm it up before a
-meeting, or keep it awake with a free UptimeRobot ping every ~10 min.
+meeting, or keep it awake with a free UptimeRobot ping every ~10 min. Keeping
+it awake does not keep Neon awake: the app's one background task (the
+receta-photo sweeper, `services/handoffs.py`) queries the database only while a
+phone photo may still be pending, and `/health` does not touch it.
 
 ---
 

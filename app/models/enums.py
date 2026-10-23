@@ -103,6 +103,15 @@ class DiscountType(str, enum.Enum):
     PERCENT = "percent"           # porcentaje (%)
 
 
+class HandoffStatus(str, enum.Enum):
+    """Where a phone-to-PC photo is (``services.handoffs.state``). Never
+    stored: worked out from the row's times on every read."""
+
+    WAITING = "waiting"
+    RECEIVED = "received"
+    EXPIRED = "expired"
+
+
 class DebtLight(str, enum.Enum):
     """The semáforo of a debt, read off its promised payment date
     (``services.sales.debt_light``). A customer shows their worst one.
