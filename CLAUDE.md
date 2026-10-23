@@ -360,11 +360,15 @@ address itself is in the two `mailto:` links.
   so the account exists but nothing opens it until the link is used. Prefer this
   over choosing a credential for a customer.
 - **A logged-in user changes their own password** at
-  `POST /api/auth/change-password`. It wants the current one, is refused in a
-  support session (a token carrying `impersonated_by`: the provider may act as
-  a user, never take the account over) and is rate limited per user, so a
-  stolen session cannot guess the current password. A wrong current password
-  is a 400, never a 401, which the console would read as an expired session.
+  `POST /api/auth/change-password`. It wants the current one and is rate
+  limited per user, so a stolen session cannot guess it. A wrong current
+  password is a 400, never a 401, which the console would read as an expired
+  session. **A support session sets no passwords**: not through that route,
+  and not through Usuarios y roles, where it cannot create users either (a
+  login made there would outlive the session). `deps.in_support_session` reads
+  the token's `impersonated_by`. The provider's own reset in `/admin`, audited,
+  is the one way it touches a password. A change does not end sessions already
+  open (tokens are not revoked).
 
 See `docs/EMAIL.md` for provider setup and the DNS records a real domain needs.
 

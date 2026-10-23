@@ -8,8 +8,8 @@ from sqlalchemy.orm import Session
 
 from app.core import ratelimit
 from app.core.database import get_db
-from app.core.deps import get_current_user, oauth2_scheme
-from app.core.security import SCOPE_TENANT, create_access_token, decode_access_token
+from app.core.deps import get_current_user, in_support_session
+from app.core.security import SCOPE_TENANT, create_access_token
 from app.models.auth import User
 from app.schemas.auth import (
     CompanyChoice,
@@ -107,7 +107,7 @@ def me(current_user: User = Depends(get_current_user)) -> User:
 @router.post("/change-password", status_code=status.HTTP_204_NO_CONTENT)
 def change_password(
     payload: PasswordChange,
-    token: str = Depends(oauth2_scheme),
+    support: bool = Depends(in_support_session),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -117,7 +117,7 @@ def change_password(
     look and fix, never take the account over, so it is refused here. The
     limit is per user, so a stolen session cannot guess the current password.
     """
-    if (decode_access_token(token) or {}).get("impersonated_by"):
+    if support:
         raise HTTPException(
             status.HTTP_403_FORBIDDEN,
             "En una sesión de soporte no se puede cambiar la contraseña de la cuenta.",

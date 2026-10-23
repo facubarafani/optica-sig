@@ -650,9 +650,10 @@
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:1180px}
   /* tabs */
   /* On a phone the tabs scroll inside their own strip instead of widening the page. */
-  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:18px;overflow-x:auto}
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:18px;overflow-x:auto;flex-shrink:0}
   .tabs button{flex:0 0 auto;background:none;border:0;border-bottom:2px solid transparent;padding:9px 14px;font-weight:600;color:var(--muted);cursor:pointer;font-size:13.5px}
   .tabs button.active{color:var(--primary);border-bottom-color:var(--primary)}
+  @media (max-width: 600px){ .tabs{gap:0} .tabs button{padding:9px 8px;font-size:13px} }
   /* modal */
   .overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);display:grid;grid-template-columns:minmax(0,1fr);justify-items:center;align-items:center;padding:20px;z-index:50;animation:fade .12s ease}
   @keyframes fade{from{opacity:0}to{opacity:1}}
@@ -1868,11 +1869,13 @@ function roleLabel(u) {
    tampoco lo deja). */
 function openUserMenu(anchor) {
   const u = state.user;
-  const menu = el(`<div class="rowmenu usermenu" role="menu" aria-label="Tu cuenta">
+  const pop = el(`<div class="rowmenu usermenu">
     <div class="um-head"><b>${esc(u.full_name || u.email)}</b>
       <div class="fhelp">${esc(u.email)}</div>
       <div class="um-role">${(u.roles || []).map(r => badge(r.name, "blue")).join("")}
-        ${u.is_superuser ? `<span class="fhelp">Todos los permisos</span>` : ""}</div></div></div>`);
+        ${u.is_superuser ? `<span class="fhelp">Todos los permisos</span>` : ""}</div></div>
+    <div role="menu" aria-label="Tu cuenta"></div></div>`);
+  const menu = $('[role="menu"]', pop);
   let close = () => {};
   const item = (icon, label, run) => {
     const b = el(`<button type="button" role="menuitem"><svg class="ic"><use href="#${icon}"/></svg><span class="lbl">${esc(label)}</span></button>`);
@@ -1881,14 +1884,42 @@ function openUserMenu(anchor) {
   };
   if (can("users:read")) item("i-shield", "Usuarios y roles", () => { location.hash = "#/users"; });
   if (!tokenClaims().impersonated_by) item("i-lock", "Cambiar contraseña", passwordModal);
-  menu.appendChild(el(`<div class="sep"></div>`));
+  menu.appendChild(el(`<div class="sep" role="separator"></div>`));
   item("i-logout", "Salir", logout);
-  close = openPopover(anchor, menu) || close;
+  // A menu button: focus goes into the menu and the arrows move; Esc brings
+  // it back to the button, and Tab closes the menu and moves on.
+  const items = [...menu.querySelectorAll('[role="menuitem"]')];
+  menu.addEventListener("keydown", (e) => {
+    const i = items.indexOf(document.activeElement);
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      items[(i + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length].focus();
+    } else if (e.key === "Home" || e.key === "End") {
+      e.preventDefault();
+      items[e.key === "Home" ? 0 : items.length - 1].focus();
+    } else if (e.key === "Tab") close();
+  });
+  const opened = openPopover(anchor, pop, { onClose: (hadFocus) => {
+    anchor.setAttribute("aria-expanded", "false");
+    if (hadFocus) anchor.focus();
+  } });
+  if (!opened) return;            // that click closed it
+  close = opened;
+  anchor.setAttribute("aria-expanded", "true");
+  items[0].focus();
 }
 
 function passwordModal() {
   formModal({
     title: "Cambiar contraseña", confirmLabel: "Cambiar",
+    onReady: (form) => {
+      const current = form.querySelector('[name="current_password"]');
+      current.autocomplete = "current-password";
+      for (const name of ["new_password", "repeat"])
+        form.querySelector(`[name="${name}"]`).autocomplete = "new-password";
+      // Opened from the menu by keyboard, focus would stay behind the overlay.
+      setTimeout(() => current.focus(), 0);
+    },
     fields: [
       { key:"current_password", label:"Contraseña actual", type:"password", required:true },
       { key:"new_password", label:"Contraseña nueva", type:"password", required:true, help:"Al menos 8 caracteres." },
@@ -1935,7 +1966,8 @@ function renderApp() {
             </div>
           </div>
           <div class="who">
-            <button type="button" class="userbtn" id="userBtn" aria-haspopup="menu" title="Tu cuenta">
+            <button type="button" class="userbtn" id="userBtn" aria-haspopup="menu" aria-expanded="false"
+              title="Tu cuenta" aria-label="${esc(`Tu cuenta: ${u.full_name || u.email}, ${roleLabel(u)}`)}">
               <span class="who-txt"><b>${esc(u.full_name || u.email)}</b><small>${esc(roleLabel(u))}</small></span>
               <span class="avatar">${esc(initials)}</span>
               <svg class="ic"><use href="#i-chevron-down"/></svg>
@@ -1996,6 +2028,8 @@ async function route() {
   const hash = location.hash.slice(1) || "/dashboard";
   const [section, arg] = hash.split("/").filter(Boolean);
   const sec = section || "dashboard";
+  // Catálogo became Productos' tabs; an old link or bookmark still lands.
+  if (sec === "catalog") { location.replace("#/products/types"); return; }
   highlightNav(sec);
   const actual = ++navegacion;
   const view = el(`<div id="view"></div>`);
@@ -2007,8 +2041,6 @@ async function route() {
     switch (sec) {
       case "dashboard": await dashboardView(view); break;
       case "products":  await productsView(view, arg); break;
-      // Catálogo became Productos' tabs; an old link or bookmark still lands.
-      case "catalog":   location.replace("#/products/types"); return;
       case "pricing":   await pricingView(view); break;
       case "stock":     await stockView(view); break;
       case "sales":     await salesView(view, arg); break;
@@ -2427,7 +2459,7 @@ function openRowMenu(anchor, items) {
    function, or null when the call was that closing toggle.
    `side` opens it beside the trigger instead of below, for triggers stacked in
    a column: below, it would cover the next row's trigger. */
-function openPopover(anchor, node, { side = false } = {}) {
+function openPopover(anchor, node, { side = false, onClose } = {}) {
   const existing = document.querySelector(".popover");
   if (existing) {
     existing._close();
@@ -2457,10 +2489,12 @@ function openPopover(anchor, node, { side = false } = {}) {
   const onOut = (e) => { if (!node.contains(e.target) && !anchor.contains(e.target)) close(); };
   const onKey = (e) => { if (e.key === "Escape") close(); };
   const close = () => {
+    const hadFocus = node.contains(document.activeElement);
     node.remove();
     document.removeEventListener("mousedown", onOut, true);
     document.removeEventListener("keydown", onKey, true);
     window.removeEventListener("scroll", close, true);
+    if (onClose) onClose(hadFocus);
   };
   node._close = close;
   setTimeout(() => {
@@ -4412,17 +4446,30 @@ const PRODUCT_TABS = [
   { key:"colors", label:"Colores", cfg:"colors" },
 ];
 function productTabsHtml(active) {
-  return `<div class="tabs" role="tablist">${PRODUCT_TABS.map(t =>
-    `<button type="button" role="tab" data-ptab="${t.key}" aria-selected="${t.key === active}"
-      class="${t.key === active ? "active" : ""}">${esc(t.label)}</button>`).join("")}</div>`;
+  return `<nav class="tabs" aria-label="Secciones de Productos">${PRODUCT_TABS.map(t =>
+    `<button type="button" data-ptab="${t.key}" ${t.key === active ? 'aria-current="page"' : ""}
+      class="${t.key === active ? "active" : ""}">${esc(t.label)}</button>`).join("")}</nav>`;
 }
+let refocusProductTab = false;
 function wireProductTabs(root) {
   $$("[data-ptab]", root).forEach(b => b.addEventListener("click", () => {
+    if (b.classList.contains("active")) return;
+    refocusProductTab = true;     // the page repaints: keep the keyboard on the tabs
     location.hash = "#/products" + (b.dataset.ptab ? "/" + b.dataset.ptab : "");
   }));
+  // On a narrow phone the strip scrolls: bring the open tab into it.
+  const strip = $(".tabs", root), active = $("[data-ptab].active", root);
+  if (strip && active && strip.scrollWidth > strip.clientWidth)
+    strip.scrollLeft += active.getBoundingClientRect().left - strip.getBoundingClientRect().left
+      - (strip.clientWidth - active.offsetWidth) / 2;
+  if (refocusProductTab) {
+    refocusProductTab = false;
+    if (active) active.focus();
+  }
 }
 async function productClassView(view, tab) {
-  view.innerHTML = `<div class="page-head"><div><h2>Productos</h2></div></div>
+  view.innerHTML = `<div class="page-head"><div><h2>Productos</h2>
+      <div class="sub">Tipos, marcas, modelos y colores: con lo que se ordenan los productos</div></div></div>
     ${productTabsHtml(tab.key)}<div id="tabbody"></div>`;
   wireProductTabs(view);
   await resourceView($("#tabbody", view), CONFIG[tab.cfg]);
@@ -7590,7 +7637,8 @@ async function usersTab(container) {
     const fields = [
       { key:"full_name", label:"Nombre completo", required: mode==="create" },
       ...(mode==="create" ? [{ key:"email", label:"Email", type:"email", required:true }] : []),
-      { key:"password", label: mode==="create"?"Contraseña":"Contraseña nueva (vacío = sin cambios)", type:"password", required: mode==="create" },
+      ...(mode === "edit" && tokenClaims().impersonated_by ? [] :
+        [{ key:"password", label: mode==="create"?"Contraseña":"Contraseña nueva (vacío = sin cambios)", type:"password", required: mode==="create" }]),
       { key:"branch_id", label:"Sucursal", type:"select", valueType:"int", optionsFrom:{ endpoint:"/api/branches" } },
       { key:"role_ids", label:"Roles", type:"multiselect", optionsFrom:{ endpoint:"/api/roles" } },
       { key:"is_superuser", label:"Superusuario (todos los permisos)", type:"checkbox" },
