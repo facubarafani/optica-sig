@@ -214,13 +214,17 @@ not built yet.
     receta. A row left behind is never served once it is `RETENTION_MINUTES`
     old, and the app deletes those at startup and, while a photo may still be
     pending, every `SWEEP_MINUTES` (`sweep_forever`, from `main.py`'s
-    lifespan; the one delete there not scoped to a company). With none pending
-    it does not query at all, so an app kept awake never stops Neon's free
-    tier from scaling to zero. While the instance sleeps nothing sweeps, so a
+    lifespan). That delete and the count after it are the two statements
+    there not scoped to a company; the count is a number nobody sees, which
+    tells the sweeper whether to keep going. With nothing pending it does not
+    query at all, so an app kept awake never stops Neon's free tier from
+    scaling to zero, and a code handed out while a sweep runs, or a failed
+    sweep, keeps it going. While the instance sleeps nothing sweeps, so a
     nightly backup can still copy a leftover photo, and Neon keeps deleted
     rows for its restore window: leaving `photo_handoffs`' rows out of the
-    dump (`--exclude-table-data`) is still to do in the backups repo. Nothing reads the photo, by
-    decision (no OCR, no AI, so it costs nothing to run): the seller types it
+    dump (`--exclude-table-data`) is still to do in the backups repo.
+    Nothing reads the photo, by decision (no OCR, no AI, so it costs nothing
+    to run): the seller types it
     into `recetaGrid`, shaped like the paper, which flags a value off the
     0.25 steps instead of correcting it, since it is medical data. On a
     developer machine the QR swaps localhost for the Wi-Fi address; run

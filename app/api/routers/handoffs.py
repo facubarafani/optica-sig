@@ -12,6 +12,7 @@ from fastapi.concurrency import run_in_threadpool
 from python_multipart.exceptions import MultipartParseError
 from sqlalchemy.orm import Session
 from starlette.datastructures import UploadFile
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.core import ratelimit
 from app.core.database import get_db
@@ -132,7 +133,9 @@ async def upload_photo(request: Request, db: Session = Depends(get_db)) -> dict[
     request._body = bytes(body)  # form() reads it from Starlette's own cache
     try:
         form = await request.form(max_files=1, max_fields=2)
-    except MultipartParseError:
+    except (MultipartParseError, StarletteHTTPException):
+        # A malformed body, or one Starlette refuses in English: the phone
+        # shows this text, so it says what is missing, in Spanish.
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Falta la foto o el código.")
     try:
         token, photo = form.get("token"), form.get("photo")

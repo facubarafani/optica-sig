@@ -250,24 +250,24 @@ def test_a_short_window_does_not_reset_a_long_one(monkeypatch):
     assert not ratelimit.hit("forgot:x", limit=5, window_seconds=3600)
 
 
-def _run_sweeper(monkeypatch, left):
-    """Run sweep_forever for five ticks; ``left`` is what each sweep finds."""
+def _run_sweeper(monkeypatch, sweep_once):
+    """Run sweep_forever for five ticks with the given sweep; return its calls."""
     import asyncio
 
     import pytest
 
     calls, ticks = [], []
 
-    def sweep_once(*args, **kwargs):
+    def counted(*args, **kwargs):
         calls.append(1)
-        return left.pop(0) if left else 0
+        return sweep_once(len(calls))
 
     async def sleep(seconds):
         ticks.append(seconds)
         if len(ticks) >= 5:
             raise asyncio.CancelledError
 
-    monkeypatch.setattr(handoffs, "sweep_once", sweep_once)
+    monkeypatch.setattr(handoffs, "sweep_once", counted)
     monkeypatch.setattr(handoffs.asyncio, "sleep", sleep)
     monkeypatch.setattr(handoffs, "_pending", False)
     with pytest.raises(asyncio.CancelledError):
@@ -278,17 +278,40 @@ def _run_sweeper(monkeypatch, left):
 def test_an_idle_sweeper_stays_off_the_database(monkeypatch):
     """Nothing pending, nothing queried after startup: an app kept warm must
     not keep the database from scaling to zero."""
-    assert _run_sweeper(monkeypatch, [0]) == 1
+    assert _run_sweeper(monkeypatch, lambda call: 0) == 1
 
 
 def test_a_pending_photo_keeps_the_sweeper_going_until_none_is_left(monkeypatch):
-    assert _run_sweeper(monkeypatch, [2, 1, 0]) == 3
+    left = {1: 2, 2: 1}
+    assert _run_sweeper(monkeypatch, lambda call: left.get(call, 0)) == 3
+
+
+def test_a_code_handed_out_during_a_sweep_is_not_forgotten(monkeypatch):
+    """Its row may be committed after the sweep counted: the sweep must not
+    stand down on a count that predates it."""
+    def sweep_once(call):
+        if call == 1:
+            handoffs._handed_out += 1     # committed while this sweep counted
+        return 0
+
+    assert _run_sweeper(monkeypatch, sweep_once) == 2
+
+
+def test_a_failed_startup_sweep_is_tried_again(monkeypatch):
+    def sweep_once(call):
+        if call == 1:
+            raise RuntimeError("database not up yet")
+        return 0
+
+    assert _run_sweeper(monkeypatch, sweep_once) == 2
 
 
 def test_handing_out_a_code_wakes_the_sweeper(client, auth_headers, monkeypatch):
     monkeypatch.setattr(handoffs, "_pending", False)
+    before = handoffs._handed_out
     _create(client, auth_headers)
     assert handoffs._pending is True
+    assert handoffs._handed_out == before + 1
 
 
 def test_the_app_starts_the_sweeper(monkeypatch):
@@ -313,3 +336,13 @@ def test_a_malformed_body_is_a_400_not_a_500(client):
         headers={"Content-Type": "multipart/form-data; boundary=x"},
     )
     assert resp.status_code == 400
+
+
+def test_a_body_starlette_refuses_gets_a_spanish_400(client):
+    """Too many fields is refused by Starlette itself, in English; the phone
+    shows whatever detail comes back."""
+    resp = client.post("/api/handoffs/upload",
+                       data={"token": "x", "a": "1", "b": "2"},
+                       files={"photo": ("r.jpg", JPEG, "image/jpeg")})
+    assert resp.status_code == 400
+    assert resp.json()["detail"] == "Falta la foto o el código."

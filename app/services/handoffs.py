@@ -12,8 +12,9 @@ What this file is responsible for, because a receta is health data:
 - **It works once, for TTL_MINUTES.** A second upload is refused.
 - **The photo is gone in minutes.** The PC deletes the row as soon as it has
   the photo. A row left behind (a closed tab, a crash) is never served once it
-  is RETENTION_MINUTES old, and the app deletes it at startup and every
-  SWEEP_MINUTES (``sweep_forever``), not only when someone asks for a QR.
+  is RETENTION_MINUTES old, and the app deletes it at startup and, while a
+  photo may still be pending, every SWEEP_MINUTES (``sweep_forever``), not
+  only when someone asks for a QR.
 - **An upload proves it is a photo** by its first bytes, never by the type the
   phone claims.
 """
@@ -49,6 +50,10 @@ SWEEP_MINUTES = 5
 # sweep stays off the database, so an idle app (kept warm by a ping, or on a
 # plan that never sleeps) does not keep Neon from scaling to zero.
 _pending = False
+# Bumped each time this process hands out a code, once it is committed. A
+# sweep that counted no rows stands down only if this did not move while it
+# ran: its count could predate the new code's commit.
+_handed_out = 0
 # A phone photo shrunk by the page is a few hundred KB; this leaves room for a
 # browser that sends the original.
 MAX_PHOTO_BYTES = 8 * 1024 * 1024
@@ -88,8 +93,7 @@ def _sniff(data: bytes) -> str | None:
 
 def create(db: Session, *, company_id: int, user_id: int) -> tuple[PhotoHandoff, str]:
     """A new handoff and its raw token, which goes in the QR and nowhere else."""
-    global _pending
-    _pending = True
+    global _pending, _handed_out
     sweep(db)
     raw = secrets.token_urlsafe(TOKEN_BYTES)
     row = PhotoHandoff(
@@ -101,6 +105,8 @@ def create(db: Session, *, company_id: int, user_id: int) -> tuple[PhotoHandoff,
     db.add(row)
     db.commit()
     db.refresh(row)
+    _handed_out += 1
+    _pending = True
     return row, raw
 
 
@@ -175,7 +181,7 @@ def discard(db: Session, row: PhotoHandoff) -> None:
 def sweep(db: Session) -> None:
     """Drop every handoff older than RETENTION_MINUTES, whatever the shop.
 
-    The one statement here not scoped to a company. It reads nothing; it only
+    The one delete here not scoped to a company. It reads nothing; it only
     deletes photos past their time, and doing it shop by shop would leave a
     photo behind in a shop that never scans again. The caller commits.
     """
@@ -184,7 +190,8 @@ def sweep(db: Session) -> None:
 
 
 def sweep_once(session_factory=SessionLocal) -> int:
-    """Sweep, and say how many handoffs are still on their way (any shop)."""
+    """Sweep, and say how many handoffs are still on their way. The count is
+    the other statement not scoped to a company: a number, never shown."""
     db = session_factory()
     try:
         sweep(db)
@@ -203,9 +210,13 @@ async def sweep_forever() -> None:
     first = True
     while True:
         if first or _pending:
+            seen = _handed_out
             try:
-                _pending = await asyncio.to_thread(sweep_once) > 0
+                left = await asyncio.to_thread(sweep_once)
+                # A code handed out while this ran may be missing from its count.
+                _pending = left > 0 or _handed_out != seen
             except Exception:  # one failed sweep must not stop the next ones
+                _pending = True
                 logger.exception("Photo handoff sweep failed")
         first = False
         await asyncio.sleep(SWEEP_MINUTES * 60)

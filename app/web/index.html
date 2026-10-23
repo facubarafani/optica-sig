@@ -7195,7 +7195,7 @@ function recetaGrid(st) {
    pestaña la olvida al cerrar. Mientras espera, pregunta cada dos segundos. */
 function recetaFoto(st, onCambio) {
   const box = el(`<div class="rxfoto"></div>`);
-  let handoff = null, vencido = false, timer = null, avisado = false;
+  let handoff = null, vencido = false, perdida = false, timer = null, avisado = false;
 
   function pintar() {
     if (st.foto) {
@@ -7213,8 +7213,10 @@ function recetaFoto(st, onCambio) {
         <div class="fhelp" style="margin:0">El código sirve una sola vez y vence en 10 minutos.</div>
         <button type="button" class="stklink" data-a="cancelar">Cancelar</button></div>`;
     } else if (handoff) {
-      box.innerHTML = `<div class="rxqr"><b>El código venció</b>
-        <div class="fhelp" style="margin:0">Pasaron 10 minutos sin que llegara la foto.</div>
+      box.innerHTML = `<div class="rxqr"><b>${perdida ? "La foto ya no está" : "El código venció"}</b>
+        <div class="fhelp" style="margin:0">${perdida
+          ? "Pasó demasiado tiempo desde que llegó. Generá otro código para sacarla de nuevo."
+          : "Pasaron 10 minutos sin que llegara la foto."}</div>
         <button type="button" class="btn sm primary" data-a="pedir"><svg class="ic"><use href="#i-smartphone"/></svg>Generar otro</button>
         <button type="button" class="stklink" data-a="cancelar">Cancelar</button></div>`;
     } else {
@@ -7237,7 +7239,7 @@ function recetaFoto(st, onCambio) {
     soltar();
     try { handoff = await api("POST", "/api/handoffs"); }
     catch (e) { return toast(e.message || "No se pudo generar el código.", "err"); }
-    vencido = false;
+    vencido = perdida = false;
     avisado = false;
     pintar();
     esperar();
@@ -7252,7 +7254,7 @@ function recetaFoto(st, onCambio) {
       try { s = await api("GET", `/api/handoffs/${handoff.id}`); }
       catch (e) {
         // Ya no existe (pasó la media hora, o se borró): hace falta otro código.
-        if (e.status === 404) { vencido = true; return pintar(); }
+        if (e.status === 404) { vencido = perdida = true; return pintar(); }
         return esperar();         // un corte de red no termina la espera
       }
       if (!handoff) return;
@@ -7266,7 +7268,7 @@ function recetaFoto(st, onCambio) {
     let blob;
     try { blob = await apiBlob(`/api/handoffs/${h.id}/photo`); }
     catch (e) {
-      if (e.status === 410 || e.status === 404) { vencido = true; return pintar(); }
+      if (e.status === 410 || e.status === 404) { vencido = perdida = true; return pintar(); }
       if (!avisado) toast(e.message || "No se pudo traer la foto.", "err");
       avisado = true;
       return esperar();
@@ -7283,7 +7285,7 @@ function recetaFoto(st, onCambio) {
     clearTimeout(timer);
     if (handoff) api("DELETE", `/api/handoffs/${handoff.id}`).catch(() => {});
     handoff = null;
-    vencido = false;
+    vencido = perdida = false;
   }
 
   box.activo = () => !!(st.foto || handoff);
