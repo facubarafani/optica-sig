@@ -69,6 +69,12 @@ def get_current_user(
     return user
 
 
+def in_support_session(token: str = Depends(oauth2_scheme)) -> bool:
+    """Whether the provider is acting as this shop's user (impersonation, rule
+    15). It may look and fix, never take an account over: no password changes."""
+    return bool((decode_access_token(token) or {}).get("impersonated_by"))
+
+
 def get_company_id(current_user: User = Depends(get_current_user)) -> int:
     """Active company is derived from the authenticated user (multi-tenant ready)."""
     return current_user.company_id

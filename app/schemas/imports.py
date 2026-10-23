@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
@@ -48,8 +48,9 @@ class ImportUploadRead(BaseModel):
 
 class TailDecision(BaseModel):
     kind: Literal["color", "supplier_number", "not_color"]
-    # Colour names, existing or to be created; several for a bicolour.
-    colors: list[str] = []
+    # Colour names, existing or to be created; several for a bicolour. A new
+    # one becomes a Color, whose name is String(80).
+    colors: list[Annotated[str, Field(max_length=80)]] = []
 
 
 class CodeColorsOptions(BaseModel):

@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.deps import get_company_id, require_permission
+from app.core.deps import get_company_id, in_support_session, require_permission
 from app.models.auth import Permission, Role, User
 from app.schemas.auth import (
     PermissionRead,
@@ -96,7 +96,16 @@ def create_user(
     db: Session = Depends(get_db),
     company_id: int = Depends(get_company_id),
     _: object = Depends(require_permission("users:write")),
+    support: bool = Depends(in_support_session),
 ):
+    # A login made with a password support chose would outlive the support
+    # session. The provider can add an administrator from /admin, audited.
+    if support:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            "En una sesión de soporte no se crean usuarios: los agrega alguien de la "
+            "óptica, y un administrador también se suma desde el panel del proveedor.",
+        )
     try:
         return auth_service.create_user(db, company_id, data)
     except auth_service.AuthError as exc:
@@ -125,7 +134,16 @@ def update_user(
     db: Session = Depends(get_db),
     company_id: int = Depends(get_company_id),
     _: object = Depends(require_permission("users:write")),
+    support: bool = Depends(in_support_session),
 ):
+    # The provider acting as the shop's admin may fix a user, never choose
+    # their password: that would be taking the account over.
+    if support and data.password:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            "En una sesión de soporte no se cambian contraseñas: cada persona "
+            "cambia la suya desde el menú bajo su nombre.",
+        )
     user = db.execute(
         select(User).where(User.id == user_id, User.company_id == company_id)
     ).scalar_one_or_none()

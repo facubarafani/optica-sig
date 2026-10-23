@@ -21,15 +21,16 @@ def _clean_code(value: str) -> str:
 
 
 # --- price list -----------------------------------------------------------
+# The max_lengths mirror the columns (see tests/test_schema_lengths.py).
 class PriceListCreate(BaseModel):
-    name: str
+    name: str = Field(max_length=120)
     product_type_id: int | None = None
     is_default: bool = False
     currency: Currency = Currency.ARS
 
 
 class PriceListUpdate(BaseModel):
-    name: str | None = None
+    name: str | None = Field(default=None, max_length=120)
     product_type_id: int | None = None
     is_default: bool | None = None
     currency: Currency | None = None
@@ -54,8 +55,8 @@ class PriceListSummaryRead(PriceListRead):
 # --- price category (a step inside one list) ------------------------------
 class PriceCategoryCreate(BaseModel):
     # Omit the code and the next one in the AA..ZZ sequence is assigned.
-    code: str | None = None
-    description: str | None = None
+    code: str | None = Field(default=None, max_length=8)
+    description: str | None = Field(default=None, max_length=255)
     price: Decimal = Decimal("0")
 
     @field_validator("code")
@@ -65,8 +66,8 @@ class PriceCategoryCreate(BaseModel):
 
 
 class PriceCategoryUpdate(BaseModel):
-    code: str | None = None
-    description: str | None = None
+    code: str | None = Field(default=None, max_length=8)
+    description: str | None = Field(default=None, max_length=255)
     price: Decimal | None = None
     is_active: bool | None = None
 

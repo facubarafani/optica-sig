@@ -26,16 +26,17 @@ class PlatformUserRead(ORMBase):
 class TenantCreate(BaseModel):
     """A new óptica, plus the credentials its owner will log in with."""
 
+    # The max_lengths mirror the columns (see tests/test_schema_lengths.py).
     name: str = Field(min_length=1, max_length=150)
-    legal_name: str | None = None
-    tax_id: str | None = None
-    email: str | None = None
-    phone: str | None = None
-    address: str | None = None
-    currency: str = "ARS"
+    legal_name: str | None = Field(default=None, max_length=200)
+    tax_id: str | None = Field(default=None, max_length=20)
+    email: str | None = Field(default=None, max_length=150)
+    phone: str | None = Field(default=None, max_length=50)
+    address: str | None = Field(default=None, max_length=255)
+    currency: str = Field(default="ARS", max_length=3)
 
-    admin_email: EmailStr
-    admin_full_name: str = "Administrador"
+    admin_email: EmailStr = Field(max_length=150)
+    admin_full_name: str = Field(default="Administrador", max_length=150)
     # Leave empty to email the owner an invitation and let them choose their
     # own password — the default, and the only path where we never handle a
     # customer's credential. Setting one here is the fallback for an owner
@@ -44,13 +45,13 @@ class TenantCreate(BaseModel):
 
 
 class TenantUpdate(BaseModel):
-    name: str | None = None
-    legal_name: str | None = None
-    tax_id: str | None = None
-    email: str | None = None
-    phone: str | None = None
-    address: str | None = None
-    currency: str | None = None
+    name: str | None = Field(default=None, max_length=150)
+    legal_name: str | None = Field(default=None, max_length=200)
+    tax_id: str | None = Field(default=None, max_length=20)
+    email: str | None = Field(default=None, max_length=150)
+    phone: str | None = Field(default=None, max_length=50)
+    address: str | None = Field(default=None, max_length=255)
+    currency: str | None = Field(default=None, max_length=3)
 
 
 class TenantRead(ORMBase):
@@ -96,8 +97,8 @@ class TenantUserRead(ORMBase):
 
 
 class TenantAdminCreate(BaseModel):
-    email: EmailStr
-    full_name: str = "Administrador"
+    email: EmailStr = Field(max_length=150)
+    full_name: str = Field(default="Administrador", max_length=150)
     # Same as TenantCreate: empty means "invite them by email".
     password: str | None = Field(default=None, min_length=8, max_length=128)
 

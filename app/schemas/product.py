@@ -39,16 +39,17 @@ def _norm_hex(v: str | None) -> str | None:
 
 
 # --- product type ---------------------------------------------------------
+# The max_lengths mirror the columns (see tests/test_schema_lengths.py).
 class ProductTypeCreate(BaseModel):
-    name: str
-    description: str | None = None
+    name: str = Field(max_length=80)
+    description: str | None = Field(default=None, max_length=255)
     # Alícuota for facturas A and B. Empty is the general 21%.
     iva_rate: IvaRate | None = None
 
 
 class ProductTypeUpdate(BaseModel):
-    name: str | None = None
-    description: str | None = None
+    name: str | None = Field(default=None, max_length=80)
+    description: str | None = Field(default=None, max_length=255)
     iva_rate: IvaRate | None = None
     is_active: bool | None = None
 
@@ -61,11 +62,11 @@ class ProductTypeRead(SoftDeleteRead):
 
 # --- brand ----------------------------------------------------------------
 class BrandCreate(BaseModel):
-    name: str
+    name: str = Field(max_length=80)
 
 
 class BrandUpdate(BaseModel):
-    name: str | None = None
+    name: str | None = Field(default=None, max_length=80)
     is_active: bool | None = None
 
 
@@ -83,10 +84,11 @@ def _norm_color_code(v: str | None) -> str | None:
 
 
 class ColorCreate(BaseModel):
-    name: str
+    name: str = Field(max_length=80)
     # Left empty, services.products.derive_color_code proposes one from the
     # name; it only has to be given when the shop wants its own tag.
-    code: str | None = None
+    code: str | None = Field(default=None, max_length=8)
+    # No max_length: _norm_hex only lets through a #rrggbb, which fits.
     hex_code: str | None = None
 
     @field_validator("hex_code")
@@ -101,8 +103,8 @@ class ColorCreate(BaseModel):
 
 
 class ColorUpdate(BaseModel):
-    name: str | None = None
-    code: str | None = None
+    name: str | None = Field(default=None, max_length=80)
+    code: str | None = Field(default=None, max_length=8)
     hex_code: str | None = None
     is_active: bool | None = None
 
@@ -125,13 +127,13 @@ class ColorRead(SoftDeleteRead):
 
 # --- product model ("Modelo": clipper, aviador, redondo...) ----------------
 class ProductModelCreate(BaseModel):
-    name: str
+    name: str = Field(max_length=80)
     # Optional: leave unset and the model applies to every product type.
     product_type_id: int | None = None
 
 
 class ProductModelUpdate(BaseModel):
-    name: str | None = None
+    name: str | None = Field(default=None, max_length=80)
     product_type_id: int | None = None
     is_active: bool | None = None
 
@@ -260,7 +262,7 @@ class VariantSpec(BaseModel):
     color_ids: list[int]
     # Left empty, it is built from the style's code plus the colour tags
     # (ARM-001 + HAV -> ARM-001-HAV).
-    code: str | None = None
+    code: str | None = Field(default=None, max_length=40)
 
 
 class VariantsCreate(BaseModel):
@@ -281,4 +283,4 @@ class VariantsCreate(BaseModel):
 
 class CostUpdate(BaseModel):
     new_cost: Decimal
-    note: str | None = None
+    note: str | None = Field(default=None, max_length=255)

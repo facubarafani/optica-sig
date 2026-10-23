@@ -1,8 +1,10 @@
-"""A small in-process rate limiter for the unauthenticated endpoints.
+"""A small in-process rate limiter for the routes worth flooding.
 
 Password reset, token lookup and the phone's photo upload (receta scanner) are
-the only routes anyone can call without credentials, which makes them the only
-ones worth flooding: to mail-bomb a customer, or to grind through token guesses.
+the only routes anyone can call without credentials, which makes them the ones
+worth flooding: to mail-bomb a customer, or to grind through token guesses.
+Changing a password is the one logged-in route here, limited per user, so a
+stolen session cannot grind through guesses of the current password.
 
 **This counts per process.** The deployment runs a single uvicorn worker
 (``WEB_CONCURRENCY=1``), so today that is the whole application. If workers

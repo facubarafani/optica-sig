@@ -41,6 +41,15 @@ def authenticate(
     return user
 
 
+def change_password(db: Session, user: User, current: str, new: str) -> None:
+    """Set a new password for whoever is logged in, if the current one is theirs."""
+    if not verify_password(current, user.hashed_password):
+        raise AuthError("La contraseña actual no es correcta.")
+    user.hashed_password = hash_password(new)
+    db.add(user)
+    db.commit()
+
+
 def find_logins(
     db: Session, email: str, password: str, company_id: int | None = None
 ) -> list[tuple[User, Company]]:

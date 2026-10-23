@@ -120,7 +120,7 @@ sin él, usa el de la óptica.
   descuento de la línea más su parte del descuento de la venta, repartido por
   mayor resto. El total del comprobante es el de la venta, al centavo.
 - **IVA.** Los precios son finales (IVA incluido). La alícuota de cada línea
-  sale de su tipo de producto (Catálogo → Tipos de producto); vacía es el
+  sale de su tipo de producto (Productos → Tipos); vacía es el
   21%. Solo la usan A y B, y la tiene que confirmar el contador de la óptica.
 - **Condición de venta.** "Contado" si la venta está paga, "Cuenta
   corriente" si queda saldo.

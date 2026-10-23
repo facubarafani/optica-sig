@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.models.enums import StockMovementType
 from app.schemas.common import ORMBase
@@ -34,8 +34,9 @@ class StockMovementCreate(BaseModel):
     branch_id: int
     movement_type: StockMovementType
     quantity: Decimal  # positive magnitude
-    reference: str | None = None
-    note: str | None = None
+    # The max_lengths mirror the columns (see tests/test_schema_lengths.py).
+    reference: str | None = Field(default=None, max_length=80)
+    note: str | None = Field(default=None, max_length=255)
 
 
 class StockTransferCreate(BaseModel):
@@ -43,8 +44,8 @@ class StockTransferCreate(BaseModel):
     from_branch_id: int
     to_branch_id: int
     quantity: Decimal
-    reference: str | None = None
-    note: str | None = None
+    reference: str | None = Field(default=None, max_length=80)
+    note: str | None = Field(default=None, max_length=255)
 
 
 class StockMovementRead(ORMBase):
