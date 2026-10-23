@@ -4446,7 +4446,7 @@ async function productsView(view) {
 
     async function refreshBrands() {
       const s = supSel.value;
-      const rows = await api("GET", s ? `/api/suppliers/${s}/brands` : "/api/brands").catch(() => []);
+      const rows = await api("GET", s ? `/api/suppliers/${s}/brands` : allOf("/api/brands")).catch(() => []);
       const { opts, outsider } = keepCurrent(brandSel, rows.map(r => ({ value:r.id, label:r.name })),
                                              brandMap, " (fuera del proveedor)");
       setSelectOptions(brandSel, opts);
@@ -6278,7 +6278,8 @@ async function salesListTab(n, arg) {
     { key:"branch_id", label:"Sucursal", priority:3, render:(v)=>esc(v ? (bmap[v]||"—") : "—") },
     { key:"total", label:"Total", type:"money", align:"right" },
     { key:"paid_amount", label:"Abonado", type:"money", align:"right", priority:2 },
-    { key:"balance", label:"Saldo", align:"right", render:(v, r) => Number(v) > 0 && r.status !== "cancelled"
+    // Red only for what the server calls a debt: a presupuesto's balance is not one.
+    { key:"balance", label:"Saldo", align:"right", render:(v, r) => r.debt_light
         ? `<b style="color:var(--danger)">${fmtMoney(v)}</b>` : `<span class="fhelp">${fmtMoney(v)}</span>` },
     // The light is the server's (rule 21): only a debt has one.
     { key:"promised_payment_date", label:"Promete pagar", priority:2, render:(v, r) =>
