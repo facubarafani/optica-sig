@@ -1519,11 +1519,17 @@ async function apiDownload(path, filename) {
   URL.revokeObjectURL(url);
 }
 
+/* Every row an endpoint has. A list the server pages stops at 100 rows when
+   no limit is asked for, so a dropdown, a name lookup or a screen without
+   paging would silently lose the 101st brand, model or product. */
+const allOf = (endpoint) => /[?&]limit=/.test(endpoint) ? endpoint
+  : endpoint + (endpoint.includes("?") ? "&" : "?") + "limit=10000";
+
 /* options cache (for dropdowns referencing other entities) */
 const _optCache = new Map();
 function clearOptions() { _optCache.clear(); }
 async function options({ endpoint, value = "id", label = "name", labelFn, metaFn }) {
-  if (!_optCache.has(endpoint)) _optCache.set(endpoint, api("GET", endpoint).catch(() => []));
+  if (!_optCache.has(endpoint)) _optCache.set(endpoint, api("GET", allOf(endpoint)).catch(() => []));
   const rows = await _optCache.get(endpoint);
   // `meta` carries whatever the widget needs beyond the label — the colour
   // select uses it for the swatch.
@@ -1534,7 +1540,7 @@ async function options({ endpoint, value = "id", label = "name", labelFn, metaFn
   }));
 }
 async function idMap(endpoint, label = "name", labelFn) {
-  const rows = await (_optCache.has(endpoint) ? _optCache.get(endpoint) : (_optCache.set(endpoint, api("GET", endpoint).catch(() => [])), _optCache.get(endpoint)));
+  const rows = await (_optCache.has(endpoint) ? _optCache.get(endpoint) : (_optCache.set(endpoint, api("GET", allOf(endpoint)).catch(() => [])), _optCache.get(endpoint)));
   const m = {};
   for (const r of (rows || [])) m[r.id] = labelFn ? labelFn(r) : r[label];
   return m;
@@ -2714,7 +2720,7 @@ async function resourceView(container, cfg, opts = {}) {
     maps[name] = await idMap(endpoint);
   }
   async function load() {
-    const list = await api("GET", cfg.endpoint + (showInactive ? "?include_inactive=true" : ""));
+    const list = await api("GET", allOf(cfg.endpoint + (showInactive ? "?include_inactive=true" : "")));
     paint(list);
   }
   const editFields = (mode, row) => {
@@ -3547,21 +3553,23 @@ const COBROS_DIAS = 7;
 async function cobrosHtml({ mine = false } = {}) {
   let rows;
   const who = mine ? `&salesperson_id=${state.user.id}` : "";
-  try { rows = await api("GET", `/api/sales?pending_only=true&due_to=${addDaysISO(COBROS_DIAS)}${who}`); }
+  try { rows = await api("GET", allOf(`/api/sales?pending_only=true&due_to=${addDaysISO(COBROS_DIAS)}${who}`)); }
   catch { return ""; }
   rows = rows.filter(r => r.promised_payment_date);
   if (!rows.length) return "";
+  // Overdue is the server's red (rule 21); "hoy" only picks today's out of
+  // the rest, so the three counts always add up.
   const hoy = todayISO();
-  const vencidos = rows.filter(r => r.promised_payment_date < hoy).length;
-  const deHoy = rows.filter(r => r.promised_payment_date === hoy).length;
+  const vencidos = rows.filter(r => r.debt_light === "red").length;
+  const deHoy = rows.filter(r => r.debt_light !== "red" && r.promised_payment_date === hoy).length;
   const proximos = rows.length - vencidos - deHoy;
   if (mine) {
     // A to-do, not a ledger: today's promises first, then the freshest
     // overdue (the most collectible, where a message still helps), then the
     // week ahead. Months-old debts sink; the owner's list leads with those.
-    const grupo = (d) => d === hoy ? 0 : d < hoy ? 1 : 2;
+    const grupo = (r) => r.debt_light === "red" ? 1 : r.promised_payment_date === hoy ? 0 : 2;
     rows.sort((a, b) => {
-      const ga = grupo(a.promised_payment_date), gb = grupo(b.promised_payment_date);
+      const ga = grupo(a), gb = grupo(b);
       if (ga !== gb) return ga - gb;
       const by = a.promised_payment_date.localeCompare(b.promised_payment_date);
       return (ga === 1 ? -by : by) || a.id - b.id;
@@ -4430,7 +4438,7 @@ async function productsView(view) {
 
     async function refreshModels() {
       const t = typeSel.value;
-      const rows = await api("GET", "/api/product-models" + (t ? `?product_type_id=${t}` : "")).catch(() => []);
+      const rows = await api("GET", allOf("/api/product-models" + (t ? `?product_type_id=${t}` : ""))).catch(() => []);
       const { opts } = keepCurrent(modelSel, rows.map(r => ({ value:r.id, label:r.name })),
                                    modelMap, " (otro tipo)");
       setSelectOptions(modelSel, opts);
@@ -4438,7 +4446,7 @@ async function productsView(view) {
 
     async function refreshBrands() {
       const s = supSel.value;
-      const rows = await api("GET", s ? `/api/suppliers/${s}/brands` : "/api/brands").catch(() => []);
+      const rows = await api("GET", s ? `/api/suppliers/${s}/brands` : allOf("/api/brands")).catch(() => []);
       const { opts, outsider } = keepCurrent(brandSel, rows.map(r => ({ value:r.id, label:r.name })),
                                              brandMap, " (fuera del proveedor)");
       setSelectOptions(brandSel, opts);
@@ -4492,7 +4500,7 @@ async function productsView(view) {
     if (showInactive) qs.set("include_inactive", "true");
     if (family) qs.set("parent_id", family.id);
     else qs.set("only_base", "true");
-    const list = await api("GET", "/api/products?" + qs);
+    const list = await api("GET", allOf("/api/products?" + qs));
     paint(list);
   }
 
@@ -4527,7 +4535,7 @@ async function productsView(view) {
     if (porKey.color_ids)
       porKey.color_ids = { ...porKey.color_ids,
         help:"Dejalo vacío si el producto no viene en colores, como unos lentes de contacto." };
-    const colores = await api("GET", "/api/colors").catch(() => []);
+    const colores = await api("GET", allOf("/api/colors")).catch(() => []);
     const codigoDeColor = Object.fromEntries(colores.map(c => [String(c.id), c.code]));
     const nombreDeColor = Object.fromEntries(colores.map(c => [String(c.id), c.name]));
     // Sin permiso de stock, o sin sucursales donde ponerlo, el paso no aparece.
@@ -4834,7 +4842,7 @@ async function productsView(view) {
      code and its own stock. The codes are previewed before anything is
      created, because a product code is a thing the shop reads out loud. */
   async function variantsModal(row) {
-    const colors = await api("GET", "/api/colors").catch(() => []);
+    const colors = await api("GET", allOf("/api/colors")).catch(() => []);
     const byId = Object.fromEntries(colors.map(c => [String(c.id), c]));
     await formModal({
       title: `Variante a medida — ${row.code}`, confirmLabel: "Crear",
@@ -5011,7 +5019,7 @@ async function productsView(view) {
     if (!kids) {
       const qs = new URLSearchParams({ parent_id: row.id });
       if (showInactive) qs.set("include_inactive", "true");
-      try { kids = await api("GET", "/api/products?" + qs); }
+      try { kids = await api("GET", allOf("/api/products?" + qs)); }
       catch (e) { toast(e.message, "err"); tr.classList.remove("open");
                   tr.setAttribute("aria-expanded", "false"); return; }
       variantCache.set(row.id, kids);
@@ -5239,8 +5247,8 @@ async function pickProduct(branchId, onPick) {
   const load = async (q) => {
     results.innerHTML = `<div class="loading">Buscando…</div>`;
     // sellable_only: a customer buys a colour, not a family, so styles are out.
-    paint(await api("GET", "/api/products?sellable_only=true"
-                          + (q ? "&q=" + encodeURIComponent(q) : ""))
+    paint(await api("GET", allOf("/api/products?sellable_only=true"
+                          + (q ? "&q=" + encodeURIComponent(q) : "")))
       .catch(() => []));
   };
   const input = $("input[type=search]", body);
@@ -6263,18 +6271,19 @@ async function salesListTab(n, arg) {
 
   const body = $("#salesBody", n);
   const reload = () => resultsInto(body, "/api/sales", f, [
+    lightCol((r) => [r.debt_light, r.promised_payment_date]),
     { key:"number", label:"Número", mono:true },
     { key:"sold_at", label:"Fecha", type:"datetime" },
     { key:"customer_id", label:"Cliente", render:(v, r)=>esc(v ? (cmap[v] || r.customer_name || ("#"+v)) : "Consumidor final") },
     { key:"branch_id", label:"Sucursal", priority:3, render:(v)=>esc(v ? (bmap[v]||"—") : "—") },
     { key:"total", label:"Total", type:"money", align:"right" },
     { key:"paid_amount", label:"Abonado", type:"money", align:"right", priority:2 },
-    { key:"balance", label:"Saldo", align:"right", render:(v, r) => Number(v) > 0 && r.status !== "cancelled"
+    // Red only for what the server calls a debt: a presupuesto's balance is not one.
+    { key:"balance", label:"Saldo", align:"right", render:(v, r) => r.debt_light
         ? `<b style="color:var(--danger)">${fmtMoney(v)}</b>` : `<span class="fhelp">${fmtMoney(v)}</span>` },
-    { key:"promised_payment_date", label:"Promete pagar", priority:2, render:(v, r) => {
-        if (!v || Number(r.balance) <= 0) return "—";
-        const late = v < todayISO();
-        return `${fmtDate(v)} ${late ? badge("vencido","red") : ""}`; } },
+    // The light is the server's (rule 21): only a debt has one.
+    { key:"promised_payment_date", label:"Promete pagar", priority:2, render:(v, r) =>
+        r.debt_light ? `${v ? fmtDate(v) + " " : ""}${dueWhy(r.debt_light, v)}` : "-" },
     { key:"invoices", label:"Factura", priority:2, when: invoicingOn, render:(v) => invoiceCell(v) },
     { key:"status", label:"Estado", render:(v)=>badge(ENUM_ES.sale_status[v] || v, SALE_STATUS_BADGE[v] || "gray") },
   ], "Ninguna venta coincide con la búsqueda.", (row) => saleDetailModal(row.id, reload));
@@ -6296,7 +6305,7 @@ async function pendingView(view) {
     can("customers:read") ? idMap("/api/customers", "id", customerLabel) : Promise.resolve({}),
     api("GET", "/api/sales/pending/summary"),
   ]);
-  const f = { pending_only: true, q:"", due_from:"", due_to:"", light:"" };
+  const f = { pending_only: true, q:"", due_from:"", due_to:"", light:"", limit: 10000 };
 
   // Whole pesos and the count on its own line, like the tiles on Inicio: a
   // six-figure balance with cents and a note beside it ran out of the card.
@@ -7350,8 +7359,8 @@ async function customersView(view) {
   async function load() {
     const qs = new URLSearchParams();
     if (showInactive) qs.set("include_inactive", "true");
-    if (owing) { qs.set("owing_only", "true"); qs.set("limit", "1000"); }
-    let list = await api("GET", "/api/customers" + (qs.toString() ? "?" + qs : ""));
+    if (owing) qs.set("owing_only", "true");
+    let list = await api("GET", allOf("/api/customers" + (qs.toString() ? "?" + qs : "")));
     // Con deuda reads as who to chase: the worst light first, then the most owed.
     if (owing) list = list.slice().sort((a, b) =>
       LIGHTS[a.debt.light].rank - LIGHTS[b.debt.light].rank || Number(b.debt.owed) - Number(a.debt.owed));

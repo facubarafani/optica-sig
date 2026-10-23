@@ -6,11 +6,12 @@ from app.schemas.common import SoftDeleteRead
 
 
 class BranchBase(BaseModel):
-    name: str
-    code: str
-    address: str | None = None
-    phone: str | None = None
-    email: EmailStr | None = None
+    # The max_lengths mirror the columns (see tests/test_schema_lengths.py).
+    name: str = Field(max_length=120)
+    code: str = Field(max_length=20)
+    address: str | None = Field(default=None, max_length=255)
+    phone: str | None = Field(default=None, max_length=50)
+    email: EmailStr | None = Field(default=None, max_length=150)
     # ARCA punto de venta for this branch's comprobantes. Empty uses the shop's.
     point_of_sale: int | None = Field(None, ge=1, le=99998)
 
@@ -20,11 +21,11 @@ class BranchCreate(BranchBase):
 
 
 class BranchUpdate(BaseModel):
-    name: str | None = None
-    code: str | None = None
-    address: str | None = None
-    phone: str | None = None
-    email: EmailStr | None = None
+    name: str | None = Field(default=None, max_length=120)
+    code: str | None = Field(default=None, max_length=20)
+    address: str | None = Field(default=None, max_length=255)
+    phone: str | None = Field(default=None, max_length=50)
+    email: EmailStr | None = Field(default=None, max_length=150)
     point_of_sale: int | None = Field(None, ge=1, le=99998)
     is_active: bool | None = None
 

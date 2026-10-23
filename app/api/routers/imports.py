@@ -42,6 +42,18 @@ router = APIRouter(prefix="/imports", tags=["imports"])
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 
 
+def _fit_filename(name: str) -> str:
+    """The name the history shows, cut to its column: longer is a DataError on
+    Postgres. The extension stays, since it says what kind of file it was."""
+    limit = ImportBatch.__table__.c.filename.type.length
+    if len(name) <= limit:
+        return name
+    stem, dot, ext = name.rpartition(".")
+    if not dot or len(ext) > 8:
+        return name[:limit]
+    return f"{stem[: limit - len(ext) - 1]}.{ext}"
+
+
 def _spec_or_404(spec_key: str) -> ImportSpec:
     spec = get_spec(spec_key)
     if spec is None:
@@ -142,7 +154,7 @@ async def upload(
     batch = ImportBatch(
         company_id=company_id,
         spec_key=spec.key,
-        filename=file.filename or "archivo",
+        filename=_fit_filename(file.filename or "archivo"),
         row_count=len(rows),
         headers=json.dumps(headers),
         rows=json.dumps(rows),

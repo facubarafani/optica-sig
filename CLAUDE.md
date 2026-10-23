@@ -53,7 +53,9 @@ not built yet.
 9. **Bulk import never bypasses business rules.** `services/importer/` routes
    costs through `pricing.change_cost()` and stock through
    `stock.apply_movement()`, both with `commit=False` so a batch is one
-   transaction. Adding an import target = one `ImportSpec` in
+   transaction, and the price fields of an existing product through
+   `pricing.apply_pricing_update()`, which audits each change exactly as a
+   single edit does (rule 4). Adding an import target = one `ImportSpec` in
    `importer/specs.py` + one apply function in `importer/engine.py` + one row
    builder in `importer/exporters.py`; the template, the mapping UI, the
    preview and the export all derive from the spec.

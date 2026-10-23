@@ -50,15 +50,18 @@ class PermissionRead(ORMBase):
 
 
 # --- roles ----------------------------------------------------------------
+# Every max_length in the request schemas mirrors its column: past it Postgres
+# raises DataError, a 500, where SQLite stores the value whole, so only the
+# schema can turn it into a 422 (tests/test_schema_lengths.py holds them level).
 class RoleCreate(BaseModel):
-    name: str
-    description: str | None = None
+    name: str = Field(max_length=80)
+    description: str | None = Field(default=None, max_length=255)
     permission_ids: list[int] = []
 
 
 class RoleUpdate(BaseModel):
-    name: str | None = None
-    description: str | None = None
+    name: str | None = Field(default=None, max_length=80)
+    description: str | None = Field(default=None, max_length=255)
     permission_ids: list[int] | None = None
     is_active: bool | None = None
 
@@ -71,8 +74,8 @@ class RoleRead(SoftDeleteRead):
 
 # --- users ----------------------------------------------------------------
 class UserCreate(BaseModel):
-    email: EmailStr
-    full_name: str
+    email: EmailStr = Field(max_length=150)
+    full_name: str = Field(max_length=150)
     password: str
     is_superuser: bool = False
     branch_id: int | None = None
@@ -80,7 +83,7 @@ class UserCreate(BaseModel):
 
 
 class UserUpdate(BaseModel):
-    full_name: str | None = None
+    full_name: str | None = Field(default=None, max_length=150)
     password: str | None = None
     is_superuser: bool | None = None
     branch_id: int | None = None
