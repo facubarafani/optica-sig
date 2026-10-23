@@ -198,6 +198,24 @@ not built yet.
     its own first column (`lightCol`, `lightDot`) and the reason in bold in the
     light's colour (`debtWhy`, "Vencido hace 7 días"). Never re-derive the
     rule in the browser.
+22. **A receta photo crosses from the phone to the PC and is gone.** The
+    receta grid's "Foto desde el celular" asks `services/handoffs.py` for a
+    handoff and shows its link as a QR, drawn on the server (`segno`) because
+    the console loads nothing from outside. The phone opens `/foto`
+    (`app/web/foto.html`, a third self-contained page) with no login: the
+    token in the URL fragment is the credential, stored only as a SHA-256,
+    single-use and valid `TTL_MINUTES`. The phone shrinks the photo to JPEG
+    and posts it to `POST /api/handoffs/upload`, which proves it is an image
+    by its first bytes and is rate limited like the password routes. The PC
+    polls, fetches it and deletes the row at once, so the photo lives on the
+    server for seconds and then only in that tab: it is never stored with the
+    receta. A row left behind is swept after `RETENTION_MINUTES` (the one
+    delete there not scoped to a company). Nothing reads the photo, by
+    decision (no OCR, no AI, so it costs nothing to run): the seller types it
+    into `recetaGrid`, shaped like the paper, which flags a value off the
+    0.25 steps instead of correcting it, since it is medical data. On a
+    developer machine the QR swaps localhost for the Wi-Fi address; run
+    uvicorn with `--host 0.0.0.0` to try it from a phone.
 
 ## Web console (`app/web/index.html`)
 
@@ -311,9 +329,10 @@ address itself is in the two `mailto:` links.
 - **The token rides in the URL fragment**, never the query string — fragments
   are not sent to the server, keeping tokens out of access logs and `Referer`.
 - **`/api/auth/forgot-password` must stay uninformative.** Same status, same
-  body, whether or not the address exists. It and `set-password` are the only
-  unauthenticated write endpoints, so both are rate limited via
-  `core/ratelimit.py` (in-process — correct only while `WEB_CONCURRENCY=1`).
+  body, whether or not the address exists. It, `set-password` and the phone's
+  photo upload (rule 22) are the only unauthenticated write endpoints, so all
+  three are rate limited via `core/ratelimit.py` (in-process — correct only
+  while `WEB_CONCURRENCY=1`).
 - **Omitting a password invites instead.** `provisioning.create_tenant()` and
   `platform.add_tenant_admin()` take `password=None` and leave an unusable hash,
   so the account exists but nothing opens it until the link is used. Prefer this

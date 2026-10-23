@@ -109,3 +109,11 @@ def guide_image(name: str) -> FileResponse:
 @app.get("/admin", include_in_schema=False)
 def admin_console() -> FileResponse:
     return FileResponse(WEB_DIR / "admin.html")
+
+
+# --- Phone half of the receta scanner (services/handoffs.py) -------------
+# Opened from the QR the PC shows: no login, one photo. A page of its own, so a
+# phone never loads the whole shop console just to take a picture.
+@app.get("/foto", include_in_schema=False)
+def phone_photo_page() -> FileResponse:
+    return FileResponse(WEB_DIR / "foto.html")

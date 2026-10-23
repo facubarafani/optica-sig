@@ -15,6 +15,7 @@ from app.models.auth import (
 from app.models.branch import Branch
 from app.models.company import Company, CompanySettings
 from app.models.customer import Customer, Prescription, TreatmentHistory
+from app.models.handoff import PhotoHandoff
 from app.models.imports import ColorAlias, ImportBatch, color_alias_colors
 from app.models.invoicing import ArcaIssuer, Invoice, InvoicingRequest
 from app.models.journal import Operation, OperationChange
@@ -75,6 +76,7 @@ __all__ = [
     "Customer",
     "Prescription",
     "TreatmentHistory",
+    "PhotoHandoff",
     "ImportBatch",
     "ArcaIssuer",
     "Invoice",

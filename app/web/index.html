@@ -328,6 +328,10 @@
   /* Las acciones y los números no se recortan: un botón a medias no se
      puede apretar y un importe cortado miente. */
   td.actions,td.num{max-width:none;overflow:visible}
+  /* Tampoco unas pastillas, como los tratamientos de un cliente: una cortada
+     a la mitad no se lee. Van en la misma línea, como todo en la fila. */
+  td.tags{max-width:none;overflow:visible}
+  td.tags .badge + .badge{margin-left:4px}
   /* Un estilo se abre en sus colores adentro de la misma grilla: la fila padre
      no se va de pantalla, así se compara el color contra el estilo sin perder
      el lugar. El triángulo dice si está abierta. */
@@ -792,6 +796,63 @@
   .stksum b{color:var(--ink)}
   @media(max-width:560px){ .stkmode{grid-template-columns:1fr} }
   @media(prefers-reduced-motion:reduce){ .wizstage,.wizpane{transition:none} }
+  /* Tratamientos del alta de cliente: se marcan de un toque, y cada uno marcado
+     abre su renglón con la fecha y el detalle. El checkbox queda adentro de la
+     pastilla, invisible pero enfocable, así el teclado la sigue alcanzando. */
+  .trtpick{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+  .trtpick label{position:relative;display:inline-flex;align-items:center;gap:7px;padding:8px 14px 8px 11px;cursor:pointer;
+    border:1px solid var(--border);border-radius:var(--radius-pill);background:var(--panel);
+    font-size:13.5px;font-weight:600;color:var(--text);user-select:none}
+  .trtpick label:hover{background:var(--hover)}
+  .trtpick label:has(input:checked){border-color:var(--primary);background:var(--primary-50);color:var(--primary-700);
+    box-shadow:0 0 0 1px var(--primary)}
+  .trtpick label:has(input:focus-visible){outline:2px solid var(--primary);outline-offset:2px}
+  .trtpick label input{position:absolute;opacity:0;width:1px;height:1px;margin:0;padding:0;pointer-events:none}
+  .trtpick .ic{width:14px;height:14px;color:var(--muted)}
+  .trtpick label:has(input:checked) .ic{color:var(--primary)}
+  .trtpick .ic.on,.trtpick label:has(input:checked) .ic.off{display:none}
+  .trtpick label:has(input:checked) .ic.on{display:block}
+  .trtgrid{display:grid;grid-template-columns:minmax(110px,150px) 170px 1fr;gap:8px 12px;align-items:center}
+  .trth{font-size:12.5px;font-weight:600;color:var(--label)}
+  .trtname{font-size:13.5px;font-weight:600;color:var(--ink)}
+  @media(max-width:560px){
+    .trtgrid{grid-template-columns:150px 1fr}
+    .trtgrid .trth:first-child{display:none}
+    .trtname{grid-column:1/-1;margin-top:6px}
+  }
+  /* Receta: la grilla como el papel (OD y OI, por Esf, Cil, Eje y Adición) y,
+     cuando hay QR o foto, la foto al lado. El modal se ensancha para que
+     entren las dos sin achicar la foto. */
+  .modal{transition:width .25s ease}
+  .modal.xwide{width:1100px}
+  .rxpane.con-foto{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:22px;align-items:start}
+  .rxgrid{display:grid;grid-template-columns:36px repeat(4,minmax(0,1fr));gap:8px;align-items:center}
+  .rxh{font-size:12px;font-weight:600;color:var(--label);text-align:center}
+  .rxeye{font-size:13px;font-weight:700;color:var(--ink)}
+  .rxgrid input{text-align:center;font-variant-numeric:tabular-nums;padding:9px 6px}
+  .rx input.bad{border-color:var(--danger);box-shadow:0 0 0 3px var(--danger-50)}
+  .rxtools{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0 2px}
+  .rxcalc{min-height:17px;margin:2px 0 0}
+  .rxmore{display:grid;grid-template-columns:110px minmax(0,1fr) 170px;gap:12px;margin:12px 0 0}
+  .rxmore .form-row,.rx .rxnotas{margin:0}
+  .rx .rxnotas{margin-top:12px}
+  .rxfoto{margin-bottom:16px}
+  .rxpane.con-foto .rxfoto{margin:0;position:sticky;top:0}
+  .rxinvite{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;border:1px dashed var(--border);border-radius:var(--radius)}
+  .rxinvite .fhelp{margin:0;flex:1;min-width:200px}
+  .rxqr{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:18px 14px;
+    border:1px solid var(--border);border-radius:var(--radius);background:var(--hover)}
+  .rxqr svg{width:190px;height:190px;display:block;background:#fff;border-radius:8px}
+  .rxqr b{color:var(--ink);font-size:14px}
+  .rxwait{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+  .rxwait::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--primary);animation:rxpulse 1.2s ease-in-out infinite}
+  @keyframes rxpulse{50%{opacity:.25}}
+  @media(prefers-reduced-motion:reduce){ .rxwait::before{animation:none} }
+  .rxphoto img{display:block;width:100%;max-height:64vh;object-fit:contain;background:#f8fafc;
+    border:1px solid var(--border);border-radius:10px;cursor:zoom-in}
+  .rxphoto .rxbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  @media(max-width:1000px){ .rxpane.con-foto{grid-template-columns:1fr} .rxpane.con-foto .rxfoto{position:static} }
+  @media(max-width:560px){ .rxmore{grid-template-columns:1fr 1fr} .rxmore .rxmedico{grid-column:1/-1} }
   .wizard table{margin-bottom:12px}
   .wizard input[type=file]{display:block;width:100%;padding:10px;border:1px dashed var(--border);border-radius:var(--radius-sm);background:var(--bg);font-size:13px}
   .wizard .stats{margin-bottom:16px}
@@ -1065,6 +1126,10 @@
 <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></symbol>
 <symbol id="i-percent" viewBox="0 0 24 24"><line x1="19" x2="5" y1="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></symbol>
 <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></symbol>
+<symbol id="i-camera" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></symbol>
+<symbol id="i-smartphone" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></symbol>
+<symbol id="i-zoom-in" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/><line x1="11" x2="11" y1="8" y2="14"/><line x1="8" x2="14" y1="11" y2="11"/></symbol>
+<symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
 </svg>
 <div id="root"></div>
 <div id="toasts"></div>
@@ -1422,6 +1487,17 @@ async function apiUpload(path, file) {
   if (txt) { try { data = JSON.parse(txt); } catch { data = txt; } }
   if (!res.ok) throw new Error(errMsg(data, res.status));
   return data;
+}
+
+/* An authenticated binary GET, as a Blob: an <img src> cannot send the token,
+   so the receta photo is fetched here and shown from an object URL. */
+async function apiBlob(path) {
+  const headers = {};
+  if (state.token) headers["Authorization"] = "Bearer " + state.token;
+  const res = await fetch(path, { headers });
+  if (res.status === 401) { logout(); throw new Error("La sesión expiró. Iniciá sesión de nuevo."); }
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.blob();
 }
 
 /* download a binary response (the .xlsx template) */
@@ -2413,6 +2489,51 @@ function stepMap(labels, i) {
       <div class="stepmap-txt" title="${esc(l)}">${esc(l)}</div>
     </div>`).join("")}
   </div>`;
+}
+
+/* Lleva el mapa de `root` al paso `i`. Se actualiza, no se vuelve a dibujar:
+   si se reemplaza el elemento la línea aparece ya pintada y la transición no
+   llega a correr nunca. */
+function moveStepMap(root, i) {
+  const m = root.querySelector(".stepmap");
+  if (!m) return false;
+  const pasos = [...m.querySelectorAll(".stepmap-step")];
+  m.style.setProperty("--avance", (pasos.length > 1 ? (i / (pasos.length - 1)) * 100 : 100) + "%");
+  pasos.forEach((paso, k) => {
+    paso.classList.toggle("done", k < i);
+    paso.classList.toggle("on", k === i);
+    const dot = paso.querySelector(".stepmap-dot");
+    const quiere = k < i ? "ok" : String(k + 1);
+    if (dot.dataset.v !== quiere) {
+      dot.dataset.v = quiere;
+      dot.innerHTML = k < i ? `<svg class="ic"><use href="#i-check"/></svg>` : String(k + 1);
+    }
+  });
+  return true;
+}
+
+/* Saca el paso viejo de `stage`, mete el nuevo y lleva el alto de uno a otro.
+   `dir` es 1 hacia adelante y -1 hacia atrás. Devuelve apenas el nuevo está en
+   pantalla, así el foco no espera a que termine. */
+async function swapStepPane(stage, pane, dir) {
+  const viejo = stage.firstElementChild;
+  if (!viejo || matchMedia("(prefers-reduced-motion: reduce)").matches) { stage.replaceChildren(pane); return; }
+  const esperar = (ms) => new Promise(r => setTimeout(r, ms));
+  stage.style.height = stage.getBoundingClientRect().height + "px";
+  stage.style.overflow = "hidden";
+  viejo.style.opacity = "0";
+  viejo.style.transform = `translateX(${-14 * dir}px)`;
+  await esperar(130);
+  stage.replaceChildren(pane);
+  pane.style.opacity = "0";
+  pane.style.transform = `translateX(${14 * dir}px)`;
+  const alto = pane.getBoundingClientRect().height;
+  requestAnimationFrame(() => {
+    stage.style.height = alto + "px";
+    pane.style.opacity = "";
+    pane.style.transform = "";
+  });
+  esperar(280).then(() => { stage.style.height = ""; stage.style.overflow = ""; });
 }
 
 /* `opts.stack`: on a phone each row becomes a block, every cell under its
@@ -4418,51 +4539,6 @@ async function productsView(view) {
     // Declaración y no `const`: pintar() corre antes de llegar a esta línea.
     function pastillas() { return stepMap(pasos.map(p => p.label), i); }
 
-    const menosMovimiento = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const esperar = (ms) => new Promise(r => setTimeout(r, ms));
-
-    /* El mapa se actualiza, no se vuelve a dibujar: si se reemplaza el elemento
-       la línea aparece ya pintada y la transición no llega a correr nunca. */
-    function actualizarMapa() {
-      const m = body.querySelector(".stepmap");
-      if (!m) return false;
-      m.style.setProperty("--avance", (i / (pasos.length - 1)) * 100 + "%");
-      [...m.querySelectorAll(".stepmap-step")].forEach((paso, k) => {
-        paso.classList.toggle("done", k < i);
-        paso.classList.toggle("on", k === i);
-        const dot = paso.querySelector(".stepmap-dot");
-        const quiere = k < i ? "ok" : String(k + 1);
-        if (dot.dataset.v !== quiere) {
-          dot.dataset.v = quiere;
-          dot.innerHTML = k < i ? `<svg class="ic"><use href="#i-check"/></svg>` : String(k + 1);
-        }
-      });
-      return true;
-    }
-
-    /* Saca el paso viejo, mete el nuevo y lleva el alto de uno a otro. Devuelve
-       apenas el nuevo está en pantalla, así el foco no espera a que termine. */
-    async function mostrar(pane, dir) {
-      const stage = body.querySelector(".wizstage");
-      const viejo = stage.firstElementChild;
-      if (!viejo || menosMovimiento.matches) { stage.replaceChildren(pane); return; }
-      stage.style.height = stage.getBoundingClientRect().height + "px";
-      stage.style.overflow = "hidden";
-      viejo.style.opacity = "0";
-      viejo.style.transform = `translateX(${-14 * dir}px)`;
-      await esperar(130);
-      stage.replaceChildren(pane);
-      pane.style.opacity = "0";
-      pane.style.transform = `translateX(${14 * dir}px)`;
-      const alto = pane.getBoundingClientRect().height;
-      requestAnimationFrame(() => {
-        stage.style.height = alto + "px";
-        pane.style.opacity = "";
-        pane.style.transform = "";
-      });
-      esperar(280).then(() => { stage.style.height = ""; stage.style.overflow = ""; });
-    }
-
     /* El paso 2 dice en castellano qué va a pasar al confirmar, con los códigos
        ya armados: es la única forma de que la regla (un estilo con variantes no
        se vende ni se stockea) se vea antes de crear y no después. */
@@ -4610,7 +4686,7 @@ async function productsView(view) {
       const form = paso.stock ? formStock() : await buildForm(campos, acc, true);
       if (!body.querySelector(".stepmap"))
         body.innerHTML = pastillas() + `<div class="wizstage"></div>`;
-      else actualizarMapa();
+      else moveStepMap(body, i);
       const caja = el(`<div class="wizpane"></div>`);
       caja.appendChild(form);
       if (i === 0) await wireDependentSelects(form, null);
@@ -4685,7 +4761,7 @@ async function productsView(view) {
       });
       der.append(falta, seguir);
       revisar();
-      await mostrar(caja, dir);
+      await swapStepPane(body.querySelector(".wizstage"), caja, dir);
       const primero = form.querySelector("input,select,textarea");
       if (primero) primero.focus();
     }
@@ -6736,20 +6812,522 @@ const CUSTOMER_FIELDS = [
   { key:"notes", label:"Notas", type:"textarea", full:true },
 ];
 
-/* Alta y edición de un cliente: el mismo formulario desde la lista y desde la
-   ficha. Sin `row` es un alta. */
+/* Alta y edición de un cliente: el mismo formulario desde la lista, desde la
+   ficha y desde una venta. Sin `row` es un alta, que va en el asistente de
+   abajo. La edición NO se parte: ahí se entra a cambiar un dato concreto. */
 function customerFormModal(row, onSaved) {
-  let fields = row ? CUSTOMER_FIELDS.concat([{ key:"is_active", label:"Activo", type:"checkbox" }]) : CUSTOMER_FIELDS;
+  if (!row) return customerWizard(onSaved);
+  let fields = CUSTOMER_FIELDS.concat([{ key:"is_active", label:"Activo", type:"checkbox" }]);
   // A type typed in before this was a list stays on offer, so saving the form
   // does not erase it. Facturar is what asks for one ARCA takes.
-  if (row && row.document_type && !(row.document_type in ENUM_ES.document_type))
+  if (row.document_type && !(row.document_type in ENUM_ES.document_type))
     fields = fields.map(f => f.key !== "document_type" ? f : { ...f, options: f.options.concat(
       [{ value: row.document_type, label: `${row.document_type} (no sirve para facturar)` }]) });
-  formModal({ title: row ? "Editar cliente" : "Nuevo cliente", grid:true, fields, values: row || {},
+  formModal({ title:"Editar cliente", grid:true, fields, values: row,
     onSubmit: async (p) => {
-      const saved = row ? await api("PUT", "/api/customers/" + row.id, p) : await api("POST", "/api/customers", p);
+      const saved = await api("PUT", "/api/customers/" + row.id, p);
       toast("Guardado", "ok"); onSaved(saved);
     } });
+}
+
+/* ---------------------------------------------------------------- alta
+   Los tratamientos y la receta vivían sólo en la ficha, a la que se llega
+   después de crear al cliente, así que casi nunca se cargaban. El alta va en
+   tres pasos, con el mismo mapa que el alta de productos: los datos, los
+   tratamientos y la receta. Los dos últimos aparecen en cada alta pero no
+   frenan a nadie: vacíos son "sin tratamientos" y "sin receta", y se sigue con
+   el mismo botón, igual que el stock inicial de un producto arranca en 0. */
+const TRATAMIENTOS = Object.entries(ENUM_ES.treatment_type);
+
+async function customerWizard(onSaved) {
+  const pasos = ["Datos", "Tratamientos (opcional)", "Receta (opcional)"];
+  let datos = {};
+  // Lo marcado, lo tipeado y la foto sobreviven a ir y volver entre pasos.
+  const trt = { on: new Set(), d: {} };
+  const rec = { modo: "add", v: {}, foto: null };
+  const body = el(`<div class="wizard">${stepMap(pasos, 0)}<div class="wizstage"></div></div>`);
+  const cerrar = openModal({ title:"Nuevo cliente", body, wide:true });
+  let i = 0;
+  await pintar();
+
+  async function pintar(dir = 0) {
+    const paso = i;
+    moveStepMap(body, paso);
+    // Sólo el paso Receta con QR o foto ensancha el modal.
+    body.closest(".modal").classList.remove("xwide");
+    const ultimo = paso === pasos.length - 1;
+    const rx = paso === 2 ? recetaPane(rec) : null;
+    const form = paso === 0 ? await buildForm(CUSTOMER_FIELDS, datos, true)
+      : paso === 1 ? formTratamientos(trt) : rx.form;
+    const caja = el(`<div class="wizpane"></div>`);
+    caja.appendChild(rx ? rx.el : form);
+
+    const nav = el(`<div class="toolbar" style="justify-content:space-between;margin:14px 0 0"></div>`);
+    const izq = el(`<div></div>`);
+    const der = el(`<div style="display:flex;align-items:center;gap:12px;min-width:0"></div>`);
+    nav.append(izq, der);
+    caja.appendChild(nav);
+    if (i) {
+      const atras = el(`<button class="btn" type="button"><svg class="ic"><use href="#i-arrow-left"/></svg>Volver</button>`);
+      atras.addEventListener("click", async () => { i--; await pintar(-1); });
+      izq.appendChild(atras);
+    }
+    const seguir = el(`<button class="btn primary" type="button">${ultimo
+      ? `<svg class="ic"><use href="#i-check"/></svg>Crear cliente`
+      : `Siguiente<svg class="ic"><use href="#i-arrow-right"/></svg>`}</button>`);
+    // Como en el alta de productos: el botón se prende cuando el paso está
+    // completo, y al lado dice qué falta.
+    const falta = el(`<div class="fhelp" style="margin:0"></div>`);
+    const problema = () => paso === 0 ? validate(CUSTOMER_FIELDS, form.read()) || emailMalo(form)
+      : paso === 2 ? form.problema() : null;
+    let enviando = false;
+    const revisar = () => {
+      if (enviando) return;
+      const err = problema();
+      seguir.disabled = !!err;
+      falta.textContent = err || "";
+    };
+    form.addEventListener("input", revisar);
+    form.addEventListener("change", revisar);
+    seguir.addEventListener("click", async () => {
+      const err = problema();
+      if (err) return toast(err, "err");
+      if (paso === 0) datos = form.read();
+      if (!ultimo) { i++; return pintar(1); }
+      enviando = true; seguir.disabled = true;
+      try {
+        const treatments = tratamientosDe(trt);
+        const prescription = form.vacia() ? null : form.read();
+        const saved = await api("POST", "/api/customers", { ...datos, treatments, prescription });
+        const n = treatments.length;
+        toast(["Guardado", n && `${n} ${n === 1 ? "tratamiento" : "tratamientos"}`, prescription && "receta"]
+          .filter(Boolean).join(" · "), "ok");
+        if (rec.foto) URL.revokeObjectURL(rec.foto);
+        cerrar();
+        onSaved(saved);
+      } catch (e) { toast(e.message || "No se pudo guardar.", "err"); enviando = false; revisar(); }
+    });
+    der.append(falta, seguir);
+    revisar();
+    await swapStepPane(body.querySelector(".wizstage"), caja, dir);
+    rx?.layout();
+    const primero = form.querySelector("input,select,textarea");
+    if (primero) primero.focus();
+  }
+}
+
+/* El servidor rechaza un email sin dominio, y el asistente manda todo recién
+   al final: sin esta revisión el error saldría un paso después del campo que
+   hay que corregir. */
+function emailMalo(form) {
+  const v = (form.querySelector('[name="email"]')?.value || "").trim();
+  return v && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v) ? "Revisá el email (por ejemplo nombre@gmail.com)." : null;
+}
+
+/* El paso Tratamientos no es una lista de campos: se marcan de un toque los
+   que tiene, y cada uno marcado abre su renglón con la fecha del diagnóstico y
+   un detalle, los dos opcionales. Devuelve un <form> con read(), como
+   buildForm, para que el asistente lo trate igual. */
+function formTratamientos(trt) {
+  const form = el(`<form class="form">
+    <div class="trth" style="margin-bottom:8px">Marcá todos los que correspondan</div>
+    <div class="trtpick" role="group" aria-label="Tratamientos">${TRATAMIENTOS.map(([v, l]) => `<label>
+      <input type="checkbox" value="${v}" ${trt.on.has(v) ? "checked" : ""}>
+      <svg class="ic off"><use href="#i-plus"/></svg><svg class="ic on"><use href="#i-check"/></svg>${esc(l)}</label>`).join("")}</div>
+    <div class="trtrows"></div>
+  </form>`);
+  form.addEventListener("submit", e => e.preventDefault());
+  const filas = form.querySelector(".trtrows");
+  // Se rehacen sólo los renglones: las pastillas quedan, y con ellas el foco.
+  function dibujar() {
+    const marcados = TRATAMIENTOS.filter(([v]) => trt.on.has(v));
+    filas.innerHTML = !marcados.length
+      ? `<div class="fhelp" style="margin:0">Si no lo sabés, dejalo así: se crea sin tratamientos y se cargan después desde su ficha.</div>`
+      : `<div class="trtgrid"><span class="trth"></span><span class="trth">Fecha de diagnóstico</span><span class="trth">Detalle</span>
+        ${marcados.map(([v, l]) => { const d = trt.d[v] || {}; return `<span class="trtname">${esc(l)}</span>
+          <input type="date" data-v="${v}" data-k="diagnosed_at" value="${esc(d.diagnosed_at || "")}" aria-label="Fecha de diagnóstico de ${esc(l)}">
+          <input type="text" data-v="${v}" data-k="description" maxlength="500" value="${esc(d.description || "")}"
+            placeholder="${v === "other" ? "Cuál, por ejemplo queratocono" : "Opcional"}" aria-label="Detalle de ${esc(l)}">`; }).join("")}</div>`;
+  }
+  form.addEventListener("change", e => {
+    const c = e.target.closest(".trtpick input");
+    if (!c) return;
+    if (c.checked) trt.on.add(c.value); else trt.on.delete(c.value);
+    dibujar();
+  });
+  form.addEventListener("input", e => {
+    const t = e.target;
+    if (t.dataset.v) (trt.d[t.dataset.v] ||= {})[t.dataset.k] = t.value;
+  });
+  form.read = () => ({ treatments: tratamientosDe(trt) });
+  dibujar();
+  return form;
+}
+
+/* Lo que va a la API, leído del estado y no del formulario: el alta se crea
+   desde el paso Receta, cuando Tratamientos ya no está en pantalla. */
+function tratamientosDe(trt) {
+  return TRATAMIENTOS.filter(([v]) => trt.on.has(v)).map(([v]) => ({
+    treatment_type: v,
+    diagnosed_at: trt.d[v]?.diagnosed_at || null,
+    description: (trt.d[v]?.description || "").trim() || null,
+  }));
+}
+
+/* -----------------------------------------------------------------------
+   Receta: la grilla como el papel y la foto desde el celular.
+   ----------------------------------------------------------------------- */
+
+/* Una dioptría como la escribe una óptica: con signo y coma, "-2,25". */
+function fmtDioptria(v) {
+  if (v == null || v === "") return "-";
+  const n = Number(v);
+  if (n === 0) return "0,00";
+  return (n > 0 ? "+" : "-") + Math.abs(n).toFixed(2).replace(".", ",");
+}
+
+/* Lo que se tipea en una celda de dioptrías. Sin coma y con tres cifras o
+   más, las dos últimas son decimales ("-225" es -2,25 y "075" es +0,75); con
+   una o dos son enteros ("2" es +2,00). Punto o coma da igual, y "pl" o
+   "neutro" es 0. Devuelve el número, null si está vacía y NaN si no se entiende. */
+function parseDioptria(raw) {
+  let s = String(raw ?? "").trim().toLowerCase().replace(/\s+/g, "").replace(/−/g, "-");
+  if (!s) return null;
+  if (/^(pl|plano|n|neutro|neutra)$/.test(s)) return 0;
+  let sign = 1;
+  if (s[0] === "+") s = s.slice(1);
+  else if (s[0] === "-") { sign = -1; s = s.slice(1); }
+  s = s.replace(",", ".");
+  if (/^\d+$/.test(s)) return sign * (s.length >= 3 ? Number(s) / 100 : Number(s));
+  if (/^\d*\.\d*$/.test(s) && s !== ".") return sign * Number(s);
+  return NaN;
+}
+
+/* "180", "x180" y "180°" son el mismo eje. */
+function parseEje(raw) {
+  const s = String(raw ?? "").trim().toLowerCase().replace(/^x/, "").replace(/[°º]/g, "").trim();
+  if (!s) return null;
+  return /^\d{1,3}$/.test(s) ? Number(s) : NaN;
+}
+
+function parseDp(raw) {
+  const s = String(raw ?? "").trim().toLowerCase().replace(/mm$/, "").trim().replace(",", ".");
+  if (!s) return null;
+  return /^\d+(\.\d+)?$/.test(s) ? Number(s) : NaN;
+}
+
+const RX_OJOS = [["od", "OD", "right"], ["oi", "OI", "left"]];
+const RX_COLS = ["esf", "cil", "eje", "add"];
+const RX_NOMBRE = { esf: "Esf", cil: "Cil", eje: "Eje", add: "Adición" };
+const round2 = (n) => Math.round(n * 100) / 100;
+
+/* La receta como el papel: dos renglones (OD y OI) y las columnas en el orden
+   en que la escribe el médico, para cargarla mirando la foto sin buscar cada
+   campo. Se tipea rápido ("-225" es -2,25), Enter pasa a la celda siguiente
+   como en una planilla, y si la receta trae Cerca en vez de adición la
+   adición se calcula. Nada se corrige solo: un valor que no va de 0,25 en
+   0,25 se marca, porque es un dato médico. Devuelve un <form> con read() y
+   problema(), como buildForm, y lo tipeado queda en `st.v`. */
+function recetaGrid(st) {
+  const v = st.v;
+  const cell = (k, label, extra = "") =>
+    `<input data-k="${k}" value="${esc(v[k] || "")}" autocomplete="off" spellcheck="false" aria-label="${esc(label)}" ${extra}>`;
+  const form = el(`<form class="form rx">
+    <div class="rxgrid">
+      <span></span>${RX_COLS.map(c => `<span class="rxh" ${c === "add" ? "data-addh" : ""}>${RX_NOMBRE[c]}</span>`).join("")}
+      ${RX_OJOS.map(([o, O]) => `<span class="rxeye">${O}</span>${RX_COLS.map(c =>
+        cell(`${o}_${c}`, `${O} ${RX_NOMBRE[c]}`, c === "eje" ? 'inputmode="numeric" placeholder="0 a 180"' : "")).join("")}`).join("")}
+    </div>
+    <div class="rxtools">
+      <button type="button" class="stklink" data-copiar><svg class="ic"><use href="#i-copy"/></svg>Copiar OD en OI</button>
+      <div class="seg sm" role="group" aria-label="La receta trae"><button type="button" data-modo="add">Adición</button><button type="button" data-modo="cerca">Cerca</button></div>
+    </div>
+    <div class="fhelp rxcalc" data-calc></div>
+    <div class="rxmore">
+      <div class="form-row"><label class="fld">DP</label>${cell("dp", "Distancia pupilar en milímetros", 'inputmode="decimal" placeholder="mm"')}</div>
+      <div class="form-row rxmedico"><label class="fld">Médico</label>${cell("medico", "Médico")}</div>
+      <div class="form-row"><label class="fld">Fecha de la receta</label><input type="date" data-k="fecha" value="${esc(v.fecha || "")}" aria-label="Fecha de la receta"></div>
+    </div>
+    <div class="form-row rxnotas"><label class="fld">Notas</label><textarea data-k="notas" rows="2" aria-label="Notas">${esc(v.notas || "")}</textarea></div>
+  </form>`);
+  form.addEventListener("submit", e => e.preventDefault());
+  const $k = (k) => form.querySelector(`[data-k="${k}"]`);
+  const nombre = (o, c) => `${o.toUpperCase()} ${c === "add" && st.modo === "cerca" ? "Cerca" : RX_NOMBRE[c]}`;
+  const paso = (n) => Math.abs(n * 4 - Math.round(n * 4)) < 1e-6;
+
+  // Con Cerca, la adición es la resta: cerca menos la esfera de lejos (plano si no hay).
+  function adicion(o) {
+    const x = parseDioptria(v[`${o}_add`]);
+    if (x == null || Number.isNaN(x) || st.modo !== "cerca") return x;
+    const lejos = parseDioptria(v[`${o}_esf`]);
+    return Number.isNaN(lejos) ? NaN : round2(x - (lejos || 0));
+  }
+
+  function errores() {
+    const out = [];
+    for (const [o, O] of RX_OJOS) {
+      for (const c of ["esf", "cil", "add"]) {
+        const n = parseDioptria(v[`${o}_${c}`]);
+        if (n == null) continue;
+        if (Number.isNaN(n)) out.push({ k: `${o}_${c}`, msg: `${nombre(o, c)}: no se entiende el número.` });
+        else if (!paso(n)) out.push({ k: `${o}_${c}`, msg: `${nombre(o, c)}: las dioptrías van de 0,25 en 0,25.` });
+        else if (Math.abs(n) > (c === "cil" ? 10 : 30)) out.push({ k: `${o}_${c}`, msg: `${nombre(o, c)}: ${fmtDioptria(n)} está fuera de rango.` });
+      }
+      const cil = parseDioptria(v[`${o}_cil`]), eje = parseEje(v[`${o}_eje`]);
+      if (Number.isNaN(eje) || eje > 180) out.push({ k: `${o}_eje`, msg: `${O} Eje: va de 0 a 180.` });
+      else if (cil && !Number.isNaN(cil) && eje == null) out.push({ k: `${o}_eje`, msg: `${O}: con cilindro hace falta el eje.` });
+      else if (eje != null && (cil == null || cil === 0)) out.push({ k: `${o}_eje`, msg: `${O}: hay eje pero no cilindro.` });
+      const a = adicion(o);
+      if (a != null && !Number.isNaN(a) && paso(a) && (a < 0.25 || a > 4))
+        out.push({ k: `${o}_add`, msg: st.modo === "cerca"
+          ? `${O}: la cerca da una adición de ${fmtDioptria(a)}, revisá.` : `${O} Adición: va de +0,25 a +4,00.` });
+    }
+    const dp = parseDp(v.dp);
+    if (dp != null && (Number.isNaN(dp) || dp < 40 || dp > 80)) out.push({ k: "dp", msg: "DP: va de 40 a 80 mm." });
+    return out;
+  }
+
+  function calc() {
+    const caja = form.querySelector("[data-calc]");
+    if (st.modo !== "cerca") { caja.textContent = ""; return; }
+    const partes = RX_OJOS.map(([o, O]) => {
+      const a = adicion(o);
+      return a == null || Number.isNaN(a) ? null : `${O} ${fmtDioptria(a)}`;
+    }).filter(Boolean);
+    caja.textContent = partes.length ? `Adición calculada: ${partes.join(" · ")}`
+      : "Con Cerca, la adición se calcula sola: cerca menos la esfera de lejos.";
+  }
+
+  function pintarModo() {
+    form.querySelector("[data-addh]").textContent = st.modo === "cerca" ? "Cerca" : "Adición";
+    form.querySelectorAll("[data-modo]").forEach(b => b.classList.toggle("on", b.dataset.modo === st.modo));
+    for (const [o] of RX_OJOS) $k(`${o}_add`).setAttribute("aria-label", nombre(o, "add"));
+    calc();
+  }
+
+  form.addEventListener("input", e => {
+    const k = e.target.dataset.k;
+    if (!k) return;
+    v[k] = e.target.value;
+    e.target.classList.remove("bad");
+    calc();
+  });
+  // Al salir de una celda se reescribe como en el papel: "-225" pasa a -2,25.
+  form.addEventListener("focusout", e => {
+    const t = e.target, k = t.dataset.k;
+    if (!k) return;
+    const c = k.split("_")[1];
+    if (["esf", "cil", "add"].includes(c)) {
+      const n = parseDioptria(t.value);
+      if (n != null && !Number.isNaN(n)) t.value = v[k] = fmtDioptria(n);
+    } else if (c === "eje") {
+      const n = parseEje(t.value);
+      if (n != null && !Number.isNaN(n)) t.value = v[k] = String(n);
+    } else if (k === "dp") {
+      const n = parseDp(t.value);
+      if (n != null && !Number.isNaN(n)) t.value = v[k] = String(n).replace(".", ",");
+    }
+    const malas = new Set(errores().map(x => x.k));
+    form.querySelectorAll("[data-k]").forEach(i => i.classList.toggle("bad", malas.has(i.dataset.k)));
+    calc();
+    form.dispatchEvent(new Event("change"));
+  });
+  form.addEventListener("keydown", e => {
+    if (e.key !== "Enter" || e.target.tagName === "TEXTAREA" || !e.target.dataset.k) return;
+    e.preventDefault();
+    const campos = [...form.querySelectorAll("[data-k]")];
+    const sig = campos[campos.indexOf(e.target) + 1];
+    if (sig) { sig.focus(); sig.select?.(); }
+  });
+  form.querySelector("[data-copiar]").addEventListener("click", () => {
+    for (const c of RX_COLS) { v[`oi_${c}`] = v[`od_${c}`] || ""; $k(`oi_${c}`).value = v[`oi_${c}`]; }
+    calc();
+    form.dispatchEvent(new Event("change"));
+    $k("oi_esf").focus();
+  });
+  // Cambiar de Adición a Cerca no pierde lo cargado: se convierte, en los dos sentidos.
+  form.querySelectorAll("[data-modo]").forEach(b => b.addEventListener("click", () => {
+    const modo = b.dataset.modo;
+    if (modo === st.modo) return;
+    for (const [o] of RX_OJOS) {
+      const x = parseDioptria(v[`${o}_add`]), lejos = parseDioptria(v[`${o}_esf`]);
+      if (x == null || Number.isNaN(x) || Number.isNaN(lejos)) continue;
+      v[`${o}_add`] = fmtDioptria(round2(modo === "cerca" ? x + (lejos || 0) : x - (lejos || 0)));
+      $k(`${o}_add`).value = v[`${o}_add`];
+    }
+    st.modo = modo;
+    pintarModo();
+    form.dispatchEvent(new Event("change"));
+  }));
+
+  const dec = (n) => (n == null || Number.isNaN(n) ? null : n.toFixed(2));
+  form.read = () => {
+    const out = {};
+    for (const [o, , lado] of RX_OJOS) {
+      out[`${lado}_sphere`] = dec(parseDioptria(v[`${o}_esf`]));
+      out[`${lado}_cylinder`] = dec(parseDioptria(v[`${o}_cil`]));
+      const eje = parseEje(v[`${o}_eje`]);
+      out[`${lado}_axis`] = eje == null || Number.isNaN(eje) ? null : eje;
+      out[`${lado}_addition`] = dec(adicion(o));
+    }
+    const dp = parseDp(v.dp);
+    out.pupillary_distance = dp == null || Number.isNaN(dp) ? null : String(dp);
+    out.doctor_name = (v.medico || "").trim() || null;
+    out.prescribed_at = v.fecha || null;
+    out.notes = (v.notas || "").trim() || null;
+    return out;
+  };
+  form.vacia = () => !Object.values(v).some(x => String(x ?? "").trim());
+  form.problema = () => { const e = errores(); return e.length ? e[0].msg : null; };
+  pintarModo();
+  return form;
+}
+
+/* La foto de la receta, desde el celular (services/handoffs.py). Un QR en
+   pantalla; el celular saca la foto y la manda; aparece al lado de la grilla
+   para cargar la receta mirándola. No la lee ninguna IA, así que usarla no
+   cuesta nada, y no se guarda: el servidor la borra en cuanto llega acá y la
+   pestaña la olvida al cerrar. Mientras espera, pregunta cada dos segundos. */
+function recetaFoto(st, onCambio) {
+  const box = el(`<div class="rxfoto"></div>`);
+  let handoff = null, vencido = false, timer = null, avisado = false;
+
+  function pintar() {
+    if (st.foto) {
+      box.innerHTML = `<div class="rxphoto"><img src="${st.foto}" alt="Foto de la receta" title="Click para agrandar">
+        <div class="rxbar">
+          <button type="button" class="btn sm" data-a="zoom"><svg class="ic"><use href="#i-zoom-in"/></svg>Agrandar</button>
+          <button type="button" class="btn sm" data-a="pedir"><svg class="ic"><use href="#i-camera"/></svg>Sacar otra</button>
+          <button type="button" class="btn sm ghost" data-a="quitar"><svg class="ic"><use href="#i-x"/></svg>Quitar</button>
+        </div>
+        <div class="fhelp">La foto no se guarda: es para cargar la receta mirándola.</div></div>`;
+    } else if (handoff && !vencido) {
+      box.innerHTML = `<div class="rxqr">${handoff.qr_svg}
+        <b>Escaneá el código con la cámara del celular</b>
+        <span class="rxwait">Esperando la foto</span>
+        <div class="fhelp" style="margin:0">El código sirve una sola vez y vence en 10 minutos.</div>
+        <button type="button" class="stklink" data-a="cancelar">Cancelar</button></div>`;
+    } else if (handoff) {
+      box.innerHTML = `<div class="rxqr"><b>El código venció</b>
+        <div class="fhelp" style="margin:0">Pasaron 10 minutos sin que llegara la foto.</div>
+        <button type="button" class="btn sm primary" data-a="pedir"><svg class="ic"><use href="#i-smartphone"/></svg>Generar otro</button>
+        <button type="button" class="stklink" data-a="cancelar">Cancelar</button></div>`;
+    } else {
+      box.innerHTML = `<div class="rxinvite">
+        <button type="button" class="btn sm" data-a="pedir"><svg class="ic"><use href="#i-smartphone"/></svg>Foto desde el celular</button>
+        <div class="fhelp">Le sacás una foto a la receta con el celular y aparece acá, al lado de la grilla.</div></div>`;
+    }
+    onCambio();
+  }
+
+  box.addEventListener("click", (e) => {
+    const a = e.target.closest("[data-a]")?.dataset.a || (e.target.matches(".rxphoto img") ? "zoom" : null);
+    if (a === "pedir") pedir();
+    else if (a === "cancelar") { soltar(); pintar(); }
+    else if (a === "quitar") { URL.revokeObjectURL(st.foto); st.foto = null; pintar(); }
+    else if (a === "zoom") zoomFoto(st.foto);
+  });
+
+  async function pedir() {
+    soltar();
+    try { handoff = await api("POST", "/api/handoffs"); }
+    catch (e) { return toast(e.message || "No se pudo generar el código.", "err"); }
+    vencido = false;
+    avisado = false;
+    pintar();
+    esperar();
+  }
+  function esperar() {
+    clearTimeout(timer);
+    timer = setTimeout(async () => {
+      if (!handoff) return;
+      // Se cerró el modal o se cambió de paso: el pedido se borra en el servidor.
+      if (!document.body.contains(box)) return soltar();
+      let s;
+      try { s = await api("GET", `/api/handoffs/${handoff.id}`); }
+      catch { return esperar(); }   // un corte de red no termina la espera
+      if (!handoff) return;
+      if (s.status === "received") return traer();
+      if (s.status === "expired") { vencido = true; return pintar(); }
+      esperar();
+    }, 2000);
+  }
+  async function traer() {
+    const h = handoff;
+    let blob;
+    try { blob = await apiBlob(`/api/handoffs/${h.id}/photo`); }
+    catch (e) {
+      if (!avisado) toast(e.message || "No se pudo traer la foto.", "err");
+      avisado = true;
+      return esperar();
+    }
+    api("DELETE", `/api/handoffs/${h.id}`).catch(() => {});
+    handoff = null;
+    if (st.foto) URL.revokeObjectURL(st.foto);
+    st.foto = URL.createObjectURL(blob);
+    pintar();
+    toast("Llegó la foto", "ok");
+  }
+  // Deja de esperar y borra el pedido en el servidor, con foto o sin ella.
+  function soltar() {
+    clearTimeout(timer);
+    if (handoff) api("DELETE", `/api/handoffs/${handoff.id}`).catch(() => {});
+    handoff = null;
+    vencido = false;
+  }
+
+  box.activo = () => !!(st.foto || handoff);
+  pintar();
+  return box;
+}
+
+function zoomFoto(url) {
+  const over = el(`<div class="shot-zoom" role="dialog" aria-modal="true" aria-label="Foto de la receta">
+    <figure><div class="shot-img"><img src="${url}" alt="Foto de la receta"></div>
+    <figcaption>Click o Escape para volver</figcaption></figure></div>`);
+  const close = () => { document.removeEventListener("keydown", onKey, true); over.remove(); };
+  const onKey = (e) => { if (e.key === "Escape") { e.stopPropagation(); close(); } };
+  over.addEventListener("click", close);
+  document.addEventListener("keydown", onKey, true);
+  document.body.appendChild(over);
+}
+
+/* La grilla y la foto juntas: el paso Receta del alta y "Agregar receta" en
+   la ficha. Con QR o foto, van lado a lado y el modal se ensancha; layout()
+   se llama cuando el panel ya está en el modal. */
+function recetaPane(st) {
+  const pane = el(`<div class="rxpane"></div>`);
+  let foto = null;
+  const layout = () => {
+    if (!foto) return;
+    const on = foto.activo();
+    pane.classList.toggle("con-foto", on);
+    pane.closest(".modal")?.classList.toggle("xwide", on);
+  };
+  foto = recetaFoto(st, layout);
+  const form = recetaGrid(st);
+  pane.append(foto, form);
+  return { el: pane, form, layout };
+}
+
+function recetaModal(customerId, onSaved) {
+  const rec = { modo: "add", v: {}, foto: null };
+  const rx = recetaPane(rec);
+  const close = openModal({ title:"Agregar receta", body: rx.el, wide:true, confirmLabel:"Guardar receta",
+    onConfirm: async (cerrar) => {
+      if (rx.form.vacia()) return toast("Cargá al menos un valor de la receta.", "err");
+      const err = rx.form.problema();
+      if (err) return toast(err, "err");
+      try { await api("POST", `/api/customers/${customerId}/prescriptions`, rx.form.read()); }
+      catch (e) { return toast(e.message || "No se pudo guardar.", "err"); }
+      if (rec.foto) URL.revokeObjectURL(rec.foto);
+      toast("Receta guardada", "ok");
+      cerrar();
+      onSaved();
+    } });
+  rx.layout();
+  rx.form.querySelector("[data-k]").focus();
+  return close;
 }
 
 async function customersView(view) {
@@ -6770,8 +7348,10 @@ async function customersView(view) {
   const openForm = (mode, row) => customerFormModal(mode === "edit" ? row : null, load);
   function actions(r) {
     let h = `<button class="btn sm" onclick="location.hash='#/customers/${r.id}'"><svg class="ic"><use href="#i-eye"/></svg>Abrir</button>`;
+    // Dos con nombre y el resto en ⋯, como en las otras grillas: el lugar que
+    // ocupaba Desactivar lo usa la columna Tratamientos.
     if (writable) h += `<button class="btn sm" data-act="edit" data-id="${r.id}"><svg class="ic"><use href="#i-pencil"/></svg>Editar</button>
-      ${r.is_active?`<button class="btn sm danger" data-act="del" data-id="${r.id}"><svg class="ic"><use href="#i-ban"/></svg>Desactivar</button>`:`<button class="btn sm" data-act="restore" data-id="${r.id}"><svg class="ic"><use href="#i-rotate"/></svg>Restaurar</button>`}`;
+      <button class="btn sm ico" data-act="more" data-id="${r.id}" title="Más acciones"><svg class="ic"><use href="#i-more"/></svg></button>`;
     return h;
   }
   function paint(list) {
@@ -6784,25 +7364,35 @@ async function customersView(view) {
         ${debts ? `<label class="switch"><input type="checkbox" id="owing" ${owing?"checked":""}> Con deuda</label>` : ""}</div>
       ${renderTable([
         { ...lightCol((r) => r.debt ? [r.debt.light, r.debt.due] : [null, null]), when: () => debts },
-        { key:"id", label:"ID" },
+        // Lo secundario cede lugar al angostarse la ventana, así Tratamientos
+        // entra sin que la grilla se vaya de costado.
+        { key:"id", label:"ID", priority:3 },
         { key:"last_name", label:"Nombre", render:(v,r) => esc(`${r.last_name}, ${r.first_name}`) },
+        // Pegado al nombre: es parte de quién es, y en la ficha quedaba escondido.
+        { key:"treatments", label:"Tratamientos", tdClass:"tags", render:(v) => v && v.length
+            ? v.map(t => badge(ENUM_ES.treatment_type[t] || t, "blue")).join("") : "-" },
         { key:"debt", label:"Cuenta", when:() => debts, render:(v) => v ? debtWhy(v.light, v.due) : "-" },
         { key:"debt", label:"Debe", align:"right", when:() => debts, render:(v) => v
             ? `<b>${esc(vzMoney(v.owed))}</b>${v.count > 1 ? `<div class="fhelp">en ${v.count} ventas</div>` : ""}`
             : "-" },
-        { key:"document_number", label:"Documento", render:(v,r)=>esc(r.document_number?`${r.document_type||""} ${r.document_number}`.trim():"—") },
-        { key:"phone", label:"Teléfono" }, { key:"email", label:"Email" },
-        { key:"is_active", label:"Estado", type:"bool" },
+        { key:"document_number", label:"Documento", priority:2, render:(v,r)=>esc(r.document_number?`${r.document_type||""} ${r.document_number}`.trim():"—") },
+        { key:"phone", label:"Teléfono" }, { key:"email", label:"Email", priority:2 },
+        { key:"is_active", label:"Estado", type:"bool", priority:3 },
       ], list, actions)}`;
     const nb = $("#newBtn", view); if (nb) nb.addEventListener("click", () => openForm("create"));
     $("#inact", view).addEventListener("change", e => { showInactive = e.target.checked; load(); });
     $("#owing", view)?.addEventListener("change", e => { owing = e.target.checked; load(); });
-    $$("[data-act]", view).forEach(b => b.addEventListener("click", async () => {
+    $$("[data-act]", view).forEach(b => b.addEventListener("click", () => {
       const row = list.find(x => String(x.id) === b.dataset.id);
-      if (b.dataset.act === "edit") openForm("edit", row);
-      else if (b.dataset.act === "restore") { await api("PUT","/api/customers/"+row.id,{ is_active:true }); toast("Restaurado","ok"); load(); }
-      else confirmDanger({ title:"Desactivar cliente", message:`¿Desactivar "${row.first_name} ${row.last_name}"?`, confirmLabel:"Desactivar",
-        onConfirm: async () => { await api("DELETE","/api/customers/"+row.id); toast("Desactivado","ok"); load(); } });
+      if (b.dataset.act === "edit") return openForm("edit", row);
+      openRowMenu(b, [
+        row.is_active
+          ? { label:"Desactivar cliente", icon:"i-ban", danger:true, onClick: () => confirmDanger({
+              title:"Desactivar cliente", message:`¿Desactivar "${row.first_name} ${row.last_name}"?`, confirmLabel:"Desactivar",
+              onConfirm: async () => { await api("DELETE","/api/customers/"+row.id); toast("Desactivado","ok"); load(); } }) }
+          : { label:"Restaurar cliente", icon:"i-rotate", onClick: async () => {
+              await api("PUT","/api/customers/"+row.id,{ is_active:true }); toast("Restaurado","ok"); load(); } },
+      ]);
     }));
   }
   await load();
@@ -6815,7 +7405,6 @@ async function customerDetailView(view, id) {
     api("GET", `/api/customers/${id}/prescriptions`).catch(() => []),
     api("GET", `/api/customers/${id}/treatments`).catch(() => []),
   ]);
-  const dim = (v) => v == null ? "—" : v;
   // Un dato que falta se dice en voz baja, sin raya: la ficha se lee entera.
   const dato = (v) => v ? esc(v) : `<span style="color:var(--muted)">Sin cargar</span>`;
   view.innerHTML = `
@@ -6850,13 +7439,15 @@ async function customerDetailView(view, id) {
       <div id="prescBox">${renderTable([
         { key:"prescribed_at", label:"Fecha", type:"date" },
         { key:"doctor_name", label:"Médico" },
-        { key:"right_sphere", label:"OD Esf", align:"right", render:(v,r)=>esc(dim(r.right_sphere)) },
-        { key:"right_cylinder", label:"OD Cil", align:"right", render:(v,r)=>esc(dim(r.right_cylinder)) },
-        { key:"right_axis", label:"OD Eje", align:"right", render:(v,r)=>esc(dim(r.right_axis)) },
-        { key:"left_sphere", label:"OI Esf", align:"right", render:(v,r)=>esc(dim(r.left_sphere)) },
-        { key:"left_cylinder", label:"OI Cil", align:"right", render:(v,r)=>esc(dim(r.left_cylinder)) },
-        { key:"left_axis", label:"OI Eje", align:"right", render:(v,r)=>esc(dim(r.left_axis)) },
-        { key:"pupillary_distance", label:"DP", align:"right", render:(v,r)=>esc(dim(r.pupillary_distance)) },
+        // Como se escribe en el papel: con signo y coma, y la adición de cada ojo.
+        ...RX_OJOS.flatMap(([, O, lado]) => [
+          { key:`${lado}_sphere`, label:`${O} Esf`, align:"right", render:(v) => esc(fmtDioptria(v)) },
+          { key:`${lado}_cylinder`, label:`${O} Cil`, align:"right", render:(v) => esc(fmtDioptria(v)) },
+          { key:`${lado}_axis`, label:`${O} Eje`, align:"right", render:(v) => v == null ? "-" : esc(String(v)) },
+          { key:`${lado}_addition`, label:`${O} Add`, align:"right", render:(v) => esc(fmtDioptria(v)) },
+        ]),
+        { key:"pupillary_distance", label:"DP", align:"right",
+          render:(v) => v == null ? "-" : esc(String(Number(v)).replace(".", ",")) },
       ], presc)}</div>
     </div>`;
 
@@ -6870,22 +7461,7 @@ async function customerDetailView(view, id) {
         { key:"description", label:"Descripción", type:"textarea" } ],
       onSubmit: async (p) => { await api("POST", `/api/customers/${id}/treatments`, p); toast("Agregado","ok"); customerDetailView(view, id); } }));
 
-    $("#addPresc", view)?.addEventListener("click", () => formModal({
-      title:"Agregar receta", grid:true, confirmLabel:"Guardar receta",
-      fields:[
-        { key:"prescribed_at", label:"Fecha de receta", type:"date" },
-        { key:"doctor_name", label:"Médico" },
-        { key:"right_sphere", label:"OD Esfera", type:"decimal", step:"0.25" },
-        { key:"right_cylinder", label:"OD Cilindro", type:"decimal", step:"0.25" },
-        { key:"right_axis", label:"OD Eje", type:"int", min:0, max:180 },
-        { key:"right_addition", label:"OD Adición", type:"decimal", step:"0.25" },
-        { key:"left_sphere", label:"OI Esfera", type:"decimal", step:"0.25" },
-        { key:"left_cylinder", label:"OI Cilindro", type:"decimal", step:"0.25" },
-        { key:"left_axis", label:"OI Eje", type:"int", min:0, max:180 },
-        { key:"left_addition", label:"OI Adición", type:"decimal", step:"0.25" },
-        { key:"pupillary_distance", label:"Distancia pupilar", type:"decimal", step:"0.5" },
-        { key:"notes", label:"Notas", type:"textarea", full:true } ],
-      onSubmit: async (p) => { await api("POST", `/api/customers/${id}/prescriptions`, p); toast("Guardado","ok"); customerDetailView(view, id); } }));
+    $("#addPresc", view)?.addEventListener("click", () => recetaModal(id, () => customerDetailView(view, id)));
   }
 }
 
