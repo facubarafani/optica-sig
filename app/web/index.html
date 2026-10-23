@@ -1146,7 +1146,7 @@
 <symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
 </svg>
 <div id="root"></div>
-<div id="toasts"></div>
+<div id="toasts" role="status" aria-live="polite" aria-atomic="false"></div>
 
 <script>
 "use strict";
@@ -1884,7 +1884,7 @@ function openUserMenu(anchor) {
   };
   if (can("users:read")) item("i-shield", "Usuarios y roles", () => { location.hash = "#/users"; });
   if (!tokenClaims().impersonated_by) item("i-lock", "Cambiar contraseña", passwordModal);
-  menu.appendChild(el(`<div class="sep" role="separator"></div>`));
+  if (menu.children.length) menu.appendChild(el(`<div class="sep" role="separator"></div>`));
   item("i-logout", "Salir", logout);
   // A menu button: focus goes into the menu and the arrows move; Esc brings
   // it back to the button, and Tab closes the menu and moves on.
@@ -1910,10 +1910,11 @@ function openUserMenu(anchor) {
 }
 
 function passwordModal() {
+  let current = null;
   formModal({
     title: "Cambiar contraseña", confirmLabel: "Cambiar",
     onReady: (form) => {
-      const current = form.querySelector('[name="current_password"]');
+      current = form.querySelector('[name="current_password"]');
       current.autocomplete = "current-password";
       for (const name of ["new_password", "repeat"])
         form.querySelector(`[name="${name}"]`).autocomplete = "new-password";
@@ -1927,9 +1928,16 @@ function passwordModal() {
     ],
     onSubmit: async (p) => {
       if (p.new_password.length < 8) throw new Error("La contraseña nueva necesita al menos 8 caracteres.");
+      if (p.new_password.length > 128) throw new Error("La contraseña nueva admite como máximo 128 caracteres.");
       if (p.new_password !== p.repeat) throw new Error("Las dos contraseñas nuevas no coinciden.");
-      await api("POST", "/api/auth/change-password",
-                { current_password: p.current_password, new_password: p.new_password });
+      try {
+        await api("POST", "/api/auth/change-password",
+                  { current_password: p.current_password, new_password: p.new_password });
+      } catch (e) {
+        // The form disabled its button while waiting: give the keyboard back.
+        setTimeout(() => current && current.focus(), 0);
+        throw e;
+      }
       toast("Contraseña cambiada", "ok");
     },
   });
@@ -7660,7 +7668,7 @@ async function usersTab(container) {
   function paint(list) {
     container.innerHTML = `
       <div class="toolbar"><label class="switch"><input type="checkbox" id="inact" ${showInactive?"checked":""}> Ver inactivos</label>
-        <div class="grow"></div>${writable ? `<button class="btn primary" id="newBtn">+ Nuevo usuario</button>` : ""}</div>
+        <div class="grow"></div>${writable && !tokenClaims().impersonated_by ? `<button class="btn primary" id="newBtn">+ Nuevo usuario</button>` : ""}</div>
       ${renderTable([
         { key:"id", label:"ID" }, { key:"full_name", label:"Nombre" }, { key:"email", label:"Email" },
         { key:"is_superuser", label:"Super", render:(v)=>v?badge("sí","blue"):"—" },

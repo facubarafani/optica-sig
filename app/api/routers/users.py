@@ -99,12 +99,12 @@ def create_user(
     support: bool = Depends(in_support_session),
 ):
     # A login made with a password support chose would outlive the support
-    # session. The provider adds people from /admin, by invitation, audited.
+    # session. The provider can add an administrator from /admin, audited.
     if support:
         raise HTTPException(
             status.HTTP_403_FORBIDDEN,
             "En una sesión de soporte no se crean usuarios: los agrega alguien de la "
-            "óptica, o se invitan desde el panel del proveedor.",
+            "óptica, y un administrador también se suma desde el panel del proveedor.",
         )
     try:
         return auth_service.create_user(db, company_id, data)

@@ -254,7 +254,8 @@ conventions worth knowing before editing it:
   Productos' tabs, each with its own address (`#/products/types`, `/brands`,
   `/models`, `/colors`), and `#/catalog` redirects there. Who is logged in, and
   with which role, sits in the top bar and opens the account menu: Usuarios y
-  roles (for `users:read`), Cambiar contraseña and Salir.
+  roles (for `users:read`), Cambiar contraseña (not in a support session) and
+  Salir.
 - **Inicio comes in two, chosen by `reports:read`** (granted to Administrador,
   never to Vendedor). The owner's (`ownerHome`) is the whole shop from
   `GET /api/sales/stats`, which also carries the Vendedores table, branches and
@@ -366,9 +367,11 @@ address itself is in the two `mailto:` links.
   session. **A support session sets no passwords**: not through that route,
   and not through Usuarios y roles, where it cannot create users either (a
   login made there would outlive the session). `deps.in_support_session` reads
-  the token's `impersonated_by`. The provider's own reset in `/admin`, audited,
-  is the one way it touches a password. A change does not end sessions already
-  open (tokens are not revoked).
+  the token's `impersonated_by`. Apart from the demo shop the seed builds, the
+  provider sets a shop user's password only from its own console in `/admin`
+  (creating a shop or adding an administrator with a chosen password, or a
+  reset), and each of those writes a `platform_audit_log` row (rule 15). A
+  change does not end sessions already open (tokens are not revoked).
 
 See `docs/EMAIL.md` for provider setup and the DNS records a real domain needs.
 
