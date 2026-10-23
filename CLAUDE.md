@@ -248,6 +248,13 @@ conventions worth knowing before editing it:
   leave the identifying columns unmarked.
 - Row actions: keep at most two labelled buttons and put the rest in the `⋯`
   menu via `openRowMenu(anchor, items)`.
+- **The menu's order and names were chosen on a board** ("Navegación y
+  nombres", with the shop owner's notes behind it). Actividad comes second, for
+  everyone. There is no Catálogo entry: types, brands, models and colours are
+  Productos' tabs, each with its own address (`#/products/types`, `/brands`,
+  `/models`, `/colors`), and `#/catalog` redirects there. Who is logged in, and
+  with which role, sits in the top bar and opens the account menu: Usuarios y
+  roles (for `users:read`), Cambiar contraseña and Salir.
 - **Inicio comes in two, chosen by `reports:read`** (granted to Administrador,
   never to Vendedor). The owner's (`ownerHome`) is the whole shop from
   `GET /api/sales/stats`, which also carries the Vendedores table, branches and
@@ -352,6 +359,12 @@ address itself is in the two `mailto:` links.
   `platform.add_tenant_admin()` take `password=None` and leave an unusable hash,
   so the account exists but nothing opens it until the link is used. Prefer this
   over choosing a credential for a customer.
+- **A logged-in user changes their own password** at
+  `POST /api/auth/change-password`. It wants the current one, is refused in a
+  support session (a token carrying `impersonated_by`: the provider may act as
+  a user, never take the account over) and is rate limited per user, so a
+  stolen session cannot guess the current password. A wrong current password
+  is a 400, never a 401, which the console would read as an expired session.
 
 See `docs/EMAIL.md` for provider setup and the DNS records a real domain needs.
 

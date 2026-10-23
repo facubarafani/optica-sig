@@ -170,6 +170,16 @@
   .topbar .crumb{font-weight:650;font-size:15px}
   .topbar .who{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:13px}
   .topbar .who .avatar{width:30px;height:30px;border-radius:50%;background:var(--primary-50);color:var(--primary);display:grid;place-items:center;font-weight:700}
+  /* Quién sos y con qué rol, a la vista: abre el menú de la cuenta. */
+  .userbtn{display:flex;align-items:center;gap:10px;border:1px solid var(--border);background:var(--hover);
+    border-radius:var(--radius-pill);padding:3px 9px 3px 12px;font:inherit;color:var(--muted);cursor:pointer}
+  .userbtn:hover{background:var(--press)}
+  .userbtn .who-txt{display:flex;flex-direction:column;align-items:flex-end;line-height:1.2}
+  .userbtn .who-txt b{color:var(--text);font-size:13px;font-weight:600}
+  .userbtn .who-txt small{font-size:11.5px;color:var(--muted)}
+  .usermenu{min-width:250px}
+  .usermenu .um-head{padding:8px 10px 10px;margin-bottom:5px;border-bottom:1px solid var(--border);font-size:13px}
+  .usermenu .um-role{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:7px}
   /* No global width cap: the data grids need the whole window. Reading-width
      layouts (Empresa, ficha de cliente) are capped individually below. */
   .content{padding:18px 22px;width:100%;min-width:0;flex:1;min-height:0;overflow:auto}
@@ -639,8 +649,9 @@
      unreadable. Data tables are deliberately not capped. */
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:1180px}
   /* tabs */
-  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:18px}
-  .tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:9px 14px;font-weight:600;color:var(--muted);cursor:pointer;font-size:13.5px}
+  /* On a phone the tabs scroll inside their own strip instead of widening the page. */
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:18px;overflow-x:auto}
+  .tabs button{flex:0 0 auto;background:none;border:0;border-bottom:2px solid transparent;padding:9px 14px;font-weight:600;color:var(--muted);cursor:pointer;font-size:13.5px}
   .tabs button.active{color:var(--primary);border-bottom-color:var(--primary)}
   /* modal */
   .overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);display:grid;grid-template-columns:minmax(0,1fr);justify-items:center;align-items:center;padding:20px;z-index:50;animation:fade .12s ease}
@@ -1074,6 +1085,7 @@
     .sidebar{position:fixed;left:0;top:0;width:240px;z-index:40;transform:translateX(-100%);transition:transform .2s}
     .sidebar.open{transform:none}
     .menu-btn{display:block}
+    .userbtn .who-txt{display:none}
     .grid2{grid-template-columns:1fr}
     form.form.grid2{grid-template-columns:1fr}
   }
@@ -1124,6 +1136,7 @@
 <symbol id="i-sheet" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h2"/><path d="M14 13h2"/><path d="M8 17h2"/><path d="M14 17h2"/></symbol>
 <symbol id="i-transfer" viewBox="0 0 24 24"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></symbol>
 <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
 <symbol id="i-percent" viewBox="0 0 24 24"><line x1="19" x2="5" y1="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></symbol>
 <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></symbol>
 <symbol id="i-camera" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></symbol>
@@ -1829,8 +1842,8 @@ function tokenClaims() {
 /* ----------------------------- app shell ------------------------------- */
 const NAV = [
   { route:"dashboard", label:"Inicio",          icon:"i-dashboard", perm:null },
+  { route:"activity",  label:"Actividad",        icon:"i-rotate", perm:null },
   { route:"products",  label:"Productos",        icon:"i-package", perm:"products:read", undo:true },
-  { route:"catalog",   label:"Catálogo",         icon:"i-tags", perm:"products:read", undo:true },
   { route:"pricing",   label:"Precios",          icon:"i-banknote", perm:"pricing:read", undo:true },
   { route:"stock",     label:"Stock",            icon:"i-layers", perm:"stock:read", undo:true },
   { route:"sales",     label:"Ventas",           icon:"i-receipt", perm:"sales:read" },
@@ -1838,10 +1851,58 @@ const NAV = [
   { route:"customers", label:"Clientes",         icon:"i-users", perm:"customers:read" },
   { route:"suppliers", label:"Proveedores",      icon:"i-truck", perm:"suppliers:read", undo:true },
   { route:"branches",  label:"Sucursales",       icon:"i-store", perm:"branches:read", undo:true },
-  { route:"activity",  label:"Actividad",        icon:"i-rotate", perm:null },
   { route:"users",     label:"Usuarios y Roles", icon:"i-shield", perm:"users:read" },
   { route:"company",   label:"Empresa",          icon:"i-settings", perm:"company:read" },
 ];
+
+/* El rol de quien entró, como lo dice su ficha: los nombres de sus roles, o
+   "Todos los permisos" para un superusuario sin ninguno. */
+function roleLabel(u) {
+  const names = (u.roles || []).map(r => r.name);
+  return names.join(", ") || (u.is_superuser ? "Todos los permisos" : "Sin rol");
+}
+
+/* El menú de la cuenta, bajo el nombre: quién sos, con qué rol, y lo que es
+   tuyo (la contraseña, salir). Usuarios y roles aparece para quien los ve; en
+   una sesión de soporte no se ofrece cambiar la contraseña (el servidor
+   tampoco lo deja). */
+function openUserMenu(anchor) {
+  const u = state.user;
+  const menu = el(`<div class="rowmenu usermenu" role="menu" aria-label="Tu cuenta">
+    <div class="um-head"><b>${esc(u.full_name || u.email)}</b>
+      <div class="fhelp">${esc(u.email)}</div>
+      <div class="um-role">${(u.roles || []).map(r => badge(r.name, "blue")).join("")}
+        ${u.is_superuser ? `<span class="fhelp">Todos los permisos</span>` : ""}</div></div></div>`);
+  let close = () => {};
+  const item = (icon, label, run) => {
+    const b = el(`<button type="button" role="menuitem"><svg class="ic"><use href="#${icon}"/></svg><span class="lbl">${esc(label)}</span></button>`);
+    b.addEventListener("click", () => { close(); run(); });
+    menu.appendChild(b);
+  };
+  if (can("users:read")) item("i-shield", "Usuarios y roles", () => { location.hash = "#/users"; });
+  if (!tokenClaims().impersonated_by) item("i-lock", "Cambiar contraseña", passwordModal);
+  menu.appendChild(el(`<div class="sep"></div>`));
+  item("i-logout", "Salir", logout);
+  close = openPopover(anchor, menu) || close;
+}
+
+function passwordModal() {
+  formModal({
+    title: "Cambiar contraseña", confirmLabel: "Cambiar",
+    fields: [
+      { key:"current_password", label:"Contraseña actual", type:"password", required:true },
+      { key:"new_password", label:"Contraseña nueva", type:"password", required:true, help:"Al menos 8 caracteres." },
+      { key:"repeat", label:"Repetí la nueva", type:"password", required:true },
+    ],
+    onSubmit: async (p) => {
+      if (p.new_password.length < 8) throw new Error("La contraseña nueva necesita al menos 8 caracteres.");
+      if (p.new_password !== p.repeat) throw new Error("Las dos contraseñas nuevas no coinciden.");
+      await api("POST", "/api/auth/change-password",
+                { current_password: p.current_password, new_password: p.new_password });
+      toast("Contraseña cambiada", "ok");
+    },
+  });
+}
 
 function renderApp() {
   const u = state.user;
@@ -1874,15 +1935,17 @@ function renderApp() {
             </div>
           </div>
           <div class="who">
-            <span>${esc(u.full_name || u.email)} ${u.is_superuser ? badge("admin","blue") : ""}</span>
-            <span class="avatar">${esc(initials)}</span>
-            <button class="btn sm ghost" id="logoutBtn"><svg class="ic"><use href="#i-logout"/></svg>Salir</button>
+            <button type="button" class="userbtn" id="userBtn" aria-haspopup="menu" title="Tu cuenta">
+              <span class="who-txt"><b>${esc(u.full_name || u.email)}</b><small>${esc(roleLabel(u))}</small></span>
+              <span class="avatar">${esc(initials)}</span>
+              <svg class="ic"><use href="#i-chevron-down"/></svg>
+            </button>
           </div>
         </div>
         <div class="content"><div id="view"></div></div>
       </div>
     </div>`;
-  $("#logoutBtn").addEventListener("click", logout);
+  $("#userBtn").addEventListener("click", (e) => openUserMenu(e.currentTarget));
   $("#ubUndo").addEventListener("click", (e) => { const op = e.currentTarget._op; if (op) revertir(op, "undo", { rapido: true }); });
   $("#ubRedo").addEventListener("click", (e) => { const op = e.currentTarget._op; if (op) revertir(op, "redo", { rapido: true }); });
   $("#ubHist").addEventListener("click", (e) => abrirHistorial(e.currentTarget));
@@ -1943,8 +2006,9 @@ async function route() {
   try {
     switch (sec) {
       case "dashboard": await dashboardView(view); break;
-      case "products":  await productsView(view); break;
-      case "catalog":   await catalogView(view); break;
+      case "products":  await productsView(view, arg); break;
+      // Catálogo became Productos' tabs; an old link or bookmark still lands.
+      case "catalog":   location.replace("#/products/types"); return;
       case "pricing":   await pricingView(view); break;
       case "stock":     await stockView(view); break;
       case "sales":     await salesView(view, arg); break;
@@ -4336,7 +4400,37 @@ async function ventasPanel(node, { scope = "shop", sellerId = null, sellerName =
 /* =======================================================================
    PRODUCTS
    ======================================================================= */
-async function productsView(view) {
+/* Productos y lo que los clasifica (tipos, marcas, modelos y colores, lo que
+   antes era Catálogo) en solapas, como se eligió en el tablero "Navegación y
+   nombres". Cada solapa tiene su dirección, así Atrás y un enlace guardado
+   vuelven a la misma. */
+const PRODUCT_TABS = [
+  { key:"",       label:"Productos" },
+  { key:"types",  label:"Tipos",   cfg:"product_types" },
+  { key:"brands", label:"Marcas",  cfg:"brands" },
+  { key:"models", label:"Modelos", cfg:"product_models" },
+  { key:"colors", label:"Colores", cfg:"colors" },
+];
+function productTabsHtml(active) {
+  return `<div class="tabs" role="tablist">${PRODUCT_TABS.map(t =>
+    `<button type="button" role="tab" data-ptab="${t.key}" aria-selected="${t.key === active}"
+      class="${t.key === active ? "active" : ""}">${esc(t.label)}</button>`).join("")}</div>`;
+}
+function wireProductTabs(root) {
+  $$("[data-ptab]", root).forEach(b => b.addEventListener("click", () => {
+    location.hash = "#/products" + (b.dataset.ptab ? "/" + b.dataset.ptab : "");
+  }));
+}
+async function productClassView(view, tab) {
+  view.innerHTML = `<div class="page-head"><div><h2>Productos</h2></div></div>
+    ${productTabsHtml(tab.key)}<div id="tabbody"></div>`;
+  wireProductTabs(view);
+  await resourceView($("#tabbody", view), CONFIG[tab.cfg]);
+}
+
+async function productsView(view, tabKey) {
+  const tab = PRODUCT_TABS.find(t => t.cfg && t.key === tabKey);
+  if (tab) return productClassView(view, tab);
   const writable = can("products:write");
   const [typeMap, brandMap, modelMap, supMap, colorMap, codeRows, priceLists, settings] = await Promise.all([
     idMap("/api/product-types"), idMap("/api/brands"), idMap("/api/product-models"),
@@ -5059,6 +5153,7 @@ async function productsView(view) {
                         <button class="btn" id="impCost"><svg class="ic"><use href="#i-upload"/></svg>Actualizar costos</button>
                         <button class="btn primary" id="newBtn"><svg class="ic"><use href="#i-plus"/></svg>Nuevo producto</button>` : ""}
         </div></div>
+      ${family ? "" : productTabsHtml("")}
       <div class="toolbar">
         ${selectFilter("product_type_id", typeMap, "Todos los tipos")}
         ${selectFilter("brand_id", brandMap, "Todas las marcas")}
@@ -5082,6 +5177,7 @@ async function productsView(view) {
     $$("[data-filter]", view).forEach(s => s.addEventListener("change", () => { filters[s.dataset.filter] = s.value; load(); }));
     const back = $("#backAll", view);
     if (back) back.addEventListener("click", leaveFamily);
+    wireProductTabs(view);
     $$("[data-act]", view).forEach(b => b.addEventListener("click", async (ev) => {
       ev.stopPropagation();                       // no abrir la fila al apretar un botón
       const row = list.find(x => String(x.id) === b.dataset.id), act = b.dataset.act;
@@ -5340,7 +5436,7 @@ async function newSaleModal(onDone) {
       <div class="pos-search">
         <label class="pos-q"><svg class="ic"><use href="#i-search"/></svg>
           <input id="posQ" placeholder="Código o nombre del producto" autocomplete="off" aria-label="Buscar producto">
-          <button type="button" class="btn sm ghost" id="posBrowse" title="Ver el catálogo agrupado por modelo">Catálogo</button></label>
+          <button type="button" class="btn sm ghost" id="posBrowse" title="Ver todos los productos, agrupados por modelo">Ver todos</button></label>
         <div class="pos-results" id="posRes" role="listbox" hidden></div>
       </div>
       <div id="posLines"></div>
@@ -6388,18 +6484,6 @@ async function pendingView(view) {
     reload();
   });
   reload();
-}
-
-/* =======================================================================
-   CATALOG (product types + brands + models + colours)
-   ======================================================================= */
-async function catalogView(view) {
-  renderTabs(view, "Catálogo", [
-    { label:"Tipos de producto", render: (n) => resourceView(n, CONFIG.product_types) },
-    { label:"Marcas",            render: (n) => resourceView(n, CONFIG.brands) },
-    { label:"Modelos",           render: (n) => resourceView(n, CONFIG.product_models) },
-    { label:"Colores",           render: (n) => resourceView(n, CONFIG.colors) },
-  ]);
 }
 
 /* =======================================================================

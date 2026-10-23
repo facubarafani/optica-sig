@@ -109,6 +109,13 @@ class SetPasswordRequest(BaseModel):
     new_password: str = Field(min_length=8, max_length=128)
 
 
+class PasswordChange(BaseModel):
+    """A logged-in user choosing a new password; the current one proves it is them."""
+
+    current_password: str = Field(max_length=128)
+    new_password: str = Field(min_length=8, max_length=128)
+
+
 class TokenCheck(BaseModel):
     """What the "set your password" screen needs to greet the visitor.
 

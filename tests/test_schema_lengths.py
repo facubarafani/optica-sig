@@ -123,6 +123,7 @@ NOT_STORED: set[str] = {
     auth.LoginRequest.__name__,
     auth.ForgotPasswordRequest.__name__,
     auth.SetPasswordRequest.__name__,
+    auth.PasswordChange.__name__,
     platform.PlatformLoginRequest.__name__,
     platform.PasswordReset.__name__,
     imports.ImportOptions.__name__,
