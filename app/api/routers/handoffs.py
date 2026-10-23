@@ -71,6 +71,10 @@ def handoff_photo(
     _: object = Depends(require_permission("customers:write")),
 ):
     row = _get(db, company_id, handoff_id)
+    if handoffs.past_retention(row):
+        # Left behind too long: it goes now, whoever asks.
+        handoffs.discard(db, row)
+        raise HTTPException(status.HTTP_410_GONE, "La foto ya no está. Generá otro código.")
     if row.photo is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Todavía no llegó la foto.")
     return Response(
@@ -100,19 +104,31 @@ async def upload_photo(request: Request, db: Session = Depends(get_db)) -> dict[
     ``token`` and ``photo``).
 
     Async and parsed by hand, unlike every other route, so an oversized body
-    is refused from its declared length before anything is read: this is the
-    one upload anyone can make without logging in.
+    is refused before it is all read: this is the one upload anyone can make
+    without logging in.
     """
     ratelimit.enforce(
         f"handoff-upload:{ratelimit.client_ip(request)}", limit=20, window_seconds=600,
         detail="Demasiados intentos. Esperá unos minutos y probá de nuevo.",
     )
+    # The photo plus the form around it.
+    cap = handoffs.MAX_PHOTO_BYTES + 64_000
+    too_big = HTTPException(
+        status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+        "La foto es muy pesada. Probá sacarla de nuevo.",
+    )
     declared = request.headers.get("content-length")
-    if declared and declared.isdigit() and int(declared) > handoffs.MAX_PHOTO_BYTES + 64_000:
-        raise HTTPException(
-            status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            "La foto es muy pesada. Probá sacarla de nuevo.",
-        )
+    if declared and declared.isdigit() and int(declared) > cap:
+        raise too_big
+    # Read with a hard cap whatever the body says about itself: a chunked one
+    # declares no length, and request.form() alone would spool all of it to
+    # disk before anything here could look at it.
+    body = bytearray()
+    async for chunk in request.stream():
+        body += chunk
+        if len(body) > cap:
+            raise too_big
+    request._body = bytes(body)  # form() reads it from Starlette's own cache
     form = await request.form(max_files=1, max_fields=2)
     try:
         token, photo = form.get("token"), form.get("photo")

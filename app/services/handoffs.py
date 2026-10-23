@@ -11,30 +11,37 @@ What this file is responsible for, because a receta is health data:
 - **The token is never stored**, only its SHA-256, like invitation links.
 - **It works once, for TTL_MINUTES.** A second upload is refused.
 - **The photo is gone in minutes.** The PC deletes the row as soon as it has
-  the photo. A row left behind (a closed tab, a crash) is swept once it is
-  older than RETENTION_MINUTES, the next time anyone asks for a handoff.
+  the photo. A row left behind (a closed tab, a crash) is never served once it
+  is RETENTION_MINUTES old, and the app deletes it at startup and every
+  SWEEP_MINUTES (``sweep_forever``), not only when someone asks for a QR.
 - **An upload proves it is a photo** by its first bytes, never by the type the
   phone claims.
 """
 from __future__ import annotations
 
+import asyncio
 import hashlib
+import logging
 import secrets
 import socket
 from datetime import datetime, timedelta, timezone
 from urllib.parse import quote, urlsplit, urlunsplit
 
 import segno
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.database import SessionLocal
 from app.models.company import Company
 from app.models.handoff import PhotoHandoff
+
+logger = logging.getLogger("app.handoffs")
 
 TOKEN_BYTES = 32
 TTL_MINUTES = 10
 RETENTION_MINUTES = 30
+SWEEP_MINUTES = 5
 # A phone photo shrunk by the page is a few hundred KB; this leaves room for a
 # browser that sends the original.
 MAX_PHOTO_BYTES = 8 * 1024 * 1024
@@ -96,9 +103,16 @@ def get(db: Session, company_id: int, handoff_id: int) -> PhotoHandoff | None:
     ).scalar_one_or_none()
 
 
+def past_retention(row: PhotoHandoff) -> bool:
+    return _aware(row.created_at) < _now() - timedelta(minutes=RETENTION_MINUTES)
+
+
 def state(row: PhotoHandoff) -> str:
     """waiting, received or expired. A photo that arrived in time stays
-    fetchable after the upload window closes, until the PC deletes it."""
+    fetchable after the upload window closes, until the PC deletes it or it
+    is RETENTION_MINUTES old, whichever comes first."""
+    if past_retention(row):
+        return "expired"
     if row.received_at is not None:
         return "received"
     if _aware(row.expires_at) < _now():
@@ -127,11 +141,20 @@ def receive(db: Session, raw_token: str, data: bytes) -> PhotoHandoff:
     kind = _sniff(data)
     if kind is None:
         raise HandoffError("not_photo", "Eso no parece una foto. Probá sacarla de nuevo.")
-    row.photo = data
-    row.photo_type = kind
-    row.received_at = _now()
-    db.add(row)
+    # Only if nobody got there first: two phones (or one retrying) sending at
+    # once must not both succeed, each overwriting the other's photo.
+    done = db.execute(
+        update(PhotoHandoff)
+        .where(PhotoHandoff.id == row.id, PhotoHandoff.received_at.is_(None))
+        .values(photo=data, photo_type=kind, received_at=_now())
+    )
+    if done.rowcount != 1:
+        db.rollback()
+        raise HandoffError(
+            "used", "Este código ya se usó. Para mandar otra foto, generá otro en la compu."
+        )
     db.commit()
+    db.refresh(row)
     return row
 
 
@@ -149,6 +172,27 @@ def sweep(db: Session) -> None:
     """
     cutoff = _now() - timedelta(minutes=RETENTION_MINUTES)
     db.execute(delete(PhotoHandoff).where(PhotoHandoff.created_at < cutoff))
+
+
+def sweep_once(session_factory=SessionLocal) -> None:
+    db = session_factory()
+    try:
+        sweep(db)
+        db.commit()
+    finally:
+        db.close()
+
+
+async def sweep_forever() -> None:
+    """Sweep at startup and every SWEEP_MINUTES while the app runs, so a
+    left-behind photo does not wait for the next QR anyone asks for. While the
+    instance sleeps nothing runs; startup catches up when it wakes."""
+    while True:
+        try:
+            await asyncio.to_thread(sweep_once)
+        except Exception:  # one failed sweep must not stop the next ones
+            logger.exception("Photo handoff sweep failed")
+        await asyncio.sleep(SWEEP_MINUTES * 60)
 
 
 def phone_url(raw_token: str) -> str:

@@ -46,18 +46,33 @@ class PrescriptionBase(BaseModel):
     doctor_name: str | None = None
     right_sphere: Decimal | None = None
     right_cylinder: Decimal | None = None
-    right_axis: int | None = Field(default=None, ge=0, le=180)
+    right_axis: int | None = None
     right_addition: Decimal | None = None
     left_sphere: Decimal | None = None
     left_cylinder: Decimal | None = None
-    left_axis: int | None = Field(default=None, ge=0, le=180)
+    left_axis: int | None = None
     left_addition: Decimal | None = None
     pupillary_distance: Decimal | None = None
     notes: str | None = None
 
 
+# What a Numeric(5, 2) column holds: past it Postgres refuses the row with a
+# 500. A capacity, not a medical range: the receta grid flags odd values.
+_DIOPTRE = {"default": None, "ge": Decimal("-999.99"), "le": Decimal("999.99")}
+
+
 class PrescriptionCreate(PrescriptionBase):
-    pass
+    # Checked on the way in only. Recetas typed before these checks may hold an
+    # axis past 180, and reading them back must never fail.
+    right_sphere: Decimal | None = Field(**_DIOPTRE)
+    right_cylinder: Decimal | None = Field(**_DIOPTRE)
+    right_axis: int | None = Field(default=None, ge=0, le=180)
+    right_addition: Decimal | None = Field(**_DIOPTRE)
+    left_sphere: Decimal | None = Field(**_DIOPTRE)
+    left_cylinder: Decimal | None = Field(**_DIOPTRE)
+    left_axis: int | None = Field(default=None, ge=0, le=180)
+    left_addition: Decimal | None = Field(**_DIOPTRE)
+    pupillary_distance: Decimal | None = Field(**_DIOPTRE)
 
 
 class PrescriptionRead(ORMBase, PrescriptionBase):

@@ -205,12 +205,18 @@ not built yet.
     (`app/web/foto.html`, a third self-contained page) with no login: the
     token in the URL fragment is the credential, stored only as a SHA-256,
     single-use and valid `TTL_MINUTES`. The phone shrinks the photo to JPEG
-    and posts it to `POST /api/handoffs/upload`, which proves it is an image
-    by its first bytes and is rate limited like the password routes. The PC
+    and posts it to `POST /api/handoffs/upload`, which reads the body with a
+    hard cap however it is framed (a chunked one declares no length), proves
+    it is an image by its first bytes, takes the token once even when two
+    uploads race, and is rate limited like the password routes. The PC
     polls, fetches it and deletes the row at once, so the photo lives on the
     server for seconds and then only in that tab: it is never stored with the
-    receta. A row left behind is swept after `RETENTION_MINUTES` (the one
-    delete there not scoped to a company). Nothing reads the photo, by
+    receta. A row left behind is never served once it is `RETENTION_MINUTES`
+    old, and the app deletes those at startup and every `SWEEP_MINUTES`
+    (`sweep_forever`, from `main.py`'s lifespan; the one delete there not
+    scoped to a company). While the instance sleeps nothing sweeps, so a
+    nightly backup can still copy a leftover photo: leaving `photo_handoffs`'
+    rows out of the dump is the backups repo's job. Nothing reads the photo, by
     decision (no OCR, no AI, so it costs nothing to run): the seller types it
     into `recetaGrid`, shaped like the paper, which flags a value off the
     0.25 steps instead of correcting it, since it is medical data. On a

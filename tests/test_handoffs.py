@@ -147,3 +147,102 @@ def test_on_a_developer_machine_the_qr_points_to_the_wifi_address(monkeypatch):
     assert handoffs.phone_url("tok") == "http://192.168.1.20:8000/foto#tok"
     monkeypatch.setattr(handoffs.settings, "environment", "production")
     assert handoffs.phone_url("tok") == "http://localhost:8000/foto#tok"
+
+
+def _backdate(db, handoff_id, minutes):
+    row = db.get(PhotoHandoff, handoff_id)
+    row.created_at = datetime.now(timezone.utc) - timedelta(minutes=minutes)
+    db.commit()
+
+
+def test_a_photo_past_its_time_is_never_served(client, auth_headers, db):
+    """A photo the PC never came for goes once it is RETENTION_MINUTES old,
+    whatever the page that asks."""
+    h = _create(client, auth_headers)
+    _upload(client, _token(h))
+    _backdate(db, h["id"], handoffs.RETENTION_MINUTES + 1)
+
+    state = client.get(f"/api/handoffs/{h['id']}", headers=auth_headers)
+    assert state.json()["status"] == "expired"
+    assert client.get(f"/api/handoffs/{h['id']}/photo", headers=auth_headers).status_code == 410
+    db.expire_all()
+    assert db.query(PhotoHandoff).count() == 0
+
+
+def test_the_app_sweeps_without_waiting_for_a_new_qr(client, auth_headers, db):
+    from sqlalchemy.orm import sessionmaker
+
+    h = _create(client, auth_headers)
+    _upload(client, _token(h))
+    _backdate(db, h["id"], handoffs.RETENTION_MINUTES + 1)
+
+    handoffs.sweep_once(sessionmaker(bind=db.get_bind()))
+    db.expire_all()
+    assert db.query(PhotoHandoff).count() == 0
+
+
+def test_a_body_with_no_length_is_capped_before_it_is_read(client, monkeypatch):
+    """A chunked body declares no length. The cap holds anyway, before the
+    form is parsed, or a guessed token would let anyone fill the disk."""
+    monkeypatch.setattr(handoffs, "MAX_PHOTO_BYTES", 100)
+    boundary = "receta-boundary"
+
+    def body():
+        yield (f'--{boundary}\r\nContent-Disposition: form-data; name="token"\r\n\r\n'
+               f'not-a-token\r\n--{boundary}\r\nContent-Disposition: form-data; '
+               f'name="photo"; filename="r.jpg"\r\nContent-Type: image/jpeg\r\n\r\n').encode()
+        for _ in range(100):
+            yield b"\xff" * 1000
+        yield f"\r\n--{boundary}--\r\n".encode()
+
+    resp = client.post(
+        "/api/handoffs/upload", content=body(),
+        headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+    )
+    assert resp.status_code == 413
+
+
+def test_a_token_cannot_be_spent_twice_at_once(client, auth_headers, db, monkeypatch):
+    """Two uploads racing on one token: the first stands, the second is told."""
+    from sqlalchemy import update
+
+    h = _create(client, auth_headers)
+    sniff = handoffs._sniff
+
+    def racing(data):
+        # The other upload lands between this one's checks and its write.
+        db.execute(update(PhotoHandoff).where(PhotoHandoff.id == h["id"]).values(
+            photo=PNG, photo_type="image/png", received_at=datetime.now(timezone.utc)))
+        db.commit()
+        return sniff(data)
+
+    monkeypatch.setattr(handoffs, "_sniff", racing)
+    assert _upload(client, _token(h)).status_code == 409
+    db.expire_all()
+    assert db.get(PhotoHandoff, h["id"]).photo == PNG
+
+
+def test_a_suspended_shop_receives_no_photo(client, auth_headers, db):
+    from app.models.company import Company
+
+    h = _create(client, auth_headers)
+    company = db.get(Company, db.get(PhotoHandoff, h["id"]).company_id)
+    company.is_active = False
+    db.commit()
+    assert _upload(client, _token(h)).status_code == 403
+
+
+def test_a_short_window_does_not_reset_a_long_one(monkeypatch):
+    """Ten minutes of anonymous uploads must not wipe an hour of password
+    guesses: each key is swept by its own window."""
+    from app.core import ratelimit
+
+    now = [10_000.0]
+    monkeypatch.setattr(ratelimit.time, "monotonic", lambda: now[0])
+    for _ in range(5):
+        assert ratelimit.hit("forgot:x", limit=5, window_seconds=3600)
+    assert not ratelimit.hit("forgot:x", limit=5, window_seconds=3600)
+
+    now[0] += 601          # past the upload window, well inside the hour
+    assert ratelimit.hit("handoff-upload:1.2.3.4", limit=20, window_seconds=600)
+    assert not ratelimit.hit("forgot:x", limit=5, window_seconds=3600)

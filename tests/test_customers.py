@@ -153,3 +153,32 @@ def test_create_customer_refuses_unknown_treatment(client, auth_headers):
     assert resp.status_code == 422
     listed = client.get("/api/customers", headers=auth_headers).json()
     assert all(c["last_name"] != "Gómez" for c in listed)
+
+
+def test_an_axis_past_180_still_reads_but_is_never_written(client, auth_headers, db):
+    """Recetas typed before the 0-180 check may hold one; reading must not fail."""
+    from app.core.config import settings
+    from app.models.customer import Prescription
+
+    cid = client.post("/api/customers", json={"first_name": "Laura", "last_name": "Giménez"},
+                      headers=auth_headers).json()["id"]
+    db.add(Prescription(company_id=settings.default_company_id, customer_id=cid, right_axis=190))
+    db.commit()
+
+    resp = client.get(f"/api/customers/{cid}/prescriptions", headers=auth_headers)
+    assert resp.status_code == 200, resp.text
+    assert resp.json()[0]["right_axis"] == 190
+    resp = client.post(f"/api/customers/{cid}/prescriptions", json={"right_axis": 190},
+                       headers=auth_headers)
+    assert resp.status_code == 422
+
+
+def test_a_dioptre_past_its_column_is_a_422(client, auth_headers):
+    cid = client.post("/api/customers", json={"first_name": "Laura", "last_name": "Giménez"},
+                      headers=auth_headers).json()["id"]
+    resp = client.post(f"/api/customers/{cid}/prescriptions", json={"right_sphere": "1234.5"},
+                       headers=auth_headers)
+    assert resp.status_code == 422
+    resp = client.post(f"/api/customers/{cid}/prescriptions", json={"right_sphere": "-2.25"},
+                       headers=auth_headers)
+    assert resp.status_code == 201, resp.text

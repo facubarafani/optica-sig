@@ -19,6 +19,9 @@ from fastapi import HTTPException, Request, status
 
 # key -> timestamps of recent hits, oldest first
 _hits: dict[str, deque[float]] = defaultdict(deque)
+# key -> its own window: a route with a short one must not forget for a route
+# with a long one (10 minutes of uploads reset an hour of password guesses).
+_windows: dict[str, float] = {}
 
 # Sweep idle keys occasionally so a long-running process does not accumulate
 # one deque per address ever seen.
@@ -26,19 +29,21 @@ _last_sweep = 0.0
 _SWEEP_EVERY = 600.0
 
 
-def _sweep(now: float, window: float) -> None:
+def _sweep(now: float) -> None:
     global _last_sweep
     if now - _last_sweep < _SWEEP_EVERY:
         return
     _last_sweep = now
-    for key in [k for k, v in _hits.items() if not v or now - v[-1] > window]:
+    for key in [k for k, v in _hits.items() if not v or now - v[-1] > _windows.get(k, 0)]:
         _hits.pop(key, None)
+        _windows.pop(key, None)
 
 
 def hit(key: str, *, limit: int, window_seconds: int) -> bool:
     """Record an attempt. Returns False when ``key`` is over its limit."""
     now = time.monotonic()
-    _sweep(now, window_seconds)
+    _sweep(now)
+    _windows[key] = window_seconds
     bucket = _hits[key]
     while bucket and now - bucket[0] > window_seconds:
         bucket.popleft()
@@ -69,4 +74,7 @@ def client_ip(request: Request) -> str:
 
 def reset() -> None:
     """Clear all buckets. For tests."""
+    global _last_sweep
     _hits.clear()
+    _windows.clear()
+    _last_sweep = 0.0
