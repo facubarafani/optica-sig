@@ -1,5 +1,6 @@
 """Bulk import: readers, column mapping, preview and atomic commit."""
 import io
+from decimal import Decimal
 
 import pytest
 
@@ -366,3 +367,95 @@ def test_batches_are_recorded_in_the_history(client, auth_headers, product_type_
     assert batches[0]["status"] == "committed"
     assert batches[0]["spec_key"] == "products"
     assert batches[0]["row_count"] == 1
+
+
+# --- pricing through a file is audited like a single edit (rule 4) ----------
+
+PRICING_HEADERS = ["Código", "Tipo de producto", "Modo de precio",
+                   "Precio de venta", "Lista de precios", "Categoría de precio"]
+
+
+@pytest.fixture
+def priced(client, auth_headers, product_type_id):
+    """A product on the General list, category AA, plus a manual one."""
+    lst = client.post("/api/price-lists", json={"name": "General"},
+                      headers=auth_headers).json()
+    client.post(f"/api/price-lists/{lst['id']}/generate-categories",
+                json={"count": 2}, headers=auth_headers)
+    listed = client.post(
+        "/api/products",
+        json={"code": "LST-1", "product_type_id": product_type_id,
+              "pricing_mode": "price_list", "price_category_code": "AA"},
+        headers=auth_headers,
+    ).json()
+    manual = client.post(
+        "/api/products",
+        json={"code": "MAN-1", "product_type_id": product_type_id,
+              "pricing_mode": "manual", "sale_price": "1000"},
+        headers=auth_headers,
+    ).json()
+    return {"list": lst, "listed": listed, "manual": manual}
+
+
+def _audited(db, product_id):
+    from app.models.audit import ChangeHistory
+
+    db.expire_all()
+    rows = db.query(ChangeHistory).filter(
+        ChangeHistory.entity_type == "product",
+        ChangeHistory.entity_id == product_id,
+    ).all()
+    return {r.field_name: (r.old_value, r.new_value) for r in rows}
+
+
+def _row(code, mode="", price="", price_list="", category=""):
+    return [code, "Armazones", mode, price, price_list, category]
+
+
+def test_imported_sale_price_is_audited(client, auth_headers, db, priced):
+    rows = [PRICING_HEADERS, _row("MAN-1", price="1.500,00")]
+    run_import(client, auth_headers, "products", rows)
+    old, new = _audited(db, priced["manual"]["id"])["sale_price"]
+    assert (Decimal(old), Decimal(new)) == (Decimal("1000"), Decimal("1500"))
+
+
+def test_imported_pricing_mode_is_audited(client, auth_headers, db, priced):
+    rows = [PRICING_HEADERS, _row("LST-1", mode="manual", price="2.000,00")]
+    run_import(client, auth_headers, "products", rows)
+    changed = _audited(db, priced["listed"]["id"])
+    assert changed["pricing_mode"] == ("price_list", "manual")
+    assert changed["sale_price"][0] is None
+
+
+def test_imported_price_list_is_audited(client, auth_headers, db, priced):
+    rows = [PRICING_HEADERS, _row("LST-1", price_list="General")]
+    run_import(client, auth_headers, "products", rows)
+    assert _audited(db, priced["listed"]["id"])["price_list_id"] == (
+        None, str(priced["list"]["id"]))
+
+
+def test_imported_price_category_is_audited(client, auth_headers, db, priced):
+    rows = [PRICING_HEADERS, _row("LST-1", category="ab")]
+    run_import(client, auth_headers, "products", rows)
+    assert _audited(db, priced["listed"]["id"])["price_category_code"] == ("AA", "AB")
+
+
+def test_reimporting_the_same_pricing_audits_nothing(client, auth_headers, db, priced):
+    rows = [PRICING_HEADERS, _row("LST-1", mode="price_list", category="AA"),
+            _row("MAN-1", mode="manual", price="1.000,00")]
+    run_import(client, auth_headers, "products", rows)
+    assert _audited(db, priced["listed"]["id"]) == {}
+    assert _audited(db, priced["manual"]["id"]) == {}
+
+
+def test_audited_import_pricing_can_still_be_undone(client, auth_headers, db, priced):
+    rows = [PRICING_HEADERS, _row("MAN-1", price="1.500,00")]
+    run_import(client, auth_headers, "products", rows)
+    ops = client.get("/api/activity", headers=auth_headers).json()
+    op = next(o for o in ops if o["area"] == "imports")
+    resp = client.post(f"/api/activity/{op['id']}/undo", json={}, headers=auth_headers)
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["applied"] >= 1
+    product = client.get(f"/api/products/{priced['manual']['id']}",
+                         headers=auth_headers).json()
+    assert product["sale_price"] == "1000.00"

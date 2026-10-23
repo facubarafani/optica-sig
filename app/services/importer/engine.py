@@ -6,8 +6,10 @@ missing). ``commit`` then applies the whole batch in a single transaction —
 either every row lands or none does.
 
 Business rules are never bypassed: costs go through ``pricing.change_cost`` so
-they reach ``cost_history``, and stock goes through ``stock.apply_movement`` so
-a ``stock_movement`` row is written.
+they reach ``cost_history``, price changes through
+``pricing.apply_pricing_update`` so each is audited as a single edit is, and
+stock goes through ``stock.apply_movement`` so a ``stock_movement`` row is
+written.
 """
 from __future__ import annotations
 
@@ -610,8 +612,7 @@ def _apply_products(db, parsed, *, company_id, user_id) -> dict:
             ("description", "description"),
             ("product_type", "product_type_id"), ("brand", "brand_id"),
             ("model", "model_id"), ("supplier", "supplier_id"),
-            ("min_stock", "min_stock"), ("sale_price", "sale_price"),
-            ("price_list", "price_list_id"), ("multicolor", "multicolor"),
+            ("min_stock", "min_stock"), ("multicolor", "multicolor"),
             ("is_active", "is_active"),
         ):
             if src in v:
@@ -620,10 +621,24 @@ def _apply_products(db, parsed, *, company_id, user_id) -> dict:
             # The whole set, so re-importing an edited export is a replacement
             # rather than an ever-growing list.
             products_service.set_colors(db, product, v["color"], company_id=company_id)
-        if "price_category" in v:
-            product.price_category_code = _category_code(v["price_category"])
+
+        pricing = {}
         if "pricing_mode" in v:
-            product.pricing_mode = PricingMode(v["pricing_mode"])
+            pricing["pricing_mode"] = PricingMode(v["pricing_mode"])
+        if "sale_price" in v:
+            pricing["sale_price"] = v["sale_price"]
+        if "price_list" in v:
+            pricing["price_list_id"] = v["price_list"]
+        if "price_category" in v:
+            pricing["price_category_code"] = _category_code(v["price_category"])
+        if is_new:
+            # Nothing to compare with, as when a product is created by hand.
+            for field, value in pricing.items():
+                setattr(product, field, value)
+        else:
+            # The same door as a single edit, so each change is audited
+            # (CLAUDE.md rule 4) and the batch stays one transaction.
+            pricing_service.apply_pricing_update(db, product, pricing, user_id=user_id)
 
         if is_new:
             # A new product needs its cost set directly; there is no previous
