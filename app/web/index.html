@@ -5247,8 +5247,8 @@ async function pickProduct(branchId, onPick) {
   const load = async (q) => {
     results.innerHTML = `<div class="loading">Buscando…</div>`;
     // sellable_only: a customer buys a colour, not a family, so styles are out.
-    paint(await api("GET", "/api/products?sellable_only=true"
-                          + (q ? "&q=" + encodeURIComponent(q) : ""))
+    paint(await api("GET", allOf("/api/products?sellable_only=true"
+                          + (q ? "&q=" + encodeURIComponent(q) : "")))
       .catch(() => []));
   };
   const input = $("input[type=search]", body);

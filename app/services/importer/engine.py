@@ -633,8 +633,8 @@ def _apply_products(db, parsed, *, company_id, user_id) -> dict:
             pricing["price_category_code"] = _category_code(v["price_category"])
         if is_new:
             # Nothing to compare with, as when a product is created by hand.
-            for field, value in pricing.items():
-                setattr(product, field, value)
+            for key, value in pricing.items():
+                setattr(product, key, value)
         else:
             # The same door as a single edit, so each change is audited
             # (CLAUDE.md rule 4) and the batch stays one transaction.
