@@ -198,6 +198,37 @@ not built yet.
     its own first column (`lightCol`, `lightDot`) and the reason in bold in the
     light's colour (`debtWhy`, "Vencido hace 7 días"). Never re-derive the
     rule in the browser.
+22. **A receta photo crosses from the phone to the PC and is gone.** The
+    receta grid's "Foto desde el celular" asks `services/handoffs.py` for a
+    handoff and shows its link as a QR, drawn on the server (`segno`) because
+    the console loads nothing from outside. The phone opens `/foto`
+    (`app/web/foto.html`, a third self-contained page) with no login: the
+    token in the URL fragment is the credential, stored only as a SHA-256,
+    single-use and valid `TTL_MINUTES`. The phone shrinks the photo to JPEG
+    and posts it to `POST /api/handoffs/upload`, which reads the body with a
+    hard cap however it is framed (a chunked one declares no length), proves
+    it is an image by its first bytes, takes the token once even when two
+    uploads race, and is rate limited like the password routes. The PC
+    polls, fetches it and deletes the row at once, so the photo lives on the
+    server for seconds and then only in that tab: it is never stored with the
+    receta. A row left behind is never served once it is `RETENTION_MINUTES`
+    old, and the app deletes those at startup and, while a photo may still be
+    pending, every `SWEEP_MINUTES` (`sweep_forever`, from `main.py`'s
+    lifespan). That delete and the count after it are the two statements
+    there not scoped to a company; the count is a number nobody sees, which
+    tells the sweeper whether to keep going. With nothing pending it does not
+    query at all, so an app kept awake never stops Neon's free tier from
+    scaling to zero, and a code handed out while a sweep runs, or a failed
+    sweep, keeps it going. While the instance sleeps nothing sweeps, so a
+    nightly backup can still copy a leftover photo, and Neon keeps deleted
+    rows for its restore window: leaving `photo_handoffs`' rows out of the
+    dump (`--exclude-table-data`) is still to do in the backups repo.
+    Nothing reads the photo, by decision (no OCR, no AI, so it costs nothing
+    to run): the seller types it
+    into `recetaGrid`, shaped like the paper, which flags a value off the
+    0.25 steps instead of correcting it, since it is medical data. On a
+    developer machine the QR swaps localhost for the Wi-Fi address; run
+    uvicorn with `--host 0.0.0.0` to try it from a phone.
 
 ## Web console (`app/web/index.html`)
 
@@ -311,9 +342,10 @@ address itself is in the two `mailto:` links.
 - **The token rides in the URL fragment**, never the query string — fragments
   are not sent to the server, keeping tokens out of access logs and `Referer`.
 - **`/api/auth/forgot-password` must stay uninformative.** Same status, same
-  body, whether or not the address exists. It and `set-password` are the only
-  unauthenticated write endpoints, so both are rate limited via
-  `core/ratelimit.py` (in-process — correct only while `WEB_CONCURRENCY=1`).
+  body, whether or not the address exists. It, `set-password` and the phone's
+  photo upload (rule 22) are the only unauthenticated write endpoints, so all
+  three are rate limited via `core/ratelimit.py` (in-process — correct only
+  while `WEB_CONCURRENCY=1`).
 - **Omitting a password invites instead.** `provisioning.create_tenant()` and
   `platform.add_tenant_admin()` take `password=None` and leave an unusable hash,
   so the account exists but nothing opens it until the link is used. Prefer this

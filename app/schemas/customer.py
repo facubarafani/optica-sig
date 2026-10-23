@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 from app.models.enums import DebtLight, DocumentType, IvaCondition, TreatmentType
 from app.schemas.common import ORMBase, SoftDeleteRead
@@ -19,6 +19,67 @@ def _canonical_document_type(value: str | None) -> str | None:
         return None
     known = DocumentType.parse(value)
     return known.value if known else value.strip()
+
+
+# Treatments and prescriptions come ahead of the customer schemas, because a
+# new customer can bring them along.
+
+# --- treatment history ----------------------------------------------------
+class TreatmentHistoryCreate(BaseModel):
+    treatment_type: TreatmentType
+    description: str | None = None
+    diagnosed_at: date | None = None
+
+
+class TreatmentHistoryRead(ORMBase):
+    id: int
+    customer_id: int
+    treatment_type: TreatmentType
+    description: str | None = None
+    diagnosed_at: date | None = None
+    created_at: datetime
+
+
+# --- prescription ---------------------------------------------------------
+class PrescriptionBase(BaseModel):
+    prescribed_at: date | None = None
+    doctor_name: str | None = None
+    right_sphere: Decimal | None = None
+    right_cylinder: Decimal | None = None
+    right_axis: int | None = None
+    right_addition: Decimal | None = None
+    left_sphere: Decimal | None = None
+    left_cylinder: Decimal | None = None
+    left_axis: int | None = None
+    left_addition: Decimal | None = None
+    pupillary_distance: Decimal | None = None
+    notes: str | None = None
+
+
+# What a Numeric(5, 2) column holds: past it Postgres refuses the row with a
+# 500. A capacity, not a medical range: the receta grid flags odd values.
+_DIOPTRE = {"default": None, "ge": Decimal("-999.99"), "le": Decimal("999.99")}
+
+
+class PrescriptionCreate(PrescriptionBase):
+    # Checked on the way in only. Recetas typed before these checks may hold an
+    # axis past 180, and reading them back must never fail.
+    right_sphere: Decimal | None = Field(**_DIOPTRE)
+    right_cylinder: Decimal | None = Field(**_DIOPTRE)
+    right_axis: int | None = Field(default=None, ge=0, le=180)
+    right_addition: Decimal | None = Field(**_DIOPTRE)
+    left_sphere: Decimal | None = Field(**_DIOPTRE)
+    left_cylinder: Decimal | None = Field(**_DIOPTRE)
+    left_axis: int | None = Field(default=None, ge=0, le=180)
+    left_addition: Decimal | None = Field(**_DIOPTRE)
+    pupillary_distance: Decimal | None = Field(**_DIOPTRE)
+
+
+class PrescriptionRead(ORMBase, PrescriptionBase):
+    id: int
+    customer_id: int
+    created_by_user_id: int | None = None
+    created_at: datetime
 
 
 # --- customer -------------------------------------------------------------
@@ -39,7 +100,10 @@ class CustomerBase(BaseModel):
 
 
 class CustomerCreate(CustomerBase):
-    pass
+    # The new-customer form's optional steps. Written in the same transaction
+    # as the customer, so a refused one leaves no customer behind.
+    treatments: list[TreatmentHistoryCreate] = []
+    prescription: PrescriptionCreate | None = None
 
 
 class CustomerUpdate(BaseModel):
@@ -78,46 +142,6 @@ class CustomerDebt(BaseModel):
 class CustomerListRead(CustomerRead):
     # Only for whoever may see sales; None also when nothing is owed.
     debt: CustomerDebt | None = None
-
-
-# --- prescription ---------------------------------------------------------
-class PrescriptionBase(BaseModel):
-    prescribed_at: date | None = None
-    doctor_name: str | None = None
-    right_sphere: Decimal | None = None
-    right_cylinder: Decimal | None = None
-    right_axis: int | None = None
-    right_addition: Decimal | None = None
-    left_sphere: Decimal | None = None
-    left_cylinder: Decimal | None = None
-    left_axis: int | None = None
-    left_addition: Decimal | None = None
-    pupillary_distance: Decimal | None = None
-    notes: str | None = None
-
-
-class PrescriptionCreate(PrescriptionBase):
-    pass
-
-
-class PrescriptionRead(ORMBase, PrescriptionBase):
-    id: int
-    customer_id: int
-    created_by_user_id: int | None = None
-    created_at: datetime
-
-
-# --- treatment history ----------------------------------------------------
-class TreatmentHistoryCreate(BaseModel):
-    treatment_type: TreatmentType
-    description: str | None = None
-    diagnosed_at: date | None = None
-
-
-class TreatmentHistoryRead(ORMBase):
-    id: int
-    customer_id: int
-    treatment_type: TreatmentType
-    description: str | None = None
-    diagnosed_at: date | None = None
-    created_at: datetime
+    # Each kind of treatment on file, once, in TreatmentType's order: what the
+    # list's Tratamientos column draws. Customer data, so everyone gets it.
+    treatments: list[TreatmentType] = []

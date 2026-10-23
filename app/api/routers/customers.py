@@ -9,6 +9,7 @@ from app.core.database import get_db
 from app.core.deps import get_company_id, has_permission, require_permission
 from app.models.auth import User
 from app.models.customer import Customer, Prescription, TreatmentHistory
+from app.models.enums import TreatmentType
 from app.schemas.customer import (
     CustomerCreate,
     CustomerListRead,
@@ -46,6 +47,9 @@ def list_customers(
         extra_where=[Customer.id.in_(sales_service.owing_customer_ids(company_id))]
         if owing_only and sees_debts else None,
     )
+    treatments = _treatment_types(db, company_id, [c.id for c in rows])
+    for customer in rows:
+        customer.treatments = treatments.get(customer.id, [])
     if sees_debts:
         debts = sales_service.customer_debts(
             db, company_id=company_id, customer_ids=[c.id for c in rows])
@@ -59,9 +63,51 @@ def create_customer(
     data: CustomerCreate,
     db: Session = Depends(get_db),
     company_id: int = Depends(get_company_id),
-    _: object = Depends(require_permission("customers:write")),
+    current_user: User = Depends(require_permission("customers:write")),
 ):
-    return crud.create(db, data, company_id=company_id)
+    """The treatments and the receta the new-customer form sends are written
+    with the customer, in one transaction: either all of it is saved or none."""
+    obj = Customer(
+        company_id=company_id,
+        **data.model_dump(exclude={"treatments", "prescription"}, exclude_unset=True),
+    )
+    db.add(obj)
+    db.flush()
+    for treatment in data.treatments:
+        db.add(TreatmentHistory(
+            company_id=company_id, customer_id=obj.id, **treatment.model_dump()
+        ))
+    if data.prescription is not None:
+        db.add(Prescription(
+            company_id=company_id, customer_id=obj.id,
+            created_by_user_id=current_user.id, **data.prescription.model_dump(),
+        ))
+    db.commit()
+    db.refresh(obj)
+    return obj
+
+
+def _treatment_types(
+    db: Session, company_id: int, customer_ids: list[int]
+) -> dict[int, list[TreatmentType]]:
+    """Each customer's kinds of treatment, once each, in one query for the page."""
+    if not customer_ids:
+        return {}
+    pairs = db.execute(
+        select(TreatmentHistory.customer_id, TreatmentHistory.treatment_type)
+        .where(
+            TreatmentHistory.company_id == company_id,
+            TreatmentHistory.customer_id.in_(customer_ids),
+        )
+        .distinct()
+    ).all()
+    order = list(TreatmentType)
+    out: dict[int, list[TreatmentType]] = {}
+    for customer_id, treatment_type in pairs:
+        out.setdefault(customer_id, []).append(treatment_type)
+    for types in out.values():
+        types.sort(key=order.index)
+    return out
 
 
 def _get_customer(db: Session, company_id: int, customer_id: int) -> Customer:

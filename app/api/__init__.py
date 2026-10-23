@@ -9,6 +9,7 @@ from app.api.routers import (
     catalog,
     company,
     customers,
+    handoffs,
     imports,
     invoicing,
     pricing,
@@ -33,6 +34,7 @@ api_router.include_router(products.router)
 api_router.include_router(pricing.router)
 api_router.include_router(stock.router)
 api_router.include_router(customers.router)
+api_router.include_router(handoffs.router)
 api_router.include_router(sales.router)
 api_router.include_router(invoicing.router)
 api_router.include_router(imports.router)

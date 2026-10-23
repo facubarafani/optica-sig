@@ -1,6 +1,8 @@
 """FastAPI application entrypoint."""
 from __future__ import annotations
 
+import asyncio
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 import re
@@ -11,10 +13,23 @@ from sqlalchemy.exc import IntegrityError
 
 from app.api import api_router
 from app.core.config import settings
+from app.services import handoffs
 
 WEB_DIR = Path(__file__).resolve().parent / "web"
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # A receta photo nobody came to fetch must not wait for the next QR.
+    sweeper = asyncio.create_task(handoffs.sweep_forever())
+    try:
+        yield
+    finally:
+        sweeper.cancel()
+
+
 app = FastAPI(
+    lifespan=lifespan,
     title=settings.app_name,
     version="0.1.0",
     description=(
@@ -109,3 +124,11 @@ def guide_image(name: str) -> FileResponse:
 @app.get("/admin", include_in_schema=False)
 def admin_console() -> FileResponse:
     return FileResponse(WEB_DIR / "admin.html")
+
+
+# --- Phone half of the receta scanner (services/handoffs.py) -------------
+# Opened from the QR the PC shows: no login, one photo. A page of its own, so a
+# phone never loads the whole shop console just to take a picture.
+@app.get("/foto", include_in_schema=False)
+def phone_photo_page() -> FileResponse:
+    return FileResponse(WEB_DIR / "foto.html")
