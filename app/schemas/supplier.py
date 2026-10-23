@@ -1,20 +1,21 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 from app.models.enums import SupplierType
 from app.schemas.common import SoftDeleteRead
 
 
 class SupplierBase(BaseModel):
-    name: str
+    # The max_lengths mirror the columns (see tests/test_schema_lengths.py).
+    name: str = Field(max_length=150)
     supplier_type: SupplierType
-    tax_id: str | None = None
-    contact_name: str | None = None
-    email: EmailStr | None = None
-    phone: str | None = None
-    address: str | None = None
-    notes: str | None = None
+    tax_id: str | None = Field(default=None, max_length=20)
+    contact_name: str | None = Field(default=None, max_length=120)
+    email: EmailStr | None = Field(default=None, max_length=150)
+    phone: str | None = Field(default=None, max_length=50)
+    address: str | None = Field(default=None, max_length=255)
+    notes: str | None = Field(default=None, max_length=500)
 
 
 class SupplierCreate(SupplierBase):
@@ -22,14 +23,14 @@ class SupplierCreate(SupplierBase):
 
 
 class SupplierUpdate(BaseModel):
-    name: str | None = None
+    name: str | None = Field(default=None, max_length=150)
     supplier_type: SupplierType | None = None
-    tax_id: str | None = None
-    contact_name: str | None = None
-    email: EmailStr | None = None
-    phone: str | None = None
-    address: str | None = None
-    notes: str | None = None
+    tax_id: str | None = Field(default=None, max_length=20)
+    contact_name: str | None = Field(default=None, max_length=120)
+    email: EmailStr | None = Field(default=None, max_length=150)
+    phone: str | None = Field(default=None, max_length=50)
+    address: str | None = Field(default=None, max_length=255)
+    notes: str | None = Field(default=None, max_length=500)
     is_active: bool | None = None
 
 

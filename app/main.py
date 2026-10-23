@@ -8,6 +8,8 @@ from pathlib import Path
 import re
 
 from fastapi import FastAPI, HTTPException, Request, status
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from sqlalchemy.exc import IntegrityError
 
@@ -48,6 +50,38 @@ def integrity_error_handler(request: Request, exc: IntegrityError) -> JSONRespon
     return JSONResponse(
         status_code=status.HTTP_409_CONFLICT,
         content={"detail": "Integrity constraint violated (duplicate or invalid reference)."},
+    )
+
+
+def _spanish(error: dict) -> str:
+    """The messages a person can trip over by typing, in their language.
+
+    The rest keep pydantic's own wording; add a case here when one of them
+    turns out to reach the screen.
+    """
+    kind, ctx, typed = error["type"], error.get("ctx") or {}, error.get("input")
+    # An email's max_length is checked after it parses, as "too_long".
+    if kind in ("string_too_long", "too_long") and isinstance(typed, str):
+        return f"Admite como máximo {ctx['max_length']} caracteres y tiene {len(typed)}."
+    if kind == "string_too_short":
+        if ctx.get("min_length") == 1:
+            return "No puede quedar vacío."
+        return f"Necesita al menos {ctx['min_length']} caracteres."
+    if kind == "value_error":
+        if error["msg"].startswith("value is not a valid email address"):
+            return "No es un email válido."
+        # Our validators already speak Spanish; pydantic only prefixes them.
+        return error["msg"].removeprefix("Value error, ")
+    return error["msg"]
+
+
+@app.exception_handler(RequestValidationError)
+def validation_error_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    """FastAPI's own 422 body, with each message in Spanish where one is known."""
+    errors = [{**error, "msg": _spanish(error)} for error in exc.errors()]
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": jsonable_encoder(errors)},
     )
 
 

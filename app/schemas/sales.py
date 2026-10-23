@@ -11,16 +11,17 @@ from app.schemas.invoicing import InvoiceRead
 
 
 # --- payment accounts (cuentas) -------------------------------------------
+# The max_lengths mirror the columns (see tests/test_schema_lengths.py).
 class PaymentAccountCreate(BaseModel):
-    name: str
+    name: str = Field(max_length=80)
     method: PaymentMethod | None = None
-    notes: str | None = None
+    notes: str | None = Field(default=None, max_length=255)
 
 
 class PaymentAccountUpdate(BaseModel):
-    name: str | None = None
+    name: str | None = Field(default=None, max_length=80)
     method: PaymentMethod | None = None
-    notes: str | None = None
+    notes: str | None = Field(default=None, max_length=255)
     is_active: bool | None = None
 
 
@@ -58,12 +59,12 @@ class PaymentCreate(BaseModel):
     amount: Decimal = Field(gt=0)
     method: PaymentMethod = PaymentMethod.CASH
     account_id: int | None = None
-    reference: str | None = None
+    reference: str | None = Field(default=None, max_length=80)
     # Cuotas: only a credit card is paid in instalments.
     installments: int | None = Field(default=None, ge=1, le=60)
     surcharge_type: DiscountType | None = None
     surcharge_value: Decimal | None = Field(default=None, ge=0)
-    note: str | None = None
+    note: str | None = Field(default=None, max_length=255)
 
     @model_validator(mode="after")
     def _installments_need_credit(self) -> "PaymentCreate":
@@ -185,8 +186,8 @@ class SaleCreate(BaseModel):
     # allowed from the start (cash now, card for the rest).
     payments: list[PaymentCreate] = Field(default_factory=list)
     promised_payment_date: date | None = None
-    reminder_note: str | None = None
-    notes: str | None = None
+    reminder_note: str | None = Field(default=None, max_length=255)
+    notes: str | None = Field(default=None, max_length=500)
     status: SaleStatus = SaleStatus.CONFIRMED
 
     @field_validator("discount_value")
@@ -206,8 +207,8 @@ class SaleUpdate(BaseModel):
 
     status: SaleStatus | None = None
     promised_payment_date: date | None = None
-    reminder_note: str | None = None
-    notes: str | None = None
+    reminder_note: str | None = Field(default=None, max_length=255)
+    notes: str | None = Field(default=None, max_length=500)
 
 
 class SaleRead(ORMBase):
