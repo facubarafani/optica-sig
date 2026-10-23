@@ -117,7 +117,8 @@ SHAPED: set[tuple[type[BaseModel], str]] = {
 }
 
 # Request schemas whose strings are never stored as sent: credentials and
-# lookups, options that only steer the request, and multipart forms.
+# lookups, options that only steer the request, and multipart forms (an
+# upload's file name is cut to its column by the router, tested below).
 NOT_STORED: set[str] = {
     auth.LoginRequest.__name__,
     auth.ForgotPasswordRequest.__name__,
@@ -288,3 +289,17 @@ def test_our_own_validation_messages_arrive_without_pydantic_prefix(client, auth
                        headers=auth_headers)
     assert resp.status_code == 422, resp.text
     assert resp.json()["detail"][0]["msg"] == "No puede quedar vacío."
+
+
+def test_an_overlong_upload_name_is_cut_to_its_column(client, auth_headers):
+    """The history keeps the file's name in a String(255); the extension stays."""
+    name = "lista de precios del proveedor " * 10 + ".csv"
+    resp = client.post(
+        "/api/imports/products/upload",
+        files={"file": (name, "Código;Tipo de producto\nX-1;Armazones\n".encode(), "text/csv")},
+        headers=auth_headers,
+    )
+    assert resp.status_code == 200, resp.text
+    kept = resp.json()["filename"]
+    assert len(name) > 255 and len(kept) == 255
+    assert kept.endswith(".csv")
